@@ -6,6 +6,9 @@
     "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
     "dev:backend": "npm --prefix packages/backend run start:dev",
     "dev:frontend": "npm --prefix packages/frontend start",
+    "prod": "concurrently \"npm run prod:backend\" \"npm run prod:frontend\"",
+    "prod:backend": "npm --prefix packages/backend run start:prod",
+    "prod:frontend": "npm --prefix packages/frontend start",
     "build": "npm --prefix packages/backend run build && npm --prefix packages/frontend run build",
     "test": "echo \"Error: no test specified\" && exit 1"
   },

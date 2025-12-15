@@ -1,0 +1,10 @@
+db:
+  mysql:
+    host: 127.0.0.1
+    name: mysql-default1
+    port: 3306
+    sync: false
+    type: mysql
+
+secrets:
+  jwtSecret: ming_secret

@@ -1,0 +1,3 @@
+db:
+  mysql:
+    name: mysql-dev1
