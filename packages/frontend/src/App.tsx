@@ -1,12 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import logo from './logo.svg';
 import './App.css';
 
 function App() {
   const [message, setMessage] = useState<string>('');
 
   useEffect(() => {
-    fetch('/api/v1/hitest')
+    fetch('/api/v1/user')
       .then((response) => response.json())
       .then((data) => setMessage(data.message))
       .catch((error) => console.error('Error fetching message:', error));
