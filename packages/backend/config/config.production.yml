@@ -1,3 +1,9 @@
 db:
   mysql:
-    name: mysql-prod1
+    host: prodhost.example.com
+    name: proddb
+    port: 3307
+    sync: false
+    type: mysql
+    username: prodroot
+    password: long-secure-password

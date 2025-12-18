@@ -1,10 +1,12 @@
 db:
   mysql:
-    host: 127.0.0.1
+    host: defaultHost
     name: mysql-default1
-    port: 3306
+    port: 0000
     sync: false
     type: mysql
+    username: defaultName
+    password: defaultPassword
 
-secrets:
-  jwtSecret: ming_secret
+# secrets:
+#   jwtSecret: ming_secret

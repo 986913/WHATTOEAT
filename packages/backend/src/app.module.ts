@@ -1,13 +1,32 @@
 import { Module } from '@nestjs/common';
-import { UserModule } from './user/user.module';
-import { ConfigModule } from '@nestjs/config';
 import configuration from '../configuration';
+import { UserModule } from './user/user.module';
+import { ConfigEnum } from './enum/config.enum';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true, // 全局注入 ConfigService
       load: [configuration], // 加载合并后的 YAML 配置
+    }),
+    TypeOrmModule.forRootAsync({
+      imports: [ConfigModule], // 导入 ConfigModule 以使用 ConfigService
+      inject: [ConfigService], // 注入 ConfigService
+      // 使用 ConfigService 来动态配置 TypeORM
+      useFactory: (cfgService: ConfigService) =>
+        ({
+          type: cfgService.get(ConfigEnum.DB_TYPE),
+          host: cfgService.get(ConfigEnum.DB_HOST),
+          port: cfgService.get(ConfigEnum.DB_PORT),
+          username: cfgService.get(ConfigEnum.DB_USERNAME),
+          password: cfgService.get(ConfigEnum.DB_PASSWORD),
+          database: cfgService.get(ConfigEnum.DB_NAME),
+          synchronize: cfgService.get(ConfigEnum.DB_SYNC), // 注意：生产环境慎用，一般本地初始化时使用，用来同步本地的schmema到数据库
+          logging: ['error'],
+          entities: [],
+        }) as TypeOrmModuleOptions,
     }),
     UserModule,
   ],

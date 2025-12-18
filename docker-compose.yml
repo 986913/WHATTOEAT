@@ -14,7 +14,7 @@ services:
 
       MYSQL_DATABASE: testdb
     ports:
-      - '3307:3306' #左边是我电脑的端口，右边永远是容器的3306
+      - '3307:3306' #左边是我本地电脑的端口，右边永远是容器的3306
     volumes:
       - mysql_data:/var/lib/mysql
 

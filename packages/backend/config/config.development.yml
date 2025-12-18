@@ -1,3 +1,9 @@
 db:
   mysql:
-    name: mysql-dev1
+    host: 127.0.0.1
+    name: testdb
+    port: 3307 # 这里的port要和 docker-compose.yml里映射的我电脑port一致
+    sync: true
+    type: mysql
+    username: root
+    password: rootpass
