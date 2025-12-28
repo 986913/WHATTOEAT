@@ -2,6 +2,10 @@ import { Module } from '@nestjs/common';
 import configuration from '../configuration';
 import { UserModule } from './user/user.module';
 import { ConfigEnum } from './enum/config.enum';
+import { LogEntity } from './log/entities/log.entity';
+import { UserEntity } from './user/entities/user.entity';
+import { RoleEntity } from './role/entities/role.entity';
+import { ProfileEntity } from './user/entities/profile.entity';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm';
 
@@ -24,8 +28,8 @@ import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm';
           password: cfgService.get(ConfigEnum.DB_PASSWORD),
           database: cfgService.get(ConfigEnum.DB_NAME),
           synchronize: cfgService.get(ConfigEnum.DB_SYNC), // 注意：生产环境慎用，一般本地初始化时使用，用来同步本地的schmema到数据库
+          entities: [UserEntity, ProfileEntity, RoleEntity, LogEntity],
           logging: ['error'],
-          entities: [],
         }) as TypeOrmModuleOptions,
     }),
     UserModule,
