@@ -2,12 +2,12 @@ import React, { useEffect, useState } from 'react';
 import './App.css';
 
 function App() {
-  const [message, setMessage] = useState<string>('');
+  const [users, setUsers] = useState([]);
 
   useEffect(() => {
     fetch('/api/v1/user')
       .then((response) => response.json())
-      .then((data) => setMessage(data.message))
+      .then((data) => setUsers(data))
       .catch((error) => console.error('Error fetching message:', error));
   }, []);
 
@@ -15,7 +15,7 @@ function App() {
     <div className='App'>
       <div>
         <h1>今天吃什么？</h1>
-        <p>后端消息: {message}</p>
+        <p>后端消息: {JSON.stringify(users)}</p>
       </div>
     </div>
   );
