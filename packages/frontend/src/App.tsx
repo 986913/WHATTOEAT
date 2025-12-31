@@ -15,12 +15,22 @@ function App() {
   const [userProfile, setUserProfile] = useState({});
   const [userLogs, setUserLogs] = useState([]);
 
+  // 抽取为一个重用的获取函数
+  async function fetchUsers() {
+    try {
+      const res = await fetch('/api/v1/user');
+      if (!res.ok) throw new Error(`fetch users failed: ${res.status}`);
+      const data = await res.json();
+      setUsers(data);
+    } catch (err) {
+      console.error('Error fetching all users:', err);
+    }
+  }
+
+  // 仅在组件挂载时加载一次；之后通过 fetchUsers() 手动刷新
   useEffect(() => {
-    fetch('/api/v1/user')
-      .then((response) => response.json())
-      .then((data) => setUsers(data))
-      .catch((error) => console.error('Error fetching all users:', error));
-  }, [users.length]);
+    fetchUsers();
+  }, []);
 
   return (
     <div className='App'>
@@ -102,22 +112,26 @@ function App() {
           onChange={(e) => setInputValue4(e.target.value)}
         />
         <button
-          onClick={() => {
-            fetch(`/api/v1/user`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                username: inputValue3,
-                password: inputValue4,
-              }),
-            })
-              .then((response) => response.json())
-              .then((data) =>
-                alert('创建新用户成功啦! ' + JSON.stringify(data))
-              )
-              .catch((error) => console.error('Error creae new user:', error));
+          onClick={async () => {
+            try {
+              const res = await fetch(`/api/v1/user`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  username: inputValue3,
+                  password: inputValue4,
+                }),
+              });
+              if (!res.ok) {
+                const txt = await res.text();
+                throw new Error(`Create failed ${res.status}: ${txt}`);
+              }
+              const data = await res.json();
+              alert('创建新用户成功: ' + JSON.stringify(data));
+              await fetchUsers(); // 成功后刷新列表
+            } catch (error) {
+              console.error('Error create new user:', error);
+            }
           }}
         >
           创建新用户!
@@ -131,20 +145,22 @@ function App() {
           onChange={(e) => setInputValue5(e.target.value)}
         />
         <button
-          onClick={() => {
-            fetch(`/api/v1/user/${inputValue5}`, {
-              method: 'DELETE',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-            })
-              .then((response) => response.json())
-              .then((data) =>
-                alert('删除新用户成功啦! ' + JSON.stringify(data))
-              )
-              .catch((error) =>
-                console.error(`Error delete user ${inputValue5}:`, error)
-              );
+          onClick={async () => {
+            try {
+              const res = await fetch(`/api/v1/user/${inputValue5}`, {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+              });
+              if (!res.ok) {
+                const txt = await res.text();
+                throw new Error(`Delete failed ${res.status}: ${txt}`);
+              }
+              await res.json().catch(() => {}); // optional body
+              alert('删除用户成功');
+              await fetchUsers();
+            } catch (error) {
+              console.error(`Error delete user ${inputValue5}:`, error);
+            }
           }}
         >
           删除!
@@ -170,20 +186,26 @@ function App() {
           onChange={(e) => setInputValue8(e.target.value)}
         />
         <button
-          onClick={() => {
-            fetch(`/api/v1/user/${inputValue6}`, {
-              method: 'PUT',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                username: inputValue7,
-                password: inputValue8,
-              }),
-            })
-              .then((response) => response.json())
-              .then((data) => alert('更新用户成功! ' + JSON.stringify(data)))
-              .catch((error) => console.error('Error update user:', error));
+          onClick={async () => {
+            try {
+              const res = await fetch(`/api/v1/user/${inputValue6}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  username: inputValue7,
+                  password: inputValue8,
+                }),
+              });
+              if (!res.ok) {
+                const txt = await res.text();
+                throw new Error(`Update failed ${res.status}: ${txt}`);
+              }
+              await res.json();
+              alert('更新用户成功');
+              await fetchUsers();
+            } catch (error) {
+              console.error('Error update user:', error);
+            }
           }}
         >
           更新用户
