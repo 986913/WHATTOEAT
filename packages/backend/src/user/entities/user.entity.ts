@@ -2,9 +2,11 @@ import {
   Entity,
   PrimaryGeneratedColumn,
   Column,
+  OneToOne,
   OneToMany,
   ManyToMany,
 } from 'typeorm';
+import { ProfileEntity } from './profile.entity';
 import { LogEntity } from 'src/log/entities/log.entity';
 import { RoleEntity } from 'src/role/entities/role.entity';
 
@@ -20,6 +22,14 @@ export class UserEntity {
 
   @Column()
   password: string;
+
+  /*
+    @OneToOne 一个用户只对应一个用户资料:
+      第一个参数: 告诉 TypeORM 关联的是哪个实体（这里是 ProfileEntity)
+      第二个参数: 告诉 TypeORM ProfileEntity实体中是通过哪个字段反向关联回来的 (这里是ProfileEntity里定义的user字段）
+   */
+  @OneToOne(() => ProfileEntity, (profile) => profile.user)
+  profile: ProfileEntity;
 
   /*
     @OneToMany 一个用户可以有多条日志记录:
