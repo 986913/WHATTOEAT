@@ -10,10 +10,12 @@ function App() {
   const [inputValue6, setInputValue6] = useState('');
   const [inputValue7, setInputValue7] = useState('');
   const [inputValue8, setInputValue8] = useState('');
+  const [inputValue9, setInputValue9] = useState('');
 
   const [users, setUsers] = useState([]);
   const [userProfile, setUserProfile] = useState({});
   const [userLogs, setUserLogs] = useState([]);
+  const [userLogsGroupedByResult, setUserLogsGroupedByResult] = useState({});
 
   // 抽取为一个重用的获取函数
   async function fetchUsers() {
@@ -68,6 +70,29 @@ function App() {
           获取用户资料
         </button>
         <p>{userProfile && JSON.stringify(userProfile)}</p>
+
+        <h1>getUserLogsGroupedByResult:</h1>
+        <input
+          type='text'
+          placeholder='输入用户ID, 获取用户所有Logs分类统计'
+          onChange={(e) => setInputValue9(e.target.value)}
+        />
+        <button
+          onClick={() => {
+            fetch(`/api/v1/user/logsByGroup?id=${inputValue9}`)
+              .then((response) => response.json())
+              .then((data) => setUserLogsGroupedByResult(data))
+              .catch((error) =>
+                console.error(
+                  'Error fetching user logs grouped by result:',
+                  error
+                )
+              );
+          }}
+        >
+          获取用户所有Logs Result 分类统计
+        </button>
+        {userLogsGroupedByResult && JSON.stringify(userLogsGroupedByResult)}
 
         <h1>getUserLogs:</h1>
         <input

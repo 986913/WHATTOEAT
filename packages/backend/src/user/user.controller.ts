@@ -57,4 +57,10 @@ export class UserController {
   getUserLogs(@Query('id', ParseIntPipe) userId: number): any {
     return this.userService.findLogs(userId);
   }
+
+  @Get('/logsByGroup')
+  // (通过 QueryPara 读取一个user的所有logs, 结果按result分组) -- http://localhost:3000/api/v1/user/logsByGroup/[?id=1]
+  getUserLogsGroupedByResult(@Query('id', ParseIntPipe) userId: number): any {
+    return this.userService.findLogsGroupedByResult(userId);
+  }
 }
