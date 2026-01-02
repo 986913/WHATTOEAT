@@ -69,10 +69,7 @@ export class UserService {
     });
   }
 
-  /**** 通过聚合查询 ****
-    SELECT logs.result as result,  COUNT (logs.result) as count from logs,
-    user WHERE user.id = logs.userId AND user.id = 2 GROUP BY logs.result
-  */
+  /**** 通过聚合查询 ****/
   async findLogsGroupedByResult(userId: number) {
     const foundUser = await this.findById(userId);
     if (!foundUser) throw new Error(`用户 id ${userId} 不存在`);
@@ -80,8 +77,8 @@ export class UserService {
     return (
       this.logRepository
         .createQueryBuilder('logsTable') // 为logs表指定别名：在后续表达式中使用该别名，如 logsTable.result
-        // 注意：此处的列名 user_Id 必须与实体上 @JoinColumn 或数据库实际列名一致
-        .where('logsTable.user_Id = :userId', { userId })
+        // 注意：此处的列名 user_id 必须与实体上 @JoinColumn 或数据库实际列名一致
+        .where('logsTable.user_id = :userId', { userId })
         // 选择非聚合列：必须在 groupBy 中出现（这里给出别名 'resultCode'，getRawMany() 返回时会包含该别名字段）
         .select('logsTable.result', 'resultCode')
         // 追加聚合列：COUNT 返回聚合结果并用别名 'count'，通常与 groupBy 一起使用
@@ -91,5 +88,18 @@ export class UserService {
         .orderBy('logsTable.result', 'ASC')
         .getRawMany()
     );
+    /*
+      上面的queryBuilder等价于下面的原生SQL查询：
+        return this.logRepository.query(
+          `SELECT 
+            logs.result AS resultCode, 
+            COUNT(*) AS count 
+          FROM logs 
+          WHERE logs.user_id = ?
+          GROUP BY logs.result 
+          ORDER BY logs.result ASC`,
+          [userId], // 参数绑定，避免SQL注入
+        );
+     */
   }
 }
