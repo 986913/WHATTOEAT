@@ -21,39 +21,39 @@ export class UserController {
     private configService: ConfigService,
   ) {}
 
-  // http://localhost:3001/api/v1/user
   @Get()
+  // http://localhost:3001/api/v1/user
   getUsers(): any {
     console.log(this.configService.get(ConfigEnum.DB_NAME));
     return this.userService.findAll();
   }
 
-  // http://localhost:3001/api/v1/user
   @Post()
+  // http://localhost:3001/api/v1/user
   addUser(@Body() payload: any): any {
     return this.userService.create(payload as UserEntity);
   }
 
-  // (通过 PathPara 更新一个user) -- http://localhost:3001/api/v1/user/[1]
   @Put('/:id')
+  // (通过 PathPara 更新一个user) -- http://localhost:3001/api/v1/user/[1]
   updateUser(@Param('id') userId: number, @Body() payload: any): any {
     return this.userService.update(userId, payload as UserEntity);
   }
 
-  // (通过 PathPara 删除一个user) -- http://localhost:3001/api/v1/user/[1]
   @Delete('/:id')
+  // (通过 PathPara 删除一个user) -- http://localhost:3001/api/v1/user/[1]
   deleteUser(@Param('id') userId: number): any {
     return this.userService.remove(userId);
   }
 
-  // (通过 QueryPara 读取一个user的profile) -- http://localhost:3000/api/v1/user/profile/[?id=3]
   @Get('/profile')
+  // (通过 QueryPara 读取一个user的profile) -- http://localhost:3000/api/v1/user/profile/[?id=3]
   getUserProfile(@Query('id', ParseIntPipe) userId: number): any {
     return this.userService.findProfile(userId);
   }
 
-  // (通过 QueryPara 读取一个user的所有logs) -- http://localhost:3000/api/v1/user/logs/[?id=3]
   @Get('/logs')
+  // (通过 QueryPara 读取一个user的所有logs) -- http://localhost:3000/api/v1/user/logs/[?id=3]
   getUserLogs(@Query('id', ParseIntPipe) userId: number): any {
     return this.userService.findLogs(userId);
   }

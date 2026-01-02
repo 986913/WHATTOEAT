@@ -25,6 +25,20 @@ export class UserService {
     return this.userRepository.findOne({ where: { id: userId } });
   }
 
+  async create(user: UserEntity) {
+    const newUser = this.userRepository.create(user);
+    return this.userRepository.save(newUser);
+  }
+
+  update(id: number, user: Partial<UserEntity>) {
+    return this.userRepository.update(id, user);
+  }
+
+  remove(id: number) {
+    return this.userRepository.delete(id);
+  }
+
+  /** 通过关联查询，获取用户及其profile信息 **/
   findProfile(userId: number) {
     return this.userRepository.findOne({
       where: { id: userId },
@@ -34,6 +48,7 @@ export class UserService {
     });
   }
 
+  /** 通过关联查询，获取用户的所有logs信息 **/
   async findLogs(userId: number) {
     const user = (await this.findById(userId)) || {
       id: -1,
@@ -46,18 +61,5 @@ export class UserService {
         user: true,
       },
     });
-  }
-
-  async create(user: UserEntity) {
-    const newUser = this.userRepository.create(user);
-    return this.userRepository.save(newUser);
-  }
-
-  update(id: number, user: Partial<UserEntity>) {
-    return this.userRepository.update(id, user);
-  }
-
-  remove(id: number) {
-    return this.userRepository.delete(id);
   }
 }
