@@ -1,4 +1,6 @@
+import * as winston from 'winston';
 import { Module } from '@nestjs/common';
+import { utilities, WinstonModule } from 'nest-winston';
 import configuration from '../configuration';
 import { UserModule } from './user/user.module';
 import { ConfigEnum } from './enum/config.enum';
@@ -29,8 +31,19 @@ import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm';
           database: cfgService.get(ConfigEnum.DB_NAME),
           synchronize: cfgService.get(ConfigEnum.DB_SYNC), // 注意：生产环境慎用，一般本地初始化时使用，用来同步本地的schmema到数据库
           entities: [UserEntity, ProfileEntity, RoleEntity, LogEntity],
-          logging: ['error'],
+          logging: false, //关闭typeorm日志
         }) as TypeOrmModuleOptions,
+    }),
+    WinstonModule.forRoot({
+      transports: [
+        new winston.transports.Console({
+          format: winston.format.combine(
+            winston.format.timestamp(),
+            winston.format.simple(),
+            utilities.format.nestLike(),
+          ),
+        }),
+      ],
     }),
     UserModule,
   ],
