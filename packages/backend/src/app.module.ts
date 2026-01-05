@@ -34,6 +34,7 @@ import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm';
           logging: false, //关闭typeorm日志
         }) as TypeOrmModuleOptions,
     }),
+    // 注册 Winston logger(单例），供全局注入
     WinstonModule.forRoot({
       transports: [
         new winston.transports.Console({
