@@ -7,6 +7,9 @@ db:
     type: mysql
     username: defaultName
     password: defaultPassword
+log:
+  level: info
+  on: true
 
 # secrets:
 #   jwtSecret: ming_secret

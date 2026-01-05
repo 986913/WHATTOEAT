@@ -55,7 +55,7 @@ export class AllExceptionFilter implements ExceptionFilter {
     }
 
     const responseBody = {
-      headers: request.headers,
+      // headers: request.headers,
       query: request.query,
       body: request.body as Record<string, unknown>,
       params: request.params,

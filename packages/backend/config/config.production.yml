@@ -7,3 +7,6 @@ db:
     type: mysql
     username: prodroot
     password: long-secure-password
+log:
+  level: info
+  on: true

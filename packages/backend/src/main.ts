@@ -12,7 +12,7 @@ async function bootstrap() {
 
   // 获取 Winston Logger 实例
   const logger = app.get<WinstonLogger>(WINSTON_MODULE_NEST_PROVIDER);
-  // Global 使用同一 logger 实例
+  // Global 使用同一 winston logger 实例, 替换掉 Nest默认的Logger
   app.useLogger(logger);
   // 设置Global的 API prefix
   app.setGlobalPrefix('api/v1');

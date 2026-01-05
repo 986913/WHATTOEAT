@@ -7,3 +7,6 @@ db:
     type: mysql
     username: root
     password: rootpass
+log:
+  level: info
+  on: true

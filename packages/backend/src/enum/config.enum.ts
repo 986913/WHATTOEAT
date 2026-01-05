@@ -11,3 +11,8 @@ export enum ConfigEnum {
   // JWT 密钥
   // SECRETS_JWT = 'secrets.jwtSecret',
 }
+
+export enum LogEnum {
+  LOG_LEVEL = 'log.level',
+  LOG_ON = 'log.on',
+}

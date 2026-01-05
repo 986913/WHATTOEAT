@@ -1,6 +1,4 @@
-import * as winston from 'winston';
 import { Module } from '@nestjs/common';
-import { utilities, WinstonModule } from 'nest-winston';
 import configuration from '../configuration';
 import { UserModule } from './user/user.module';
 import { ConfigEnum } from './enum/config.enum';
@@ -10,6 +8,7 @@ import { RoleEntity } from './role/entities/role.entity';
 import { ProfileEntity } from './user/entities/profile.entity';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm';
+import { LogModule } from './log/log.module';
 
 @Module({
   imports: [
@@ -34,19 +33,8 @@ import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm';
           logging: false, //关闭typeorm日志
         }) as TypeOrmModuleOptions,
     }),
-    // 注册 Winston logger(单例），供全局注入
-    WinstonModule.forRoot({
-      transports: [
-        new winston.transports.Console({
-          format: winston.format.combine(
-            winston.format.timestamp(),
-            winston.format.simple(),
-            utilities.format.nestLike(),
-          ),
-        }),
-      ],
-    }),
     UserModule,
+    LogModule, // 引入 LogModule 来注册 Winston logger(单例)
   ],
   controllers: [],
   providers: [],
