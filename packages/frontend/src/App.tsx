@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import axios from './utils/axios';
 import './App.css';
 
 function App() {
@@ -20,10 +21,8 @@ function App() {
   // 抽取为一个重用的获取函数
   async function fetchUsers() {
     try {
-      const res = await fetch('/api/v1/user');
-      if (!res.ok) throw new Error(`fetch users failed: ${res.status}`);
-      const data = await res.json();
-      setUsers(data);
+      const res = await axios.get('/user');
+      setUsers(res.data);
     } catch (err) {
       console.error('Error fetching all users:', err);
     }
@@ -57,14 +56,16 @@ function App() {
           onChange={(e) => setInputValue1(e.target.value)}
         />
         <button
-          onClick={() => {
-            fetch(`/api/v1/user/profile?id=${inputValue1}`)
-              .then((response) => response.json())
-              .then((data) => setUserProfile(data))
-              .catch((error) =>
-                console.error('Error fetching user profile:', error)
-              );
-            setUserProfile({});
+          onClick={async () => {
+            try {
+              setUserProfile({});
+              const res = await axios.get('/user/profile', {
+                params: { id: inputValue1 },
+              });
+              setUserProfile(res.data);
+            } catch (error) {
+              console.error('Error fetching user profile:', error);
+            }
           }}
         >
           获取用户资料
@@ -78,16 +79,18 @@ function App() {
           onChange={(e) => setInputValue9(e.target.value)}
         />
         <button
-          onClick={() => {
-            fetch(`/api/v1/user/logsByGroup?id=${inputValue9}`)
-              .then((response) => response.json())
-              .then((data) => setUserLogsGroupedByResult(data))
-              .catch((error) =>
-                console.error(
-                  'Error fetching user logs grouped by result:',
-                  error
-                )
+          onClick={async () => {
+            try {
+              const res = await axios.get('/user/logsByGroup', {
+                params: { id: inputValue9 },
+              });
+              setUserLogsGroupedByResult(res.data);
+            } catch (error) {
+              console.error(
+                'Error fetching user logs grouped by result:',
+                error
               );
+            }
           }}
         >
           获取用户所有Logs Result 分类统计
@@ -102,13 +105,21 @@ function App() {
           onChange={(e) => setInputValue2(e.target.value)}
         />
         <button
-          onClick={() => {
-            fetch(`/api/v1/user/logs?id=${inputValue2}`)
-              .then((response) => response.json())
-              .then((data) => setUserLogs(data))
-              .catch((error) =>
-                console.error('Error fetching user logs:', error)
-              );
+          onClick={async () => {
+            try {
+              const res = await axios.get('/user/logs', {
+                params: { id: inputValue2 },
+              });
+              setUserLogs(res.data);
+            } catch (error) {
+              console.error('Error fetching user logs:', error);
+            }
+            // fetch(`/api/v1/user/logs?id=${inputValue2}`)
+            //   .then((response) => response.json())
+            //   .then((data) => setUserLogs(data))
+            //   .catch((error) =>
+            //     console.error('Error fetching user logs:', error)
+            //   );
           }}
         >
           获取用户所有Logs
@@ -139,20 +150,11 @@ function App() {
         <button
           onClick={async () => {
             try {
-              const res = await fetch(`/api/v1/user`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  username: inputValue3,
-                  password: inputValue4,
-                }),
+              const res = await axios.post('/user', {
+                username: inputValue3,
+                password: inputValue4,
               });
-              if (!res.ok) {
-                const txt = await res.text();
-                throw new Error(`Create failed ${res.status}: ${txt}`);
-              }
-              const data = await res.json();
-              alert('创建新用户成功: ' + JSON.stringify(data));
+              alert('创建新用户成功: ' + JSON.stringify(res.data));
               await fetchUsers(); // 成功后刷新列表
             } catch (error) {
               console.error('Error create new user:', error);
@@ -172,15 +174,7 @@ function App() {
         <button
           onClick={async () => {
             try {
-              const res = await fetch(`/api/v1/user/${inputValue5}`, {
-                method: 'DELETE',
-                headers: { 'Content-Type': 'application/json' },
-              });
-              if (!res.ok) {
-                const txt = await res.text();
-                throw new Error(`Delete failed ${res.status}: ${txt}`);
-              }
-              await res.json().catch(() => {}); // optional body
+              await axios.delete(`/user/${inputValue5}`);
               alert('删除用户成功');
               await fetchUsers();
             } catch (error) {
@@ -213,19 +207,10 @@ function App() {
         <button
           onClick={async () => {
             try {
-              const res = await fetch(`/api/v1/user/${inputValue6}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  username: inputValue7,
-                  password: inputValue8,
-                }),
+              await axios.put(`/user/${inputValue6}`, {
+                username: inputValue7,
+                password: inputValue8,
               });
-              if (!res.ok) {
-                const txt = await res.text();
-                throw new Error(`Update failed ${res.status}: ${txt}`);
-              }
-              await res.json();
               alert('更新用户成功');
               await fetchUsers();
             } catch (error) {
