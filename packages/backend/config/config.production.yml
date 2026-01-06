@@ -1,9 +1,9 @@
 db:
   mysql:
-    host: database-2.cn40g8yicfus.us-east-2.rds.amazonaws.com:3310
+    host: database-2.cn40g8yicfus.us-east-2.rds.amazonaws.com
     name: eatdbprod
     port: 3310
-    sync: false
+    sync: true
     type: mysql
     username: admin
     password: eatgood2026
