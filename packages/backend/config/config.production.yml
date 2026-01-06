@@ -1,12 +1,12 @@
 db:
   mysql:
-    host: prodhost.example.com
-    name: proddb
-    port: 3307
+    host: database-2.cn40g8yicfus.us-east-2.rds.amazonaws.com:3310
+    name: eatdbprod
+    port: 3310
     sync: false
     type: mysql
-    username: prodroot
-    password: long-secure-password
+    username: admin
+    password: eatgood2026
 log:
   level: info
   on: true
