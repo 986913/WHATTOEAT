@@ -1,3 +1,5 @@
+# 这个文件在 npm run prod 命令下用到
+
 db:
   mysql:
     host: database-2.cn40g8yicfus.us-east-2.rds.amazonaws.com

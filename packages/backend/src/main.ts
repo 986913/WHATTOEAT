@@ -6,9 +6,7 @@ import { WINSTON_MODULE_NEST_PROVIDER, WinstonLogger } from 'nest-winston';
 import { AllExceptionFilter } from './filters/all-exception.filter';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, {
-    cors: true,
-  });
+  const app = await NestFactory.create(AppModule);
 
   // 获取 Winston Logger 实例
   const logger = app.get<WinstonLogger>(WINSTON_MODULE_NEST_PROVIDER);
@@ -23,10 +21,10 @@ async function bootstrap() {
   await app.listen(process.env.PORT ?? 3001);
   console.log(`🚀 Backend running at http://localhost:3001`);
 
-  if (module.hot) {
-    module.hot.accept(() => console.log('🔁  HMR Reloading...'));
-    module.hot.dispose(() => app.close());
-  }
+  // if (module.hot) {
+  //   module.hot.accept(() => console.log('🔁  HMR Reloading...'));
+  //   module.hot.dispose(() => app.close());
+  // }
 }
 
 bootstrap();

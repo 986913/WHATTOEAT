@@ -1,0 +1,14 @@
+# 这个文件在 docker-compose -p whattoeat up -d --build 命令下用到
+
+db:
+  mysql:
+    host: db # 👈 service name
+    name: testdb
+    port: 3306 # 👈 container内部端口
+    sync: true
+    type: mysql
+    username: root
+    password: rootpass
+log:
+  level: info
+  on: true

@@ -20,8 +20,20 @@ import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm';
       imports: [ConfigModule], // 导入 ConfigModule 以使用 ConfigService
       inject: [ConfigService], // 注入 ConfigService
       // 使用 ConfigService 来动态配置 TypeORM
-      useFactory: (cfgService: ConfigService) =>
-        ({
+      useFactory: (cfgService: ConfigService) => {
+        const host = cfgService.get<string>(ConfigEnum.DB_HOST);
+        const nodeEnv = process.env.NODE_ENV;
+        // 🚨 安全护栏：防止本地 / docker 误连生产数据库
+        if (
+          nodeEnv !== 'production' &&
+          typeof host === 'string' &&
+          host.includes('rds.amazonaws.com')
+        ) {
+          throw new Error(
+            `❌ 非生产环境禁止连接生产数据库！当前 NODE_ENV=${nodeEnv}, DB_HOST=${host}`,
+          );
+        }
+        return {
           type: cfgService.get(ConfigEnum.DB_TYPE),
           host: cfgService.get(ConfigEnum.DB_HOST),
           port: cfgService.get(ConfigEnum.DB_PORT),
@@ -31,7 +43,8 @@ import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm';
           synchronize: cfgService.get(ConfigEnum.DB_SYNC), // 注意：生产环境慎用，一般本地初始化时使用，用来同步本地的schmema到数据库
           entities: [UserEntity, ProfileEntity, RoleEntity, LogEntity],
           logging: false, //关闭typeorm日志
-        }) as TypeOrmModuleOptions,
+        } as TypeOrmModuleOptions;
+      },
     }),
     UserModule,
     LogModule, // 引入 LogModule 来注册 Winston logger(单例)
