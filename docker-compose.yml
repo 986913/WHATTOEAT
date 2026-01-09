@@ -6,8 +6,6 @@ services:
     container_name: backend-eat
     environment:
       NODE_ENV: production
-    # depends_on:
-    #   - db
 
   frontend:
     build: ./packages/frontend
