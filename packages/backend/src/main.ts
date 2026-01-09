@@ -19,12 +19,12 @@ async function bootstrap() {
   app.useGlobalFilters(new AllExceptionFilter(logger, httpAdapter));
 
   await app.listen(process.env.PORT ?? 3001);
-  console.log(`🚀 Backend running at http://localhost:3001`);
+  console.log(`🚀 Backend running at ${process.env.PORT ?? 3001}`);
 
-  // if (module.hot) {
-  //   module.hot.accept(() => console.log('🔁  HMR Reloading...'));
-  //   module.hot.dispose(() => app.close());
-  // }
+  if (module?.hot) {
+    module.hot.accept(() => console.log('🔁  HMR Reloading...'));
+    module.hot.dispose(() => app.close());
+  }
 }
 
 bootstrap();

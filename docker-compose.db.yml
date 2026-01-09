@@ -1,0 +1,29 @@
+# 这个文件启动： docker-compose -f docker-compose.db.yml -p whattoeat-local up -d
+
+services:
+  db:
+    image: mysql:8.0
+    restart: always
+    environment:
+      # username: root, password: rootpass
+      MYSQL_ROOT_PASSWORD: rootpass
+      # username: ming, password: 123
+      MYSQL_USER: ming
+      MYSQL_PASSWORD: 123
+
+      MYSQL_DATABASE: testdb
+    ports:
+      - '3307:3306' #左边是我本地电脑的端口，右边永远是容器的3306
+    volumes:
+      - mysql_data:/var/lib/mysql-eat
+
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - '8080:8080'
+    depends_on:
+      - db
+
+volumes:
+  mysql_data:
