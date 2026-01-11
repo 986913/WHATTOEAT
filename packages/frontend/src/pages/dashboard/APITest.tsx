@@ -12,16 +12,18 @@ export default function APITest() {
   const [inputValue7, setInputValue7] = useState('');
   const [inputValue8, setInputValue8] = useState('');
   const [inputValue9, setInputValue9] = useState('');
+  const [inputValue10, setInputValue10] = useState('');
 
   const [users, setUsers] = useState([]);
   const [userProfile, setUserProfile] = useState({});
   const [userLogs, setUserLogs] = useState([]);
   const [userLogsGroupedByResult, setUserLogsGroupedByResult] = useState({});
+  const [singleUser, setSingleUser] = useState({});
 
   // 抽取为一个重用的获取函数
   async function fetchUsers() {
     try {
-      const res = await axios.get('/user');
+      const res = await axios.get('/users');
       setUsers(res.data);
     } catch (err) {
       console.error('Error fetching all users:', err);
@@ -48,6 +50,27 @@ export default function APITest() {
           );
         })}
 
+        <h1>getUser:</h1>
+        <input
+          type='text'
+          placeholder='输入用户ID, 获取用户'
+          id='userIdInput10'
+          onChange={(e) => setInputValue10(e.target.value)}
+        />
+        <button
+          onClick={async () => {
+            try {
+              const res = await axios.get(`/users/${inputValue10}`);
+              setSingleUser(res.data);
+            } catch (error) {
+              console.error('Error fetching single user:', error);
+            }
+          }}
+        >
+          获取用户资料
+        </button>
+        <p>{singleUser && JSON.stringify(singleUser)}</p>
+
         <h1>getUserProfile:</h1>
         <input
           type='text'
@@ -59,7 +82,7 @@ export default function APITest() {
           onClick={async () => {
             try {
               setUserProfile({});
-              const res = await axios.get('/user/profile', {
+              const res = await axios.get('/users/profile', {
                 params: { id: inputValue1 },
               });
               setUserProfile(res.data);
@@ -81,7 +104,7 @@ export default function APITest() {
         <button
           onClick={async () => {
             try {
-              const res = await axios.get('/user/logsByGroup', {
+              const res = await axios.get('/users/logsByGroup', {
                 params: { id: inputValue9 },
               });
               setUserLogsGroupedByResult(res.data);
@@ -107,7 +130,7 @@ export default function APITest() {
         <button
           onClick={async () => {
             try {
-              const res = await axios.get('/user/logs', {
+              const res = await axios.get('/users/logs', {
                 params: { id: inputValue2 },
               });
               setUserLogs(res.data);
@@ -144,7 +167,7 @@ export default function APITest() {
         <button
           onClick={async () => {
             try {
-              const res = await axios.post('/user', {
+              const res = await axios.post('/users', {
                 username: inputValue3,
                 password: inputValue4,
               });
@@ -168,7 +191,7 @@ export default function APITest() {
         <button
           onClick={async () => {
             try {
-              await axios.delete(`/user/${inputValue5}`);
+              await axios.delete(`/users/${inputValue5}`);
               alert('删除用户成功');
               await fetchUsers();
             } catch (error) {
@@ -201,7 +224,7 @@ export default function APITest() {
         <button
           onClick={async () => {
             try {
-              await axios.put(`/user/${inputValue6}`, {
+              await axios.put(`/users/${inputValue6}`, {
                 username: inputValue7,
                 password: inputValue8,
               });
