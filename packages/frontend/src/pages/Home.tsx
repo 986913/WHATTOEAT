@@ -3,5 +3,5 @@ import axios from '../utils/axios';
 import '../App.css';
 
 export default function Home() {
-  return <div className='App'>Home page</div>;
+  return <h3 className='App p-3'>Home page</h3>;
 }

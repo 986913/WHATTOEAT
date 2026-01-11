@@ -1,5 +1,5 @@
 import '../../App.css';
 
 export default function Menus() {
-  return <div className='App'>Menus 子路由（4） 内容</div>;
+  return <h3 className='App p-3'>Menus 子路由（4） 内容</h3>;
 }

@@ -34,9 +34,9 @@ export default function APITest() {
   }, []);
 
   return (
-    <div className='App'>
+    <div className='App p-3'>
       <div>
-        <h1>子路由（5） - 测试 API </h1>
+        <h3>子路由（5） - 测试 API </h3>
 
         <h1>getUsers:</h1>
         {users.map((user: any) => {

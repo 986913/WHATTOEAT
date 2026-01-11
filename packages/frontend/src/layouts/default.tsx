@@ -7,14 +7,13 @@ export default function DefaultLayout() {
   return (
     <div className='container-fluid'>
       <div className='row'>
-        <div className='col-3'>
+        <div className='col-3 p-0'>
           <SidebarNav />
         </div>
-        <div className='col-9'>
+        <div className='col-9 p-0'>
           <div className='row'>
             <div className='container-fluid'>
               <HeaderNav />
-              {/* 主题内容 */}
               <main>
                 <Outlet /> {/* 这里会渲染 Dashboard 或其他APItest等子路由 */}
               </main>
