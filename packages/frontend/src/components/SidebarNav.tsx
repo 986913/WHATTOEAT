@@ -1,13 +1,27 @@
-import { Nav } from 'react-bootstrap';
+import { NavLink } from 'react-router-dom';
+import Nav from 'react-bootstrap/Nav';
 
 export default function SidebarNav() {
   return (
-    <Nav defaultActiveKey='/home' className='flex-column'>
-      <Nav.Link href='/home'>Active</Nav.Link>
-      <Nav.Link eventKey='link-1'>Link</Nav.Link>
-      <Nav.Link eventKey='link-2'>Link</Nav.Link>
-      <Nav.Link eventKey='disabled' disabled>
-        Disabled
+    <Nav className='flex-column'>
+      <Nav.Link as={NavLink} to='/home/dashboard'>
+        Dashboard
+      </Nav.Link>
+
+      <Nav.Link as={NavLink} to='/home/users'>
+        Users Management
+      </Nav.Link>
+
+      <Nav.Link as={NavLink} to='/home/roles'>
+        Roles Management
+      </Nav.Link>
+
+      <Nav.Link as={NavLink} to='/home/meuns'>
+        Meuns Management
+      </Nav.Link>
+
+      <Nav.Link as={NavLink} to='/home/apitest'>
+        API Testing
       </Nav.Link>
     </Nav>
   );
