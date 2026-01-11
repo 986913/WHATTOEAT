@@ -4,8 +4,11 @@ import axios from '../utils/axios';
 import classNames from '../utils/classNames';
 import { Link } from 'react-router-dom';
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 export default function Signin() {
+  const navigate = useNavigate();
+
   const [username, setUsername] = useState('');
   const [userPassword, setUserPassword] = useState('');
   const [usernameMessage, setUsernameMessage] = useState('');
@@ -37,16 +40,17 @@ export default function Signin() {
 
   const handleSigninClick = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
-
-    try {
-      const res = await axios.post('/auth/signin', {
-        username,
-        password: userPassword,
-      });
-      alert('User login succees! : ' + JSON.stringify(res.data));
-    } catch (error) {
-      console.error('Error sign-in:', error);
-    }
+    // navigate('/home/dashboard'); // 跳转到/home/dashboard
+    navigate('/home/apitest'); //  跳转到/home/apitest
+    // try {
+    //   const res = await axios.post('/auth/signin', {
+    //     username,
+    //     password: userPassword,
+    //   });
+    //   alert('User login succees! : ' + JSON.stringify(res.data));
+    // } catch (error) {
+    //   console.error('Error sign-in:', error);
+    // }
   };
 
   return (
