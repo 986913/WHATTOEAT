@@ -1,28 +1,16 @@
-import { NavLink } from 'react-router-dom';
 import Nav from 'react-bootstrap/Nav';
+import { NavLink } from 'react-router-dom';
+import { useMenuStore } from '../store/useMenuStore';
 
 export default function SidebarNav() {
+  const menus = useMenuStore((state) => state.menus);
   return (
     <Nav className='flex-column'>
-      <Nav.Link as={NavLink} to='/home/dashboard'>
-        Dashboard
-      </Nav.Link>
-
-      <Nav.Link as={NavLink} to='/home/users'>
-        Users Management
-      </Nav.Link>
-
-      <Nav.Link as={NavLink} to='/home/roles'>
-        Roles Management
-      </Nav.Link>
-
-      <Nav.Link as={NavLink} to='/home/meuns'>
-        Meuns Management
-      </Nav.Link>
-
-      <Nav.Link as={NavLink} to='/home/apitest'>
-        API Testing
-      </Nav.Link>
+      {menus.map((menu) => (
+        <Nav.Link as={NavLink} key={menu.id} to={menu.path}>
+          {menu.name}
+        </Nav.Link>
+      ))}
     </Nav>
   );
 }

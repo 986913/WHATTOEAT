@@ -6,6 +6,7 @@ export default function Users() {
   return (
     <div className=''>
       <h3 className='App'>Users 子路由（2） 内容</h3>
+      <i className='fa-solid fa-users'></i>
       <Table striped bordered hover>
         <thead>
           <tr>
