@@ -7,10 +7,5 @@ COPY package*.json ./
 RUN npm ci
 
 COPY . .
+# 确保 package.json 有 build 脚本，下面会执行它
 RUN npm run build
-
-FROM nginx:alpine
-COPY --from=builder /app/build /usr/share/nginx/html
-
-EXPOSE 8000
-CMD ["nginx", "-g", "daemon off;"]

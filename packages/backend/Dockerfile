@@ -9,4 +9,5 @@ COPY . .
 RUN npm run build
 
 EXPOSE 3001
+# Docker 会用 Node.js 运行 dist/src/main 文件
 CMD ["node", "dist/src/main"]

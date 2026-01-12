@@ -7,21 +7,15 @@ services:
     environment:
       NODE_ENV: production
 
-  frontend:
-    build: ./packages/frontend
-    container_name: frontend-eat
-    environment:
-      NODE_ENV: production
-
   nginx:
     image: nginx:alpine
     container_name: nginx-eat
     ports:
       - '8000:8000'
     volumes:
+      - ./packages/frontend/build:/usr/share/nginx/html # ✅ 挂载前端的本地build，因为前端不开启任何服务
       - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf
     depends_on:
-      - frontend
       - backend
 
 volumes:
