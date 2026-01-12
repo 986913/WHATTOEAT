@@ -13,12 +13,16 @@ export default function APITest() {
   const [inputValue8, setInputValue8] = useState('');
   const [inputValue9, setInputValue9] = useState('');
   const [inputValue10, setInputValue10] = useState('');
+  const [inputValue11, setInputValue11] = useState('');
+  const [inputValue12, setInputValue12] = useState('');
+  const [inputValue13, setInputValue13] = useState('');
 
   const [users, setUsers] = useState([]);
   const [userProfile, setUserProfile] = useState({});
   const [userLogs, setUserLogs] = useState([]);
   const [userLogsGroupedByResult, setUserLogsGroupedByResult] = useState({});
   const [singleUser, setSingleUser] = useState({});
+  const [filterdUsers, setFilterdUsers] = useState([]);
 
   // 抽取为一个重用的获取函数
   async function fetchUsers() {
@@ -43,13 +47,85 @@ export default function APITest() {
         <h1>getUsers:</h1>
         {users.map((user: any) => {
           return (
-            <p>
+            <p key={user?.id}>
+              id: {user?.id}, username: {user?.username}, password:
+              {user?.password}
+            </p>
+          );
+        })}
+        <hr />
+
+        <h1>getUsers（pagination+conditions）</h1>
+        <input
+          type='text'
+          placeholder='输入用户username'
+          id='userIdInput11'
+          onChange={(e) => setInputValue11(e.target.value)}
+        />
+        <fieldset>
+          <label htmlFor='role-select'>Choose a Role:</label>
+          <select
+            name='rolesSelection'
+            id='role-select'
+            onChange={(e) => setInputValue12(e.target.value)}
+          >
+            <option value=''>--Please choose an option--</option>
+            <option value='1'>Admin</option>
+            <option value='2'>Write</option>
+            <option value='3'>ReadOnly</option>
+          </select>
+        </fieldset>
+        <fieldset>
+          <legend>Select a gender:</legend>
+          <div>
+            <input
+              type='radio'
+              id='female'
+              name='gender'
+              value='1'
+              onChange={(e) => setInputValue13(e.target.value)}
+            />
+            <label htmlFor='female'>Female</label>
+          </div>
+          <div>
+            <input
+              type='radio'
+              id='male'
+              name='gender'
+              value='2'
+              onChange={(e) => setInputValue13(e.target.value)}
+            />
+            <label htmlFor='male'>Male</label>
+          </div>
+        </fieldset>
+        <button
+          onClick={async () => {
+            try {
+              const res = await axios.get(`/users`, {
+                params: {
+                  username: inputValue11,
+                  role: inputValue12,
+                  gender: inputValue13,
+                },
+              });
+              setFilterdUsers(res.data);
+            } catch (error) {
+              console.error('Error fetching users with conditions:', error);
+            }
+          }}
+        >
+          获取符合条件的用户们！
+        </button>
+        {filterdUsers.map((user: any) => {
+          return (
+            <p key={user?.id}>
               id: {user?.id}, username: {user?.username}, password:
               {user?.password}
             </p>
           );
         })}
 
+        <hr />
         <h1>getUser:</h1>
         <input
           type='text'
@@ -71,6 +147,7 @@ export default function APITest() {
         </button>
         <p>{singleUser && JSON.stringify(singleUser)}</p>
 
+        <hr />
         <h1>getUserProfile:</h1>
         <input
           type='text'
@@ -95,6 +172,7 @@ export default function APITest() {
         </button>
         <p>{userProfile && JSON.stringify(userProfile)}</p>
 
+        <hr />
         <h1>getUserLogsGroupedByResult:</h1>
         <input
           type='text'
@@ -120,6 +198,7 @@ export default function APITest() {
         </button>
         {userLogsGroupedByResult && JSON.stringify(userLogsGroupedByResult)}
 
+        <hr />
         <h1>getUserLogs:</h1>
         <input
           type='text'
@@ -151,6 +230,7 @@ export default function APITest() {
           );
         })}
 
+        <hr />
         <h1>addUser:</h1>
         <input
           type='text'
@@ -161,7 +241,7 @@ export default function APITest() {
         <input
           type='password'
           placeholder='输入新用户密码'
-          id='newUserpsd'
+          id='userpsd'
           onChange={(e) => setInputValue4(e.target.value)}
         />
         <button
@@ -181,6 +261,7 @@ export default function APITest() {
           创建新用户!
         </button>
 
+        <hr />
         <h1>deleteUser:</h1>
         <input
           type='text'
@@ -202,6 +283,7 @@ export default function APITest() {
           删除!
         </button>
 
+        <hr />
         <h1>updateUser:</h1>
         <input
           type='text'
