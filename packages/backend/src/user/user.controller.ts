@@ -51,13 +51,6 @@ export class UserController {
     return this.userService.findAll();
   }
 
-  @Get('/:id')
-  // (通过 PathPara 获取一个user) --  http://localhost:3001/api/v1/users/[1]
-  getUser(@Param('id') userId: number): any {
-    this.logger.log(`Fetching single user who id is ${userId}`);
-    return this.userService.findById(userId);
-  }
-
   @Get('/profile')
   // (通过 QueryPara 读取一个user的profile) -- http://localhost:3000/api/v1/users/profile/?id=[3]
   getUserProfile(@Query('id', ParseIntPipe) userId: number): any {
@@ -84,6 +77,13 @@ export class UserController {
   addUser(@Body() dto: any): any {
     this.logger.log('Adding a new user');
     return this.userService.create(dto as UserEntity);
+  }
+
+  @Get('/:id')
+  // (通过 PathPara 获取一个user) --  http://localhost:3001/api/v1/users/[1]
+  getUser(@Param('id') userId: number): any {
+    this.logger.log(`Fetching single user who id is ${userId}`);
+    return this.userService.findById(userId);
   }
 
   @Put('/:id')
