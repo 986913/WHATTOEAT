@@ -13,17 +13,10 @@ import {
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { ConfigService } from '@nestjs/config';
-import { ConfigEnum } from 'src/enum/config.enum';
+import { GetUsersDTO } from './dto/get-user.dto';
 import { UserEntity } from './entities/user.entity';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 
-interface ReadUsersDTO {
-  page: number;
-  limit?: number;
-  username?: string;
-  role?: number; // 前端呈现的select下拉框
-  gender?: number;
-}
 @Controller('users')
 export class UserController {
   constructor(
@@ -35,20 +28,17 @@ export class UserController {
     this.logger.log('UserController initialized');
   }
 
-  @Get()
-  // 基本的获取全部Users -- http://localhost:3001/api/v1/users
-  /*
+  /* 基本的获取全部Users -- http://localhost:3001/api/v1/users
     getUsers(): any {
       this.logger.log('Fetching all users');
       console.log(this.configService.get(ConfigEnum.DB_NAME));
       return this.userService.findAll();
     }
   */
+  @Get()
   // (通过 QueryPara 获取符合条件的users) -- http://localhost:3001/api/v1/users?username=[ming]&role=[1]&gender=[1]
-  getUsers(@Query() query: ReadUsersDTO): any {
-    console.warn(query); // { username: 'ming', role: '1', gender: '1' }
-    // const { page = 0, limit = 10, username, role, gender } = query;
-    return this.userService.findAll();
+  getUsers(@Query() query: GetUsersDTO): any {
+    return this.userService.findAll(query);
   }
 
   @Get('/profile')
