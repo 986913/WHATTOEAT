@@ -10,14 +10,17 @@ import {
   Body,
   Inject,
   LoggerService,
+  UseFilters,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { ConfigService } from '@nestjs/config';
 import { GetUsersDTO } from './dto/get-user.dto';
 import { UserEntity } from './entities/user.entity';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
+import { TypeormFilter } from 'src/filters/typeorm.filter';
 
 @Controller('users')
+@UseFilters(new TypeormFilter())
 export class UserController {
   constructor(
     private userService: UserService,

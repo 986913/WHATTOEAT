@@ -6,10 +6,9 @@ import {
 } from '@nestjs/common';
 import { HttpAdapterHost } from '@nestjs/core';
 import { ArgumentsHost, Catch } from '@nestjs/common';
-import { QueryFailedError } from 'typeorm';
 import { Request, Response } from 'express';
 
-// 自定义Global异常过滤器: 装饰器 @Catch() 指定该过滤器捕获所有异常，包括非HTTP异常, HttpException异常等等
+// 自定义Global异常过滤器: 装饰器 @Catch() 指定该过滤器捕获所有异常(兜底)，包括非HTTP异常, HttpException异常, TypeORM异常等等
 @Catch()
 export class AllExceptionFilter implements ExceptionFilter {
   constructor(
@@ -37,20 +36,9 @@ export class AllExceptionFilter implements ExceptionFilter {
     // 是HttpException类型的异常
     if (exception instanceof HttpException) {
       const res = exception.getResponse();
-      if (typeof res === 'string') {
-        msg = res;
-      } else if (typeof res === 'object' && res && 'message' in res) {
+      if (typeof res === 'string') msg = res;
+      else if (typeof res === 'object' && res && 'message' in res) {
         msg = res.message;
-      }
-    }
-    // 是QueryFailedError类型的异常
-    if (exception instanceof QueryFailedError) {
-      msg = exception.message;
-      if (hasErrno(exception.driverError)) {
-        if (exception.driverError.errno === 1062) {
-          msg = '唯一 index(username) 冲突';
-        }
-        // 可以根据不同的 errno 设置不同的msg
       }
     }
 
@@ -66,17 +54,7 @@ export class AllExceptionFilter implements ExceptionFilter {
       errorMessage: msg,
     };
 
-    this.logger.error('[Ming Filter]', responseBody);
+    this.logger.error('[Ming Global Filter]', responseBody);
     httpAdapter.reply(response, responseBody, httpStatus);
   }
-}
-
-//helper type guard function
-function hasErrno(error: unknown): error is { errno: number } {
-  return (
-    typeof error === 'object' &&
-    error !== null &&
-    'errno' in error &&
-    typeof (error as Record<string, unknown>).errno === 'number'
-  );
 }
