@@ -19,6 +19,17 @@ export class UserRepository {
     return this.repo.findOne({ where: { username } });
   }
 
+  findUserProfile(userId: number) {
+    return this.repo.findOne({
+      where: {
+        id: userId,
+      },
+      relations: {
+        profile: true,
+      },
+    });
+  }
+
   async findUsersWithFilters(query: GetUsersDTO) {
     const { page = 1, limit = 10, username, role, gender } = query;
     /*
@@ -73,11 +84,18 @@ export class UserRepository {
     return this.repo.save(newUser);
   }
 
-  async update(userId: number, user: Partial<UserEntity>) {
-    return this.repo.update(userId, user);
-  }
-
   deleteById(id: number) {
     return this.repo.delete(id);
+  }
+
+  deepUpdate(user: UserEntity, updateUser: Partial<UserEntity>) {
+    const newUser = this.repo.merge(user, updateUser);
+    // 有关系的模型update, 需要使用save方法
+    return this.repo.save(newUser);
+  }
+
+  /* 这个只是适合单模型的update, 不适合有关系的模型update */
+  update(userId: number, user: Partial<UserEntity>) {
+    return this.repo.update(userId, user);
   }
 }

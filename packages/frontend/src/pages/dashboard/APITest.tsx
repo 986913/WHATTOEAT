@@ -13,6 +13,9 @@ export default function APITest() {
   const [inputValue8, setInputValue8] = useState('');
   const [inputValue9, setInputValue9] = useState('');
   const [inputValue10, setInputValue10] = useState('');
+  const [inputValue11, setInputValue11] = useState('');
+  const [inputValue12, setInputValue12] = useState('');
+  const [inputValue13, setInputValue13] = useState('');
 
   const [users, setUsers] = useState([]);
   const [userProfile, setUserProfile] = useState({});
@@ -218,12 +221,35 @@ export default function APITest() {
           id='newUserpsd'
           onChange={(e) => setInputValue8(e.target.value)}
         />
+        <input
+          type='text'
+          placeholder='输入新Address'
+          id='newAddress'
+          onChange={(e) => setInputValue11(e.target.value)}
+        />
+        <input
+          type='text'
+          placeholder='输入新Gender'
+          id='newGender'
+          onChange={(e) => setInputValue12(e.target.value)}
+        />
+        <input
+          type='text'
+          placeholder='输入新Photo url'
+          id='newPhotourl'
+          onChange={(e) => setInputValue13(e.target.value)}
+        />
         <button
           onClick={async () => {
             try {
               await axios.put(`/users/${inputValue6}`, {
                 username: inputValue7,
                 password: inputValue8,
+                profile: {
+                  address: inputValue11,
+                  gender: inputValue12,
+                  photo: inputValue13,
+                },
               });
               alert('更新用户成功');
               await fetchUsers();

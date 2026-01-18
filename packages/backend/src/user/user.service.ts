@@ -36,8 +36,11 @@ export class UserService {
   }
 
   async update(userId: number, user: Partial<UserEntity>) {
-    await this.ensureUserExists(userId);
-    return this.userRepository.update(userId, user);
+    const foundUser = await this.findProfile(userId);
+    return this.userRepository.deepUpdate(foundUser!, user);
+
+    //下面只适合单模型的update, 不适合有关系的模型update:
+    // return this.userRepository.update(userId, user);
   }
 
   async remove(userId: number) {
@@ -48,7 +51,7 @@ export class UserService {
   /**** 通过关联查询，获取用户及其profile信息 ****/
   async findProfile(userId: number) {
     await this.ensureUserExists(userId);
-    return this.logService.findUserLogs(userId);
+    return this.userRepository.findUserProfile(userId);
   }
   /**** 通过关联查询，获取用户的所有logs信息 ****/
   async findLogs(userId: number) {

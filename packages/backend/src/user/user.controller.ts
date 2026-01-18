@@ -83,6 +83,9 @@ export class UserController {
   // (通过 PathPara 更新一个user) -- http://localhost:3001/api/v1/users/[1]
   updateUser(@Param('id') userId: number, @Body() dto: any): any {
     this.logger.log(`Updating user with ID: ${userId}`);
+    // 权限1: 判断用户是否是自己
+    // 权限2: 判断和用户能否有更新的权限
+    // 返回数据： 不能包含敏感的password等信息
     return this.userService.update(userId, dto as UserEntity);
   }
 

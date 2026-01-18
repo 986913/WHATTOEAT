@@ -28,7 +28,7 @@ export class UserEntity {
       第一个参数: 告诉 TypeORM 关联的是哪个实体（这里是 ProfileEntity)
       第二个参数: 告诉 TypeORM ProfileEntity实体中是通过哪个字段反向关联回来的 (这里是ProfileEntity里定义的user字段）
    */
-  @OneToOne(() => ProfileEntity, (profile) => profile.user)
+  @OneToOne(() => ProfileEntity, (profile) => profile.user, { cascade: true })
   profile: ProfileEntity;
 
   /*
