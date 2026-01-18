@@ -4,13 +4,11 @@ import { Type } from 'class-transformer';
 import { UpdateProfileDTO } from './update-profile.dto';
 
 export class UpdateUserDTO {
-  @IsOptional()
   @IsString()
-  username?: string;
+  username: string;
 
-  @IsOptional()
   @IsString()
-  password?: string;
+  password: string;
 
   @IsOptional()
   @ValidateNested()

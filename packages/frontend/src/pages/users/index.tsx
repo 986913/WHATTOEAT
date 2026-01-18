@@ -1,9 +1,10 @@
+import React, { useEffect, useState } from 'react';
 import '../../App.css';
 import './index.css';
 import axios from '../../utils/axios';
-import React, { useEffect, useState } from 'react';
 import Table from 'react-bootstrap/Table';
 import Pagination from 'react-bootstrap/Pagination';
+import { Modal, Button, Form } from 'react-bootstrap';
 import { GetUsersDTO } from '../../../../backend/src/user/dto/get-users.dto';
 
 const DEFAULT_LIMIT = 10;
@@ -29,7 +30,19 @@ export default function Users() {
     userNameInputVal || roleInputVal || genderInputVal,
   );
 
-  // ===== Fetch =====
+  // ===== Modal State =====
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<any>(null);
+
+  // ===== Edit Form State =====
+  const [editUsername, setEditUsername] = useState('');
+  const [editGender, setEditGender] = useState<'1' | '2'>('1');
+  const [editRoles, setEditRoles] = useState<number[]>([]);
+  const [editPhoto, setEditPhoto] = useState('');
+  const [editAddress, setEditAddress] = useState('');
+
+  // ===== Fetch Users =====
   const fetchUsers = async (
     page: number,
     filters?: { username?: string; role?: string; gender?: string },
@@ -47,9 +60,7 @@ export default function Users() {
     }
   };
 
-  // ===== Auto fetch on page change =====
   useEffect(() => {
-    // 如果 filters dirty，使用当前 filter
     const filters = isFilterDirty
       ? {
           username: userNameInputVal,
@@ -57,28 +68,97 @@ export default function Users() {
           gender: genderInputVal,
         }
       : undefined;
-
     fetchUsers(currentPage, filters);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage]);
 
   const totalPages = Math.ceil(totalCount / limit);
 
-  // ===== Clear Filters =====
   const clearAllFilters = async () => {
     setUserNameInputVal('');
     setRoleInputVal('');
     setGenderInputVal('');
     setCurrentPage(1);
-    // 显式传空 filters，保证 URL 不带任何 filter
     await fetchUsers(1, { username: '', role: '', gender: '' });
+  };
+
+  // ===== Open Modals =====
+  const openEditModal = (user: any) => {
+    setSelectedUser(user);
+    setEditUsername(user.username);
+    setEditGender(user.profile?.gender || '1');
+    setEditRoles(user.roles.map((r: any) => r.roleId)); // 假设 roleId 后端接受
+    setEditPhoto(user.profile?.photo || '');
+    setEditAddress(user.profile?.address || '');
+    setShowEditModal(true);
+  };
+
+  const openDeleteModal = (user: any) => {
+    setSelectedUser(user);
+    setShowDeleteModal(true);
+  };
+
+  // ===== Handle Edit Save (updateUser) =====
+  const handleEditSave = async () => {
+    if (!selectedUser) return;
+
+    try {
+      await axios.put(
+        `/users/${selectedUser.id}`,
+        {
+          username: editUsername,
+          profile: {
+            gender: editGender,
+            photo: editPhoto,
+            address: editAddress,
+          },
+          roles: editRoles, // 发送 roleId 数组给后端
+        },
+        {
+          headers: {
+            Authorization: '5', // 这里换成你实际的 token 或值
+          },
+        },
+      );
+
+      setShowEditModal(false);
+      alert('更新用户成功');
+      fetchUsers(currentPage);
+    } catch (error) {
+      console.error('Error updating user:', error);
+      alert('更新用户失败，请检查控制台');
+    }
+  };
+
+  // ===== Handle Delete =====
+  const handleDelete = async () => {
+    if (!selectedUser) return;
+    try {
+      await axios.delete(`/users/${selectedUser.id}`, {
+        headers: { Authorization: '5' }, // 同样加 token
+      });
+      setShowDeleteModal(false);
+      fetchUsers(currentPage);
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      alert('删除用户失败，请检查控制台');
+    }
+  };
+
+  // ===== Toggle Role Checkbox =====
+  const toggleRole = (roleId: number) => {
+    setEditRoles((prev) =>
+      prev.includes(roleId)
+        ? prev.filter((r) => r !== roleId)
+        : [...prev, roleId],
+    );
   };
 
   return (
     <div className='users-page'>
       <h3 className='page-title'>Users</h3>
 
-      {/* ================= Filters ================= */}
+      {/* Filters */}
       <div className='filters-bar'>
         <div className='filters-left'>
           <input
@@ -137,7 +217,6 @@ export default function Users() {
           </button>
         </div>
 
-        {/* ===== Clear Button Right Aligned ===== */}
         <button
           className={`btn-clear ${isFilterDirty ? 'active' : 'disabled'}`}
           disabled={!isFilterDirty}
@@ -147,7 +226,7 @@ export default function Users() {
         </button>
       </div>
 
-      {/* ================= Table ================= */}
+      {/* Table */}
       <Table striped bordered hover className='users-table'>
         <thead>
           <tr>
@@ -157,12 +236,13 @@ export default function Users() {
             <th>Gender</th>
             <th>Roles</th>
             <th>Address</th>
+            <th>Action</th>
           </tr>
         </thead>
         <tbody>
           {users.length === 0 ? (
             <tr>
-              <td colSpan={6} className='table-empty'>
+              <td colSpan={7} className='table-empty'>
                 No Data
               </td>
             </tr>
@@ -192,20 +272,38 @@ export default function Users() {
                 <td>{user.roles.map((r: any) => r.roleName).join(', ')}</td>
 
                 <td>{user.profile?.address || '-'}</td>
+
+                <td>
+                  <Button
+                    variant='primary'
+                    size='sm'
+                    onClick={() => openEditModal(user)}
+                  >
+                    <i className='fa-regular fa-pen-to-square'></i>
+                    Edit
+                  </Button>{' '}
+                  <Button
+                    variant='danger'
+                    size='sm'
+                    onClick={() => openDeleteModal(user)}
+                  >
+                    <i className='fa-solid fa-trash'></i>
+                    Delete
+                  </Button>
+                </td>
               </tr>
             ))
           )}
         </tbody>
       </Table>
 
-      {/* ================= Pagination ================= */}
+      {/* Pagination */}
       {totalPages > 1 && (
         <Pagination className='pagination-bar'>
           <Pagination.Prev
             disabled={currentPage === 1}
             onClick={() => setCurrentPage((p) => p - 1)}
           />
-
           {Array.from({ length: totalPages }).map((_, i) => {
             const page = i + 1;
             return (
@@ -218,13 +316,115 @@ export default function Users() {
               </Pagination.Item>
             );
           })}
-
           <Pagination.Next
             disabled={currentPage === totalPages}
             onClick={() => setCurrentPage((p) => p + 1)}
           />
         </Pagination>
       )}
+
+      {/* Edit Modal */}
+      <Modal show={showEditModal} onHide={() => setShowEditModal(false)}>
+        <Modal.Header closeButton>
+          <Modal.Title>Edit User</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form>
+            <Form.Group className='mb-2'>
+              <Form.Label>Username</Form.Label>
+              <Form.Control
+                type='text'
+                value={editUsername}
+                onChange={(e) => setEditUsername(e.target.value)}
+              />
+            </Form.Group>
+
+            <Form.Group className='mb-2'>
+              <Form.Label>Gender</Form.Label>
+              <div>
+                <Form.Check
+                  inline
+                  type='radio'
+                  label='Female'
+                  value='1'
+                  checked={editGender === '1'}
+                  onChange={(e) => setEditGender(e.target.value as '1' | '2')}
+                />
+                <Form.Check
+                  inline
+                  type='radio'
+                  label='Male'
+                  value='2'
+                  checked={editGender === '2'}
+                  onChange={(e) => setEditGender(e.target.value as '1' | '2')}
+                />
+              </div>
+            </Form.Group>
+
+            <Form.Group className='mb-2'>
+              <Form.Label>Roles</Form.Label>
+              <div>
+                <Form.Check
+                  inline
+                  type='checkbox'
+                  label='Write'
+                  checked={editRoles.includes(2)}
+                  onChange={() => toggleRole(2)}
+                />
+                <Form.Check
+                  inline
+                  type='checkbox'
+                  label='ReadOnly'
+                  checked={editRoles.includes(3)}
+                  onChange={() => toggleRole(3)}
+                />
+              </div>
+            </Form.Group>
+
+            <Form.Group className='mb-2'>
+              <Form.Label>Photo URL</Form.Label>
+              <Form.Control
+                type='text'
+                value={editPhoto}
+                onChange={(e) => setEditPhoto(e.target.value)}
+              />
+            </Form.Group>
+
+            <Form.Group className='mb-2'>
+              <Form.Label>Address</Form.Label>
+              <Form.Control
+                type='text'
+                value={editAddress}
+                onChange={(e) => setEditAddress(e.target.value)}
+              />
+            </Form.Group>
+          </Form>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant='secondary' onClick={() => setShowEditModal(false)}>
+            Cancel
+          </Button>
+          <Button variant='primary' onClick={handleEditSave}>
+            Save
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* Delete Modal */}
+      <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)}>
+        <Modal.Header closeButton>
+          <Modal.Title>Delete User</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>Are you sure you want to delete this user?</Modal.Body>
+        <Modal.Footer>
+          <Button variant='secondary' onClick={() => setShowDeleteModal(false)}>
+            Cancel
+          </Button>
+          <Button variant='danger' onClick={handleDelete}>
+            Delete
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </div>
   );
 }

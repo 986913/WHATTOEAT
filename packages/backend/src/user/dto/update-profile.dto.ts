@@ -8,7 +8,7 @@ export class UpdateProfileDTO {
 
   @IsOptional()
   @IsIn(['1', '2'])
-  gender?: '1' | '2';
+  gender: '1' | '2';
 
   @IsOptional()
   @IsUrl()

@@ -242,15 +242,23 @@ export default function APITest() {
         <button
           onClick={async () => {
             try {
-              await axios.put(`/users/${inputValue6}`, {
-                username: inputValue7,
-                password: inputValue8,
-                profile: {
-                  address: inputValue11,
-                  gender: inputValue12,
-                  photo: inputValue13,
+              await axios.put(
+                `/users/${inputValue6}`,
+                {
+                  username: inputValue7,
+                  password: inputValue8,
+                  profile: {
+                    address: inputValue11,
+                    gender: inputValue12,
+                    photo: inputValue13,
+                  },
                 },
-              });
+                {
+                  headers: {
+                    Authorization: '5',
+                  },
+                },
+              );
               alert('更新用户成功');
               await fetchUsers();
             } catch (error) {
