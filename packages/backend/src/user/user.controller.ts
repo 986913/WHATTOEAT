@@ -11,10 +11,12 @@ import {
   Inject,
   LoggerService,
   UseFilters,
+  Headers,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { ConfigService } from '@nestjs/config';
-import { GetUsersDTO } from './dto/get-user.dto';
+import { GetUsersDTO } from './dto/get-users.dto';
+import { UpdateUserDTO } from './dto/update-user.dto';
 import { UserEntity } from './entities/user.entity';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { TypeormFilter } from 'src/filters/typeorm.filter';
@@ -81,12 +83,16 @@ export class UserController {
 
   @Put('/:id')
   // (通过 PathPara 更新一个user) -- http://localhost:3001/api/v1/users/[1]
-  updateUser(@Param('id') userId: number, @Body() dto: any): any {
+  updateUser(
+    @Param('id') userId: number,
+    @Body() dto: UpdateUserDTO,
+    @Headers() headers: any,
+  ): any {
     this.logger.log(`Updating user with ID: ${userId}`);
     // 权限1: 判断用户是否是自己
     // 权限2: 判断和用户能否有更新的权限
     // 返回数据： 不能包含敏感的password等信息
-    return this.userService.update(userId, dto as UserEntity);
+    return this.userService.update(userId, dto);
   }
 
   @Delete('/:id')

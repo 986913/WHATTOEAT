@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { NotFoundException } from '@nestjs/common';
-import { GetUsersDTO } from './dto/get-user.dto';
+import { GetUsersDTO } from './dto/get-users.dto';
+import { UpdateUserDTO } from './dto/update-user.dto';
 import { LogService } from 'src/log/log.service';
 import { UserRepository } from './user.repository';
 import { UserEntity } from './entities/user.entity';
@@ -35,7 +36,7 @@ export class UserService {
     return this.userRepository.createAndSave(user);
   }
 
-  async update(userId: number, user: Partial<UserEntity>) {
+  async update(userId: number, user: UpdateUserDTO) {
     const foundUser = await this.findProfile(userId);
     return this.userRepository.deepUpdate(foundUser!, user);
 

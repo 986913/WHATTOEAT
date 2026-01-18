@@ -4,7 +4,7 @@ import axios from '../../utils/axios';
 import React, { useEffect, useState } from 'react';
 import Table from 'react-bootstrap/Table';
 import Pagination from 'react-bootstrap/Pagination';
-import { GetUsersDTO } from '../../../../backend/src/user/dto/get-user.dto';
+import { GetUsersDTO } from '../../../../backend/src/user/dto/get-users.dto';
 
 const DEFAULT_LIMIT = 10;
 const PLACEHOLDER_AVATAR =

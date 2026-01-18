@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { DataSource, Repository } from 'typeorm';
 import { UserEntity } from './entities/user.entity';
-import { GetUsersDTO } from './dto/get-user.dto';
+import { GetUsersDTO } from './dto/get-users.dto';
+import { UpdateUserDTO } from './dto/update-user.dto';
 
 @Injectable()
 export class UserRepository {
@@ -88,7 +89,7 @@ export class UserRepository {
     return this.repo.delete(id);
   }
 
-  deepUpdate(user: UserEntity, updateUser: Partial<UserEntity>) {
+  deepUpdate(user: UserEntity, updateUser: UpdateUserDTO) {
     const newUser = this.repo.merge(user, updateUser);
     // 有关系的模型update, 需要使用save方法
     return this.repo.save(newUser);
