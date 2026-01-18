@@ -41,9 +41,7 @@ export class UserService {
   }
 
   async remove(userId: number) {
-    const foundUser = await this.findById(userId);
-    if (!foundUser) throw new Error(`用户 id ${userId} 不存在`);
-
+    await this.ensureUserExists(userId);
     return this.userRepository.deleteById(userId);
   }
 
