@@ -45,8 +45,8 @@ export class UserService {
   }
 
   async remove(userId: number) {
-    await this.ensureUserExists(userId);
-    return this.userRepository.deleteById(userId);
+    const foundUser = await this.ensureUserExists(userId);
+    return this.userRepository.removeUser(foundUser);
   }
 
   /**** 通过关联查询，获取用户及其profile信息 ****/
@@ -66,10 +66,11 @@ export class UserService {
     return this.logService.getUserLogStatistics(userId);
   }
 
-  private async ensureUserExists(userId: number): Promise<void> {
+  private async ensureUserExists(userId: number): Promise<UserEntity> {
     const exists = await this.userRepository.findById(userId);
     if (!exists) {
       throw new NotFoundException(`用户 id with ${userId} 不存在`);
     }
+    return exists;
   }
 }

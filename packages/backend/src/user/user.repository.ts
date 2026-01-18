@@ -19,8 +19,14 @@ export class UserRepository {
     this.profileRepo = dataSource.getRepository(ProfileEntity);
   }
 
-  findById(id: number) {
-    return this.userRepo.findOne({ where: { id } });
+  findById(userId: number) {
+    return this.userRepo.findOne({
+      where: { id: userId },
+      // relations: {
+      //   roles: true,
+      //   profile: true,
+      // },
+    });
   }
 
   findByUserName(username: string) {
@@ -92,8 +98,17 @@ export class UserRepository {
     return this.userRepo.save(newUser);
   }
 
-  deleteById(id: number) {
-    return this.userRepo.delete(id);
+  async removeUser(user: UserEntity) {
+    // 先删除关联的profile记录
+    await this.userRepo
+      .createQueryBuilder()
+      .delete()
+      .from('profiles')
+      .where('user_id = :userId', { userId: user.id })
+      .execute();
+
+    // 使用 remove 方法（而不是 delete）以触发 TypeORM 的级联逻辑
+    return this.userRepo.remove(user);
   }
 
   /**
