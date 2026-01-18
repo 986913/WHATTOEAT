@@ -3,25 +3,14 @@ import axios from '../../utils/axios';
 import React, { useEffect, useState } from 'react';
 
 export default function APITest() {
-  const [inputValue1, setInputValue1] = useState('');
   const [inputValue2, setInputValue2] = useState('');
   const [inputValue3, setInputValue3] = useState('');
   const [inputValue4, setInputValue4] = useState('');
-  const [inputValue5, setInputValue5] = useState('');
-  const [inputValue6, setInputValue6] = useState('');
-  const [inputValue7, setInputValue7] = useState('');
-  const [inputValue8, setInputValue8] = useState('');
   const [inputValue9, setInputValue9] = useState('');
-  const [inputValue10, setInputValue10] = useState('');
-  const [inputValue11, setInputValue11] = useState('');
-  const [inputValue12, setInputValue12] = useState('');
-  const [inputValue13, setInputValue13] = useState('');
 
   const [users, setUsers] = useState([]);
-  const [userProfile, setUserProfile] = useState({});
   const [userLogs, setUserLogs] = useState([]);
   const [userLogsGroupedByResult, setUserLogsGroupedByResult] = useState({});
-  const [singleUser, setSingleUser] = useState({});
 
   // 抽取为一个重用的获取函数
   async function fetchUsers() {
@@ -42,53 +31,6 @@ export default function APITest() {
     <div className='App p-3'>
       <div>
         <h3>子路由（5） - 测试 API </h3>
-
-        <hr />
-        <h1>getUser:</h1>
-        <input
-          type='text'
-          placeholder='输入用户ID, 获取用户'
-          id='userIdInput10'
-          onChange={(e) => setInputValue10(e.target.value)}
-        />
-        <button
-          onClick={async () => {
-            try {
-              const res = await axios.get(`/users/${inputValue10}`);
-              setSingleUser(res.data);
-            } catch (error) {
-              console.error('Error fetching single user:', error);
-            }
-          }}
-        >
-          获取用户资料
-        </button>
-        <p>{singleUser && JSON.stringify(singleUser)}</p>
-
-        <hr />
-        <h1>getUserProfile:</h1>
-        <input
-          type='text'
-          placeholder='输入用户ID, 获取用户Profile'
-          id='userIdInput1'
-          onChange={(e) => setInputValue1(e.target.value)}
-        />
-        <button
-          onClick={async () => {
-            try {
-              setUserProfile({});
-              const res = await axios.get('/users/profile', {
-                params: { id: inputValue1 },
-              });
-              setUserProfile(res.data);
-            } catch (error) {
-              console.error('Error fetching user profile:', error);
-            }
-          }}
-        >
-          获取用户资料
-        </button>
-        <p>{userProfile && JSON.stringify(userProfile)}</p>
 
         <hr />
         <h1>getUserLogsGroupedByResult:</h1>
@@ -177,96 +119,6 @@ export default function APITest() {
           }}
         >
           创建新用户!
-        </button>
-
-        <hr />
-        <h1>deleteUser:</h1>
-        <input
-          type='text'
-          placeholder='输入想删除的用户ID'
-          id='userIdToDelete'
-          onChange={(e) => setInputValue5(e.target.value)}
-        />
-        <button
-          onClick={async () => {
-            try {
-              await axios.delete(`/users/${inputValue5}`);
-              alert('删除用户成功');
-              await fetchUsers();
-            } catch (error) {
-              console.error(`Error delete user ${inputValue5}:`, error);
-            }
-          }}
-        >
-          删除!
-        </button>
-
-        <hr />
-        <h1>updateUser:</h1>
-        <input
-          type='text'
-          placeholder='输入你想更改的用户ID'
-          id='userIdToUpdate'
-          onChange={(e) => setInputValue6(e.target.value)}
-        />
-        <input
-          type='text'
-          placeholder='输入新用户名'
-          id='updatedUserName'
-          onChange={(e) => setInputValue7(e.target.value)}
-        />
-        <input
-          type='password'
-          placeholder='输入新密码'
-          id='newUserpsd'
-          onChange={(e) => setInputValue8(e.target.value)}
-        />
-        <input
-          type='text'
-          placeholder='输入新Address'
-          id='newAddress'
-          onChange={(e) => setInputValue11(e.target.value)}
-        />
-        <input
-          type='text'
-          placeholder='输入新Gender'
-          id='newGender'
-          onChange={(e) => setInputValue12(e.target.value)}
-        />
-        <input
-          type='text'
-          placeholder='输入新Photo url'
-          id='newPhotourl'
-          onChange={(e) => setInputValue13(e.target.value)}
-        />
-        <button
-          onClick={async () => {
-            try {
-              await axios.put(
-                `/users/${inputValue6}`,
-                {
-                  username: inputValue7,
-                  password: inputValue8,
-                  profile: {
-                    address: inputValue11,
-                    gender: inputValue12,
-                    photo: inputValue13,
-                  },
-                },
-                {
-                  headers: {
-                    Authorization: '5',
-                  },
-                },
-              );
-              alert('更新用户成功');
-              await fetchUsers();
-            } catch (error) {
-              console.error('Error update user:', error);
-            }
-          }}
-        >
-          更新用户
         </button>
       </div>
     </div>
