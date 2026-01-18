@@ -90,14 +90,16 @@ export class UserController {
     @Headers('Authorization') headers: any,
   ): any {
     this.logger.log(`Updating user with ID: ${userId}`);
-    if (headers === userId) {
-      // 权限1: 判断用户是否是自己 - 说明当前user在尝试update自己的信息
-      // 权限2: 判断和用户能否有更新的权限
-      // 返回数据： 不能包含敏感的password等信息
-      return this.userService.update(userId, dto);
-    } else {
-      throw new UnauthorizedException();
-    }
+    // 权限1: 判断用户是否是自己 - 说明当前user在尝试update自己的信息
+    // 权限2: 判断和用户能否有更新的权限
+    // 返回数据： 不能包含敏感的password等信息
+
+    return this.userService.update(userId, dto);
+    // if (headers === userId) {
+    // return this.userService.update(userId, dto);
+    // } else {
+    //   throw new UnauthorizedException();
+    // }
   }
 
   @Delete('/:id')

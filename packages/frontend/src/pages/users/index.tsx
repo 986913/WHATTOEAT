@@ -38,9 +38,16 @@ export default function Users() {
   // ===== Edit Form State =====
   const [editUsername, setEditUsername] = useState('');
   const [editGender, setEditGender] = useState<'1' | '2'>('1');
-  const [editRoles, setEditRoles] = useState<number[]>([]);
+  const [editRoles, setEditRoles] = useState<string[]>([]);
   const [editPhoto, setEditPhoto] = useState('');
   const [editAddress, setEditAddress] = useState('');
+
+  // ===== Derived state for Save button =====
+  const isEditFormValid =
+    editUsername.trim() !== '' &&
+    editRoles.length > 0 &&
+    editPhoto.trim() !== '' &&
+    editAddress.trim() !== '';
 
   // ===== Fetch Users =====
   const fetchUsers = async (
@@ -87,7 +94,9 @@ export default function Users() {
     setSelectedUser(user);
     setEditUsername(user.username);
     setEditGender(user.profile?.gender || '1');
-    setEditRoles(user.roles.map((r: any) => r.roleId)); // 假设 roleId 后端接受
+    setEditRoles(
+      user.roles?.map((r: any) => String(r.id)).filter(Boolean) || [],
+    );
     setEditPhoto(user.profile?.photo || '');
     setEditAddress(user.profile?.address || '');
     setShowEditModal(true);
@@ -103,23 +112,15 @@ export default function Users() {
     if (!selectedUser) return;
 
     try {
-      await axios.put(
-        `/users/${selectedUser.id}`,
-        {
-          username: editUsername,
-          profile: {
-            gender: editGender,
-            photo: editPhoto,
-            address: editAddress,
-          },
-          roles: editRoles, // 发送 roleId 数组给后端
+      await axios.put(`/users/${selectedUser.id}`, {
+        username: editUsername,
+        profile: {
+          address: editAddress,
+          gender: editGender,
+          photo: editPhoto,
         },
-        {
-          headers: {
-            Authorization: '5', // 这里换成你实际的 token 或值
-          },
-        },
-      );
+        roles: editRoles, // ['2', '3'] 字符串数组
+      });
 
       setShowEditModal(false);
       alert('更新用户成功');
@@ -134,9 +135,7 @@ export default function Users() {
   const handleDelete = async () => {
     if (!selectedUser) return;
     try {
-      await axios.delete(`/users/${selectedUser.id}`, {
-        headers: { Authorization: '5' }, // 同样加 token
-      });
+      await axios.delete(`/users/${selectedUser.id}`);
       setShowDeleteModal(false);
       fetchUsers(currentPage);
     } catch (error) {
@@ -146,7 +145,7 @@ export default function Users() {
   };
 
   // ===== Toggle Role Checkbox =====
-  const toggleRole = (roleId: number) => {
+  const toggleRole = (roleId: string) => {
     setEditRoles((prev) =>
       prev.includes(roleId)
         ? prev.filter((r) => r !== roleId)
@@ -279,16 +278,14 @@ export default function Users() {
                     size='sm'
                     onClick={() => openEditModal(user)}
                   >
-                    <i className='fa-regular fa-pen-to-square'></i>
-                    Edit
+                    <i className='fa-regular fa-pen-to-square'></i> Edit
                   </Button>{' '}
                   <Button
                     variant='danger'
                     size='sm'
                     onClick={() => openDeleteModal(user)}
                   >
-                    <i className='fa-solid fa-trash'></i>
-                    Delete
+                    <i className='fa-solid fa-trash'></i> Delete
                   </Button>
                 </td>
               </tr>
@@ -368,15 +365,15 @@ export default function Users() {
                   inline
                   type='checkbox'
                   label='Write'
-                  checked={editRoles.includes(2)}
-                  onChange={() => toggleRole(2)}
+                  checked={editRoles.includes('2')}
+                  onChange={() => toggleRole('2')}
                 />
                 <Form.Check
                   inline
                   type='checkbox'
                   label='ReadOnly'
-                  checked={editRoles.includes(3)}
-                  onChange={() => toggleRole(3)}
+                  checked={editRoles.includes('3')}
+                  onChange={() => toggleRole('3')}
                 />
               </div>
             </Form.Group>
@@ -404,7 +401,11 @@ export default function Users() {
           <Button variant='secondary' onClick={() => setShowEditModal(false)}>
             Cancel
           </Button>
-          <Button variant='primary' onClick={handleEditSave}>
+          <Button
+            variant='primary'
+            onClick={handleEditSave}
+            disabled={!isEditFormValid} // ✅ 动态 Save 按钮
+          >
             Save
           </Button>
         </Modal.Footer>
