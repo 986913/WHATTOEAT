@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { LogModule } from './log/log.module';
 import configuration from '../configuration';
 import { UserModule } from './user/user.module';
+import { MealModule } from './meal/meal.module';
 import { ConfigEnum } from './enum/config.enum';
 import { LogEntity } from './log/entities/log.entity';
 import { UserEntity } from './user/entities/user.entity';
@@ -9,6 +10,9 @@ import { RoleEntity } from './role/entities/role.entity';
 import { ProfileEntity } from './user/entities/profile.entity';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm';
+import { MealEntity } from './meal/entities/meal.entity';
+import { TypeEntity } from './meal/entities/type.entity';
+import { IngredientEntity } from './meal/entities/ingredient.entity';
 
 @Module({
   imports: [
@@ -41,12 +45,21 @@ import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm';
           password: cfgService.get(ConfigEnum.DB_PASSWORD),
           database: cfgService.get(ConfigEnum.DB_NAME),
           synchronize: cfgService.get(ConfigEnum.DB_SYNC), // 注意：生产环境慎用，一般本地初始化时使用，用来同步本地的schmema到数据库
-          entities: [UserEntity, ProfileEntity, RoleEntity, LogEntity],
+          entities: [
+            UserEntity,
+            ProfileEntity,
+            RoleEntity,
+            LogEntity,
+            MealEntity,
+            TypeEntity,
+            IngredientEntity,
+          ],
           logging: false, //关闭typeorm日志
         } as TypeOrmModuleOptions;
       },
     }),
     UserModule,
+    MealModule,
     LogModule, // 引入 LogModule 来注册 Winston logger(单例)
   ],
   controllers: [],

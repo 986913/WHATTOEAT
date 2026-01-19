@@ -40,6 +40,12 @@ export const useMenuStore = create<MenuState>(() => ({
     },
     {
       id: 5,
+      name: 'Meals Management',
+      path: '/home/meals',
+      icon: <i className='fa-solid fa-bowl-food'></i>,
+    },
+    {
+      id: 6,
       name: 'API Testing',
       path: '/home/apitest',
       icon: <i className='fa-solid fa-vial'></i>,
