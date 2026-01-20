@@ -17,15 +17,6 @@ export class MealService {
     private ingredientRepo: Repository<IngredientEntity>,
   ) {}
 
-  async findAll() {
-    return this.mealRepo.find({
-      relations: {
-        types: true,
-        ingredients: true,
-      },
-    });
-  }
-
   async findById(mealId: number) {
     return this.mealRepo.findOne({
       where: {
@@ -43,6 +34,7 @@ export class MealService {
 
     const queryBuilder = this.mealRepo
       .createQueryBuilder('mealsTable')
+      .leftJoinAndSelect('mealsTable.user', 'users')
       .leftJoinAndSelect('mealsTable.types', 'types')
       .leftJoinAndSelect('mealsTable.ingredients', 'ingredients');
     // 后面的.where会替换前面的.where, 所以要用.andWhere

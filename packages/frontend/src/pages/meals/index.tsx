@@ -103,6 +103,7 @@ export default function Meals() {
             <th>Name</th>
             <th>URL</th>
             <th>Types</th>
+            <th>Creator</th>
             <th>Ingredients</th>
           </tr>
         </thead>
@@ -128,6 +129,7 @@ export default function Meals() {
                   )}
                 </td>
                 <td>{meal.types?.map((t: any) => t.name).join(', ')}</td>
+                <td>{meal.user?.username ? meal.user.username : '-'}</td>
                 <td>{meal.ingredients?.map((i: any) => i.name).join(', ')}</td>
               </tr>
             ))

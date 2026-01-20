@@ -9,6 +9,7 @@ import {
 import { ProfileEntity } from './profile.entity';
 import { LogEntity } from 'src/log/entities/log.entity';
 import { RoleEntity } from 'src/role/entities/role.entity';
+import { MealEntity } from 'src/meal/entities/meal.entity';
 
 //@Entity(users)装饰器告诉 TypeORM：这是一个数据库的表, 表名为users
 @Entity('users') // 表名为复数
@@ -41,6 +42,14 @@ export class UserEntity {
    */
   @OneToMany(() => LogEntity, (log) => log.user)
   logs: LogEntity[];
+
+  /*
+    @OneToMany 一个用户可以有多个meal:
+      第一个参数: 告诉 TypeORM 关联的是哪个实体（这里是 MealEntity)
+      第二个参数: 告诉 TypeORM LogEntity实体中是通过哪个字段反向关联回来的 (这里是MealEntity里定义的creator字段）
+   */
+  @OneToMany(() => MealEntity, (meal) => meal.user)
+  meals: MealEntity[];
 
   /*
     @ManyToMany 一个用户可以有多个角色:

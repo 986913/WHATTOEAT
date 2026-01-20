@@ -27,7 +27,7 @@ export class MealController {
 
   @Get()
   // (通过 QueryPara 获取符合条件的meals) -- http://localhost:3001/api/v1/meals?page=[1]&limit=[10]&type=[snack]
-  getBreakfastMeals(@Query() query: GetMealsDTO): any {
+  getMeals(@Query() query: GetMealsDTO): any {
     this.logger.log('Fetching all matching meals');
     return this.mealService.findAllMatch(query);
   }
