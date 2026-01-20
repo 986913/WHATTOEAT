@@ -4,172 +4,161 @@ import './index.css';
 import axios from '../../utils/axios';
 import Table from 'react-bootstrap/Table';
 import Pagination from 'react-bootstrap/Pagination';
-import { Dropdown, Button, Spinner } from 'react-bootstrap';
 
 const DEFAULT_LIMIT = 10;
 
 export default function Meals() {
-  const mealTypes = ['breakfast', 'lunch', 'dinner', 'snack'];
+  // ===== Filters =====
   const [typeInputVal, setTypeInputVal] = useState<string | undefined>(
     undefined,
   );
 
-  const [meals, setMeals] = useState<
-    {
-      id: number;
-      name: string;
-      url: string;
-      types: { name: string }[];
-      ingredients: { name: string }[];
-    }[]
-  >([]);
-  const [loading, setLoading] = useState(false);
+  // ===== Data =====
+  const [meals, setMeals] = useState<any[]>([]);
 
+  // ===== Pagination =====
   const [currentPage, setCurrentPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
   const [limit] = useState(DEFAULT_LIMIT);
 
+  // ===== Derived state =====
   const isFilterDirty = Boolean(typeInputVal);
 
   // ===== Fetch Meals =====
-  const fetchMeals = async (page = 1, type?: string) => {
-    setLoading(true);
+  const fetchMeals = async (page: number, type?: string) => {
     const params: any = { page, limit };
-    if (type) params.type = type;
+    if (type !== undefined) params.type = type;
 
     try {
       const res = await axios.get('/meals', { params });
-      setMeals(res.data.meals || []);
-      setTotalCount(res.data.mealsTotalCount || 0);
-      setCurrentPage(res.data.currPage || page);
-    } catch (err) {
-      console.error('Error fetching meals:', err);
+      const data = res.data.meals || [];
+      setMeals(data);
+      setTotalCount(data.length);
+      setCurrentPage(page);
+    } catch (error) {
+      console.error('Error fetching meals:', error);
       setMeals([]);
       setTotalCount(0);
-    } finally {
-      setLoading(false);
     }
   };
 
   useEffect(() => {
     fetchMeals(currentPage, typeInputVal);
-  }, [currentPage, typeInputVal]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPage]);
 
   const totalPages = Math.ceil(totalCount / limit);
 
-  const clearAllFilters = () => {
+  const clearAllFilters = async () => {
     setTypeInputVal(undefined);
     setCurrentPage(1);
-    fetchMeals(1);
+    await fetchMeals(1);
   };
 
   return (
-    <div className='meals-page container mt-4'>
-      <h3 className='page-title'>Meals Table</h3>
+    <div className='meals-page'>
+      <h3 className='page-title'>Meals</h3>
 
-      {/* Filters */}
-      <div className='filters-bar mb-3 d-flex align-items-center'>
-        <Dropdown className='me-2'>
-          <Dropdown.Toggle variant='secondary'>
-            {typeInputVal
-              ? typeInputVal.charAt(0).toUpperCase() + typeInputVal.slice(1)
-              : 'Filter by Type'}
-          </Dropdown.Toggle>
-          <Dropdown.Menu>
-            {mealTypes.map((t) => (
-              <Dropdown.Item
-                key={t}
-                onClick={() => {
-                  setTypeInputVal(t);
-                  setCurrentPage(1);
-                }}
-              >
-                {t.charAt(0).toUpperCase() + t.slice(1)}
-              </Dropdown.Item>
-            ))}
-          </Dropdown.Menu>
-        </Dropdown>
-        <Button
-          variant='secondary'
-          onClick={clearAllFilters}
+      {/* ================= Filters ================= */}
+      <div className='filters-bar'>
+        <div className='filters-left'>
+          <select
+            className='filter-select'
+            value={typeInputVal ?? ''}
+            onChange={(e) => {
+              const val = e.target.value;
+              setTypeInputVal(val === '' ? undefined : val);
+              setCurrentPage(1);
+            }}
+          >
+            <option value=''>All Types</option>
+            <option value='breakfast'>Breakfast</option>
+            <option value='lunch'>Lunch</option>
+            <option value='dinner'>Dinner</option>
+            <option value='snack'>Snack</option>
+          </select>
+
+          <button
+            className='btn-search'
+            onClick={() => fetchMeals(1, typeInputVal)}
+          >
+            Search
+          </button>
+        </div>
+
+        <button
+          className={`btn-clear ${isFilterDirty ? 'active' : 'disabled'}`}
           disabled={!isFilterDirty}
+          onClick={clearAllFilters}
         >
-          Clear Filter
-        </Button>
+          Clear All Filters
+        </button>
       </div>
 
-      {/* Table */}
-      {loading ? (
-        <div className='text-center my-4'>
-          <Spinner animation='border' />
-        </div>
-      ) : (
-        <>
-          <Table striped bordered hover className='meals-table'>
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>Name</th>
-                <th>URL</th>
-                <th>Types</th>
-                <th>Ingredients</th>
-                <th>Action</th>
+      {/* ================= Table ================= */}
+      <Table striped bordered hover className='meals-table'>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Name</th>
+            <th>URL</th>
+            <th>Types</th>
+            <th>Ingredients</th>
+          </tr>
+        </thead>
+        <tbody>
+          {meals.length === 0 ? (
+            <tr>
+              <td colSpan={5} className='table-empty'>
+                No Data
+              </td>
+            </tr>
+          ) : (
+            meals.map((meal, index) => (
+              <tr key={meal.id}>
+                <td>{(currentPage - 1) * limit + index + 1}</td>
+                <td>{meal.name}</td>
+                <td>
+                  {meal.url ? (
+                    <a href={meal.url} target='_blank' rel='noreferrer'>
+                      Link
+                    </a>
+                  ) : (
+                    '-'
+                  )}
+                </td>
+                <td>{meal.types?.map((t: any) => t.name).join(', ')}</td>
+                <td>{meal.ingredients?.map((i: any) => i.name).join(', ')}</td>
               </tr>
-            </thead>
-            <tbody>
-              {meals.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className='table-empty'>
-                    No Data
-                  </td>
-                </tr>
-              ) : (
-                meals.map((meal, index) => (
-                  <tr key={meal.id}>
-                    <td>{(currentPage - 1) * limit + index + 1}</td>
-                    <td>{meal.name}</td>
-                    <td>
-                      <a href={meal.url} target='_blank' rel='noreferrer'>
-                        Link
-                      </a>
-                    </td>
-                    <td>{(meal.types || []).map((t) => t.name).join(', ')}</td>
-                    <td>
-                      {(meal.ingredients || []).map((i) => i.name).join(', ')}
-                    </td>
-                    <td>{/* Action 留空 */}</td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </Table>
-
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <Pagination className='pagination-bar'>
-              <Pagination.Prev
-                disabled={currentPage === 1}
-                onClick={() => setCurrentPage((p) => p - 1)}
-              />
-              {Array.from({ length: totalPages }).map((_, i) => {
-                const page = i + 1;
-                return (
-                  <Pagination.Item
-                    key={page}
-                    active={page === currentPage}
-                    onClick={() => setCurrentPage(page)}
-                  >
-                    {page}
-                  </Pagination.Item>
-                );
-              })}
-              <Pagination.Next
-                disabled={currentPage === totalPages}
-                onClick={() => setCurrentPage((p) => p + 1)}
-              />
-            </Pagination>
+            ))
           )}
-        </>
+        </tbody>
+      </Table>
+
+      {/* ================= Pagination ================= */}
+      {totalPages > 1 && (
+        <Pagination className='pagination-bar'>
+          <Pagination.Prev
+            disabled={currentPage === 1}
+            onClick={() => setCurrentPage((p) => p - 1)}
+          />
+          {Array.from({ length: totalPages }).map((_, i) => {
+            const page = i + 1;
+            return (
+              <Pagination.Item
+                key={page}
+                active={page === currentPage}
+                onClick={() => setCurrentPage(page)}
+              >
+                {page}
+              </Pagination.Item>
+            );
+          })}
+          <Pagination.Next
+            disabled={currentPage === totalPages}
+            onClick={() => setCurrentPage((p) => p + 1)}
+          />
+        </Pagination>
       )}
     </div>
   );
