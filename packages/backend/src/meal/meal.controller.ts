@@ -6,12 +6,15 @@ import {
   LoggerService,
   UseFilters,
   Query,
+  Body,
+  Post,
 } from '@nestjs/common';
 import { MealService } from './meal.service';
 import { ConfigService } from '@nestjs/config';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { TypeormFilter } from 'src/filters/typeorm.filter';
 import { GetMealsDTO } from './dto/get-meals.dto';
+import { CreateMealDTO } from './dto/create-meal.dto';
 
 @Controller('meals')
 @UseFilters(new TypeormFilter())
@@ -30,6 +33,13 @@ export class MealController {
   getMeals(@Query() query: GetMealsDTO): any {
     this.logger.log('Fetching all matching meals');
     return this.mealService.findAllMatch(query);
+  }
+
+  @Post()
+  // http://localhost:3001/api/v1/meals
+  addMeal(@Body() dto: CreateMealDTO): any {
+    this.logger.log('Adding a new meal');
+    return this.mealService.create(dto);
   }
 
   @Get('/:id')
