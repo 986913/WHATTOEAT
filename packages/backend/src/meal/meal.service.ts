@@ -113,14 +113,6 @@ export class MealService {
 
   async remove(mealId: number) {
     const foundMeal = await this.ensureUserExists(mealId);
-    // 先删除关联的profile记录
-    // await this.userRepo
-    //   .createQueryBuilder()
-    //   .delete()
-    //   .from('profiles')
-    //   .where('user_id = :userId', { userId: user.id })
-    //   .execute();
-
     // 使用 remove 方法（而不是 delete）以触发 TypeORM 的级联逻辑
     return this.mealRepo.remove(foundMeal);
   }
