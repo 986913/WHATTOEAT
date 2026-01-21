@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { MealEntity } from './entities/meal.entity';
@@ -17,6 +17,14 @@ export class MealService {
     @InjectRepository(IngredientEntity)
     private ingredientRepo: Repository<IngredientEntity>,
   ) {}
+
+  private async ensureUserExists(mealId: number): Promise<MealEntity> {
+    const exists = await this.findById(mealId);
+    if (!exists) {
+      throw new NotFoundException(`Meal id with ${mealId} 不存在`);
+    }
+    return exists;
+  }
 
   async findById(mealId: number) {
     return this.mealRepo.findOne({
@@ -101,5 +109,19 @@ export class MealService {
     });
 
     return await this.mealRepo.save(newMeal);
+  }
+
+  async remove(mealId: number) {
+    const foundMeal = await this.ensureUserExists(mealId);
+    // 先删除关联的profile记录
+    // await this.userRepo
+    //   .createQueryBuilder()
+    //   .delete()
+    //   .from('profiles')
+    //   .where('user_id = :userId', { userId: user.id })
+    //   .execute();
+
+    // 使用 remove 方法（而不是 delete）以触发 TypeORM 的级联逻辑
+    return this.mealRepo.remove(foundMeal);
   }
 }

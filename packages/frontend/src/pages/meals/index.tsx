@@ -4,9 +4,7 @@ import './index.css';
 import axios from '../../utils/axios';
 import Table from 'react-bootstrap/Table';
 import Pagination from 'react-bootstrap/Pagination';
-import Modal from 'react-bootstrap/Modal';
-import Button from 'react-bootstrap/Button';
-import Form from 'react-bootstrap/Form';
+import { Modal, Button, Form } from 'react-bootstrap';
 
 const DEFAULT_LIMIT = 10;
 
@@ -30,6 +28,10 @@ export default function Meals() {
   // ===== Create Modal =====
   const [showModal, setShowModal] = useState(false);
 
+  // ===== Delete Modal =====
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [selectedMeal, setSelectedMeal] = useState<any>(null);
+
   // ===== Create Form =====
   const [mealName, setMealName] = useState('');
   const [mealUrl, setMealUrl] = useState('');
@@ -47,8 +49,8 @@ export default function Meals() {
       const res = await axios.get('/meals', { params });
       const data = res.data.meals || [];
       setMeals(data);
-      setTotalCount(data.length);
-      setCurrentPage(page);
+      setTotalCount(res.data.mealsTotalCount || data.length);
+      setCurrentPage(res.data.currPage || page);
     } catch (error) {
       console.error('Error fetching meals:', error);
       setMeals([]);
@@ -69,27 +71,48 @@ export default function Meals() {
     await fetchMeals(1);
   };
 
+  // ===== Create Meal =====
   const handleCreateMeal = async () => {
     const ingredients = ingredientsInput
       .split(',')
       .map((i) => i.trim())
       .filter(Boolean);
 
-    await axios.post('/meals', {
-      name: mealName,
-      url: mealUrl,
-      types: selectedTypes,
-      ingredients,
-    });
+    try {
+      await axios.post('/meals', {
+        name: mealName,
+        url: mealUrl,
+        types: selectedTypes,
+        ingredients,
+      });
+      setShowModal(false);
+      setMealName('');
+      setMealUrl('');
+      setSelectedTypes([]);
+      setIngredientsInput('');
+      fetchMeals(1);
+    } catch (error) {
+      console.error('Error creating meal:', error);
+      alert('创建 meal 失败，请检查控制台');
+    }
+  };
 
-    setShowModal(false);
-    // 重置表单
-    setMealName('');
-    setMealUrl('');
-    setSelectedTypes([]);
-    setIngredientsInput('');
-    // 刷新列表
-    fetchMeals(1);
+  // ===== Delete Meal =====
+  const openDeleteModal = (meal: any) => {
+    setSelectedMeal(meal);
+    setShowDeleteModal(true);
+  };
+
+  const handleDeleteMeal = async () => {
+    if (!selectedMeal) return;
+    try {
+      await axios.delete(`/meals/${selectedMeal.id}`);
+      setShowDeleteModal(false);
+      fetchMeals(currentPage);
+    } catch (error) {
+      console.error('Error deleting meal:', error);
+      alert('删除 meal 失败，请检查控制台');
+    }
   };
 
   return (
@@ -103,7 +126,6 @@ export default function Meals() {
         }}
       >
         <h3 className='page-title'>Meals</h3>
-        {/* Create Meal Button */}
         <Button variant='success' onClick={() => setShowModal(true)}>
           + Create Meal
         </Button>
@@ -122,10 +144,11 @@ export default function Meals() {
             }}
           >
             <option value=''>All Types</option>
-            <option value='breakfast'>Breakfast</option>
-            <option value='lunch'>Lunch</option>
-            <option value='dinner'>Dinner</option>
-            <option value='snack'>Snack</option>
+            {ALL_TYPES.map((t) => (
+              <option key={t} value={t}>
+                {t.charAt(0).toUpperCase() + t.slice(1)}
+              </option>
+            ))}
           </select>
 
           <button
@@ -155,12 +178,13 @@ export default function Meals() {
             <th>Types</th>
             <th>Creator</th>
             <th>Ingredients</th>
+            <th>Action</th>
           </tr>
         </thead>
         <tbody>
           {meals.length === 0 ? (
             <tr>
-              <td colSpan={6} className='table-empty'>
+              <td colSpan={7} className='table-empty'>
                 No Data
               </td>
             </tr>
@@ -181,6 +205,18 @@ export default function Meals() {
                 <td>{meal.types?.map((t: any) => t.name).join(', ')}</td>
                 <td>{meal.user?.username ?? '-'}</td>
                 <td>{meal.ingredients?.map((i: any) => i.name).join(', ')}</td>
+                <td>
+                  <Button variant='primary' size='sm' disabled>
+                    Edit
+                  </Button>{' '}
+                  <Button
+                    variant='danger'
+                    size='sm'
+                    onClick={() => openDeleteModal(meal)}
+                  >
+                    Delete
+                  </Button>
+                </td>
               </tr>
             ))
           )}
@@ -228,7 +264,6 @@ export default function Meals() {
                 onChange={(e) => setMealName(e.target.value)}
               />
             </Form.Group>
-
             <Form.Group className='mb-3'>
               <Form.Label>Meal URL</Form.Label>
               <Form.Control
@@ -237,7 +272,6 @@ export default function Meals() {
                 onChange={(e) => setMealUrl(e.target.value)}
               />
             </Form.Group>
-
             <Form.Group className='mb-3'>
               <Form.Label>Meal Types</Form.Label>
               {ALL_TYPES.map((t) => (
@@ -246,17 +280,16 @@ export default function Meals() {
                   type='checkbox'
                   label={t.charAt(0).toUpperCase() + t.slice(1)}
                   checked={selectedTypes.includes(t)}
-                  onChange={(e) => {
+                  onChange={(e) =>
                     setSelectedTypes((prev) =>
                       e.target.checked
                         ? [...prev, t]
                         : prev.filter((x) => x !== t),
-                    );
-                  }}
+                    )
+                  }
                 />
               ))}
             </Form.Group>
-
             <Form.Group className='mb-3'>
               <Form.Label>Ingredients (comma separated)</Form.Label>
               <Form.Control
@@ -274,6 +307,22 @@ export default function Meals() {
           </Button>
           <Button variant='success' onClick={handleCreateMeal}>
             Create!
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* ================= Delete Modal ================= */}
+      <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)}>
+        <Modal.Header closeButton>
+          <Modal.Title>Delete Meal</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>Are you sure you want to delete this meal?</Modal.Body>
+        <Modal.Footer>
+          <Button variant='secondary' onClick={() => setShowDeleteModal(false)}>
+            Cancel
+          </Button>
+          <Button variant='danger' onClick={handleDeleteMeal}>
+            Delete
           </Button>
         </Modal.Footer>
       </Modal>

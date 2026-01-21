@@ -8,6 +8,7 @@ import {
   Query,
   Body,
   Post,
+  Delete,
 } from '@nestjs/common';
 import { MealService } from './meal.service';
 import { ConfigService } from '@nestjs/config';
@@ -47,5 +48,12 @@ export class MealController {
   getMeal(@Param('id') mealId: number): any {
     this.logger.log(`Fetching single meal, id is ${mealId}`);
     return this.mealService.findById(mealId);
+  }
+
+  @Delete('/:id')
+  // (通过 PathPara 删除一个meal) -- http://localhost:3001/api/v1/meals/[1]
+  deleteUser(@Param('id') mealId: number): any {
+    this.logger.log(`Deleting meal with ID: ${mealId}`);
+    return this.mealService.remove(mealId);
   }
 }
