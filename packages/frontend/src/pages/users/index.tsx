@@ -4,7 +4,8 @@ import './index.css';
 import axios from '../../utils/axios';
 import Table from 'react-bootstrap/Table';
 import Pagination from 'react-bootstrap/Pagination';
-import { Modal, Button, Form } from 'react-bootstrap';
+import { Modal, Button } from 'react-bootstrap';
+import UserFormModal from '../../components/UserFormModal';
 import { GetUsersDTO } from '../../../../backend/src/user/dto/get-users.dto';
 
 const DEFAULT_LIMIT = 10;
@@ -12,58 +13,59 @@ const PLACEHOLDER_AVATAR =
   'https://i.pinimg.com/736x/c9/b6/f4/c9b6f424a544f3e1fa9a6d73b170b79e.jpg';
 
 export default function Users() {
-  // ===== Filters =====
+  // ================= Filters =================
   const [userNameInputVal, setUserNameInputVal] = useState('');
   const [roleInputVal, setRoleInputVal] = useState('');
   const [genderInputVal, setGenderInputVal] = useState('');
 
-  // ===== Data =====
+  // ================= Data =================
   const [users, setUsers] = useState<any[]>([]);
 
-  // ===== Pagination =====
+  // ================= Pagination =================
   const [currentPage, setCurrentPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
   const [limit, setLimit] = useState(DEFAULT_LIMIT);
 
-  // ===== Derived state =====
+  // ================= Derived =================
   const isFilterDirty = Boolean(
     userNameInputVal || roleInputVal || genderInputVal,
   );
 
-  // ===== Modal State =====
+  const totalPages = Math.ceil(totalCount / limit);
+
+  // ================= Modal State =================
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState<any>(null);
 
-  // ===== Edit Form State =====
+  // ================= Form State (Edit / Create 共用) =================
   const [editUsername, setEditUsername] = useState('');
   const [editGender, setEditGender] = useState<'1' | '2'>('1');
   const [editRoles, setEditRoles] = useState<string[]>([]);
   const [editPhoto, setEditPhoto] = useState('');
   const [editAddress, setEditAddress] = useState('');
 
-  // ===== Derived state for Save button =====
   const isEditFormValid =
     editUsername.trim() !== '' &&
     editRoles.length > 0 &&
     editPhoto.trim() !== '' &&
     editAddress.trim() !== '';
 
-  // ===== Fetch Users =====
+  // ================= Fetch Users =================
   const fetchUsers = async (
     page: number,
     filters?: { username?: string; role?: string; gender?: string },
   ) => {
     const params: GetUsersDTO = { page, limit, ...filters };
-
     try {
       const res = await axios.get('/users', { params });
       setUsers(res.data.users);
       setTotalCount(res.data.usersTotalCount);
       setCurrentPage(res.data.currPage);
       setLimit(res.data.currLimit);
-    } catch (error) {
-      console.error('Error fetching users:', error);
+    } catch (err) {
+      console.error(err);
     }
   };
 
@@ -75,11 +77,10 @@ export default function Users() {
           gender: genderInputVal,
         }
       : undefined;
+
     fetchUsers(currentPage, filters);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage]);
-
-  const totalPages = Math.ceil(totalCount / limit);
 
   const clearAllFilters = async () => {
     setUserNameInputVal('');
@@ -89,7 +90,7 @@ export default function Users() {
     await fetchUsers(1, { username: '', role: '', gender: '' });
   };
 
-  // ===== Open Modals =====
+  // ================= Modal Open Helpers =================
   const openEditModal = (user: any) => {
     setSelectedUser(user);
     setEditUsername(user.username);
@@ -102,49 +103,22 @@ export default function Users() {
     setShowEditModal(true);
   };
 
+  const openCreateModal = () => {
+    setSelectedUser(null);
+    setEditUsername('');
+    setEditGender('1');
+    setEditRoles([]);
+    setEditPhoto('');
+    setEditAddress('');
+    setShowCreateModal(true);
+  };
+
   const openDeleteModal = (user: any) => {
     setSelectedUser(user);
     setShowDeleteModal(true);
   };
 
-  // ===== Handle Edit Save (updateUser) =====
-  const handleEditSave = async () => {
-    if (!selectedUser) return;
-
-    try {
-      await axios.put(`/users/${selectedUser.id}`, {
-        username: editUsername,
-        profile: {
-          address: editAddress,
-          gender: editGender,
-          photo: editPhoto,
-        },
-        roles: editRoles, // ['2', '3'] 字符串数组
-      });
-
-      setShowEditModal(false);
-      alert('更新用户成功');
-      fetchUsers(currentPage);
-    } catch (error) {
-      console.error('Error updating user:', error);
-      alert('更新用户失败，请检查控制台');
-    }
-  };
-
-  // ===== Handle Delete =====
-  const handleDelete = async () => {
-    if (!selectedUser) return;
-    try {
-      await axios.delete(`/users/${selectedUser.id}`);
-      setShowDeleteModal(false);
-      fetchUsers(currentPage);
-    } catch (error) {
-      console.error('Error deleting user:', error);
-      alert('删除用户失败，请检查控制台');
-    }
-  };
-
-  // ===== Toggle Role Checkbox =====
+  // ================= Handlers =================
   const toggleRole = (roleId: string) => {
     setEditRoles((prev) =>
       prev.includes(roleId)
@@ -153,9 +127,38 @@ export default function Users() {
     );
   };
 
+  const handleEditSave = async () => {
+    if (!selectedUser) return;
+    await axios.put(`/users/${selectedUser.id}`, {
+      username: editUsername,
+      profile: {
+        address: editAddress,
+        gender: editGender,
+        photo: editPhoto,
+      },
+      roles: editRoles,
+    });
+    setShowEditModal(false);
+    fetchUsers(currentPage);
+  };
+
+  const handleDelete = async () => {
+    if (!selectedUser) return;
+    await axios.delete(`/users/${selectedUser.id}`);
+    setShowDeleteModal(false);
+    fetchUsers(currentPage);
+  };
+
+  // ================= Render =================
   return (
     <div className='users-page'>
-      <h3 className='page-title'>Users</h3>
+      {/* Header */}
+      <div className='page-header'>
+        <h3 className='page-title'>Users</h3>
+        <Button variant='success' onClick={openCreateModal}>
+          <i className='fa-solid fa-plus'></i> Create User
+        </Button>
+      </div>
 
       {/* Filters */}
       <div className='filters-bar'>
@@ -189,7 +192,6 @@ export default function Users() {
               />
               Female
             </label>
-
             <label>
               <input
                 type='radio'
@@ -249,17 +251,14 @@ export default function Users() {
             users.map((user, index) => (
               <tr key={user.id}>
                 <td>{(currentPage - 1) * limit + index + 1}</td>
-
                 <td>
                   <img
-                    src={user?.profile?.photo || PLACEHOLDER_AVATAR}
-                    alt='avatar'
+                    src={user.profile?.photo || PLACEHOLDER_AVATAR}
                     className='user-avatar'
+                    alt='avatar'
                   />
                 </td>
-
                 <td>{user.username}</td>
-
                 <td>
                   {user.profile?.gender === '1'
                     ? 'Female'
@@ -267,25 +266,22 @@ export default function Users() {
                       ? 'Male'
                       : '-'}
                 </td>
-
                 <td>{user.roles.map((r: any) => r.roleName).join(', ')}</td>
-
                 <td>{user.profile?.address || '-'}</td>
-
                 <td>
                   <Button
-                    variant='primary'
                     size='sm'
+                    variant='primary'
                     onClick={() => openEditModal(user)}
                   >
-                    <i className='fa-regular fa-pen-to-square'></i> Edit
+                    Edit
                   </Button>{' '}
                   <Button
-                    variant='danger'
                     size='sm'
+                    variant='danger'
                     onClick={() => openDeleteModal(user)}
                   >
-                    <i className='fa-solid fa-trash'></i> Delete
+                    Delete
                   </Button>
                 </td>
               </tr>
@@ -301,18 +297,15 @@ export default function Users() {
             disabled={currentPage === 1}
             onClick={() => setCurrentPage((p) => p - 1)}
           />
-          {Array.from({ length: totalPages }).map((_, i) => {
-            const page = i + 1;
-            return (
-              <Pagination.Item
-                key={page}
-                active={page === currentPage}
-                onClick={() => setCurrentPage(page)}
-              >
-                {page}
-              </Pagination.Item>
-            );
-          })}
+          {Array.from({ length: totalPages }).map((_, i) => (
+            <Pagination.Item
+              key={i + 1}
+              active={i + 1 === currentPage}
+              onClick={() => setCurrentPage(i + 1)}
+            >
+              {i + 1}
+            </Pagination.Item>
+          ))}
           <Pagination.Next
             disabled={currentPage === totalPages}
             onClick={() => setCurrentPage((p) => p + 1)}
@@ -321,95 +314,44 @@ export default function Users() {
       )}
 
       {/* Edit Modal */}
-      <Modal show={showEditModal} onHide={() => setShowEditModal(false)}>
-        <Modal.Header closeButton>
-          <Modal.Title>Edit User</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <Form>
-            <Form.Group className='mb-2'>
-              <Form.Label>Username</Form.Label>
-              <Form.Control
-                type='text'
-                value={editUsername}
-                onChange={(e) => setEditUsername(e.target.value)}
-              />
-            </Form.Group>
+      <UserFormModal
+        show={showEditModal}
+        title='Edit User'
+        submitText='Save'
+        onClose={() => setShowEditModal(false)}
+        onSubmit={handleEditSave}
+        isSubmitDisabled={!isEditFormValid}
+        username={editUsername}
+        setUsername={setEditUsername}
+        gender={editGender}
+        setGender={setEditGender}
+        roles={editRoles}
+        toggleRole={toggleRole}
+        photo={editPhoto}
+        setPhoto={setEditPhoto}
+        address={editAddress}
+        setAddress={setEditAddress}
+      />
 
-            <Form.Group className='mb-2'>
-              <Form.Label>Gender</Form.Label>
-              <div>
-                <Form.Check
-                  inline
-                  type='radio'
-                  label='Female'
-                  value='1'
-                  checked={editGender === '1'}
-                  onChange={(e) => setEditGender(e.target.value as '1' | '2')}
-                />
-                <Form.Check
-                  inline
-                  type='radio'
-                  label='Male'
-                  value='2'
-                  checked={editGender === '2'}
-                  onChange={(e) => setEditGender(e.target.value as '1' | '2')}
-                />
-              </div>
-            </Form.Group>
-
-            <Form.Group className='mb-2'>
-              <Form.Label>Roles</Form.Label>
-              <div>
-                <Form.Check
-                  inline
-                  type='checkbox'
-                  label='Write'
-                  checked={editRoles.includes('2')}
-                  onChange={() => toggleRole('2')}
-                />
-                <Form.Check
-                  inline
-                  type='checkbox'
-                  label='ReadOnly'
-                  checked={editRoles.includes('3')}
-                  onChange={() => toggleRole('3')}
-                />
-              </div>
-            </Form.Group>
-
-            <Form.Group className='mb-2'>
-              <Form.Label>Photo URL</Form.Label>
-              <Form.Control
-                type='text'
-                value={editPhoto}
-                onChange={(e) => setEditPhoto(e.target.value)}
-              />
-            </Form.Group>
-
-            <Form.Group className='mb-2'>
-              <Form.Label>Address</Form.Label>
-              <Form.Control
-                type='text'
-                value={editAddress}
-                onChange={(e) => setEditAddress(e.target.value)}
-              />
-            </Form.Group>
-          </Form>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant='secondary' onClick={() => setShowEditModal(false)}>
-            Cancel
-          </Button>
-          <Button
-            variant='primary'
-            onClick={handleEditSave}
-            disabled={!isEditFormValid} // ✅ 动态 Save 按钮
-          >
-            Save
-          </Button>
-        </Modal.Footer>
-      </Modal>
+      {/* Create Modal */}
+      <UserFormModal
+        show={showCreateModal}
+        title='Create User'
+        submitText='Create'
+        onClose={() => setShowCreateModal(false)}
+        onSubmit={() => setShowCreateModal(false)}
+        isSubmitDisabled={!isEditFormValid}
+        username={editUsername}
+        setUsername={setEditUsername}
+        gender={editGender}
+        setGender={setEditGender}
+        roles={editRoles}
+        toggleRole={toggleRole}
+        photo={editPhoto}
+        setPhoto={setEditPhoto}
+        address={editAddress}
+        setAddress={setEditAddress}
+      />
 
       {/* Delete Modal */}
       <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)}>
