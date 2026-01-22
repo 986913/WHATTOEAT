@@ -6,6 +6,7 @@ import { ProfileEntity } from './entities/profile.entity';
 import { GetUsersDTO } from './dto/get-users.dto';
 import { UpdateUserDTO } from './dto/update-user.dto';
 import { NotFoundException } from '@nestjs/common';
+import { CreateUserDTO } from './dto/create-user.dto';
 
 @Injectable()
 export class UserRepository {
@@ -93,9 +94,32 @@ export class UserRepository {
     return { data, total };
   }
 
-  createAndSave(user: UserEntity) {
-    const newUser = this.userRepo.create(user);
-    return this.userRepo.save(newUser);
+  async createAndSave(user: CreateUserDTO) {
+    const { username, password, profile, roles = [] } = user;
+
+    // 1️⃣ 处理 roles（'2' | '3' -> RoleEntity[]
+    let roleEntities: RoleEntity[] = [];
+    if (roles && roles.length > 0) {
+      const roleIds = roles.map((id) => Number(id));
+      roleEntities = await this.roleRepo.findByIds(roleIds);
+    }
+
+    // 2️⃣ create user（注意：这里只是 create，不落库）
+    const newUser = this.userRepo.create({
+      username,
+      password,
+      roles: roleEntities,
+      profile: profile ? this.profileRepo.create(profile) : undefined,
+    });
+
+    /**
+     * 3️⃣ save user
+     * - user 先 insert
+     * - profile 因为 cascade: true 自动 insert
+     * - profiles.user_id 自动填
+     * - users_roles 自动维护
+     */
+    return await this.userRepo.save(newUser);
   }
 
   async removeUser(user: UserEntity) {

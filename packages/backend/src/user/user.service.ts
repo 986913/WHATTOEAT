@@ -5,6 +5,7 @@ import { UpdateUserDTO } from './dto/update-user.dto';
 import { LogService } from 'src/log/log.service';
 import { UserRepository } from './user.repository';
 import { UserEntity } from './entities/user.entity';
+import { CreateUserDTO } from './dto/create-user.dto';
 
 @Injectable()
 export class UserService {
@@ -32,14 +33,13 @@ export class UserService {
     };
   }
 
-  create(user: UserEntity) {
+  create(user: CreateUserDTO) {
     return this.userRepository.createAndSave(user);
   }
 
   async update(userId: number, user: UpdateUserDTO) {
-    const foundUser = await this.findProfile(userId);
-    return this.userRepository.deepUpdate(foundUser!, user);
-
+    const foundUserWithProfile = await this.findProfile(userId);
+    return this.userRepository.deepUpdate(foundUserWithProfile!, user);
     //下面只适合单模型的update, 不适合有关系的模型update:
     // return this.userRepository.update(userId, user);
   }

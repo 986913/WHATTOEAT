@@ -12,13 +12,12 @@ import {
   LoggerService,
   UseFilters,
   Headers,
-  UnauthorizedException,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { ConfigService } from '@nestjs/config';
 import { GetUsersDTO } from './dto/get-users.dto';
+import { CreateUserDTO } from './dto/create-user.dto';
 import { UpdateUserDTO } from './dto/update-user.dto';
-import { UserEntity } from './entities/user.entity';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { TypeormFilter } from 'src/filters/typeorm.filter';
 
@@ -70,9 +69,9 @@ export class UserController {
 
   @Post()
   // http://localhost:3001/api/v1/users
-  addUser(@Body() dto: any): any {
+  addUser(@Body() dto: CreateUserDTO): any {
     this.logger.log('Adding a new user');
-    return this.userService.create(dto as UserEntity);
+    return this.userService.create(dto);
   }
 
   @Get('/:id')

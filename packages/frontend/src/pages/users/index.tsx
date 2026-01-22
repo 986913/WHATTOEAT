@@ -41,6 +41,7 @@ export default function Users() {
 
   // ================= Form State (Edit / Create 共用) =================
   const [editUsername, setEditUsername] = useState('');
+  const [editPassword, setEditPassword] = useState('');
   const [editGender, setEditGender] = useState<'1' | '2'>('1');
   const [editRoles, setEditRoles] = useState<string[]>([]);
   const [editPhoto, setEditPhoto] = useState('');
@@ -50,7 +51,8 @@ export default function Users() {
     editUsername.trim() !== '' &&
     editRoles.length > 0 &&
     editPhoto.trim() !== '' &&
-    editAddress.trim() !== '';
+    editAddress.trim() !== '' &&
+    (showCreateModal ? editPassword.trim() !== '' : true);
 
   // ================= Fetch Users =================
   const fetchUsers = async (
@@ -106,6 +108,7 @@ export default function Users() {
   const openCreateModal = () => {
     setSelectedUser(null);
     setEditUsername('');
+    setEditPassword('');
     setEditGender('1');
     setEditRoles([]);
     setEditPhoto('');
@@ -147,6 +150,27 @@ export default function Users() {
     await axios.delete(`/users/${selectedUser.id}`);
     setShowDeleteModal(false);
     fetchUsers(currentPage);
+  };
+
+  const handleCreateSave = async () => {
+    try {
+      await axios.post('/users', {
+        username: editUsername,
+        password: editPassword,
+        profile: {
+          gender: editGender,
+          photo: editPhoto,
+          address: editAddress,
+        },
+        roles: editRoles, // ['2','3']
+      });
+
+      setShowCreateModal(false);
+      setCurrentPage(1);
+      fetchUsers(1);
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   // ================= Render =================
@@ -316,6 +340,7 @@ export default function Users() {
       {/* Edit Modal */}
       <UserFormModal
         show={showEditModal}
+        showPassword={false}
         title='Edit User'
         submitText='Save'
         onClose={() => setShowEditModal(false)}
@@ -339,10 +364,13 @@ export default function Users() {
         title='Create User'
         submitText='Create'
         onClose={() => setShowCreateModal(false)}
-        onSubmit={() => setShowCreateModal(false)}
+        onSubmit={handleCreateSave}
         isSubmitDisabled={!isEditFormValid}
         username={editUsername}
         setUsername={setEditUsername}
+        password={editPassword}
+        setPassword={setEditPassword}
+        showPassword={true}
         gender={editGender}
         setGender={setEditGender}
         roles={editRoles}

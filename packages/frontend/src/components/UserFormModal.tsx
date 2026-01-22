@@ -12,6 +12,10 @@ interface UserFormModalProps {
   username: string;
   setUsername: (v: string) => void;
 
+  password?: string;
+  setPassword?: (v: string) => void;
+  showPassword?: boolean; // 👈 控制 Create / Edit 是否显示
+
   gender: '1' | '2';
   setGender: (v: '1' | '2') => void;
 
@@ -34,6 +38,9 @@ export default function UserFormModal({
   isSubmitDisabled,
   username,
   setUsername,
+  password,
+  setPassword,
+  showPassword = false,
   gender,
   setGender,
   roles,
@@ -51,6 +58,7 @@ export default function UserFormModal({
 
       <Modal.Body>
         <Form>
+          {/* Username */}
           <Form.Group className='mb-2'>
             <Form.Label>Username</Form.Label>
             <Form.Control
@@ -60,6 +68,20 @@ export default function UserFormModal({
             />
           </Form.Group>
 
+          {/* Password（仅 Create 显示） */}
+          {showPassword && setPassword && (
+            <Form.Group className='mb-2'>
+              <Form.Label>Password</Form.Label>
+              <Form.Control
+                type='password'
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder='Enter password'
+              />
+            </Form.Group>
+          )}
+
+          {/* Gender */}
           <Form.Group className='mb-2'>
             <Form.Label>Gender</Form.Label>
             <div>
@@ -67,7 +89,6 @@ export default function UserFormModal({
                 inline
                 type='radio'
                 label='Female'
-                value='1'
                 checked={gender === '1'}
                 onChange={() => setGender('1')}
               />
@@ -75,13 +96,13 @@ export default function UserFormModal({
                 inline
                 type='radio'
                 label='Male'
-                value='2'
                 checked={gender === '2'}
                 onChange={() => setGender('2')}
               />
             </div>
           </Form.Group>
 
+          {/* Roles */}
           <Form.Group className='mb-2'>
             <Form.Label>Roles</Form.Label>
             <div>
@@ -102,6 +123,7 @@ export default function UserFormModal({
             </div>
           </Form.Group>
 
+          {/* Photo */}
           <Form.Group className='mb-2'>
             <Form.Label>Photo URL</Form.Label>
             <Form.Control
@@ -111,6 +133,7 @@ export default function UserFormModal({
             />
           </Form.Group>
 
+          {/* Address */}
           <Form.Group className='mb-2'>
             <Form.Label>Address</Form.Label>
             <Form.Control
