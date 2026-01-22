@@ -1,6 +1,5 @@
 import '../App.css';
 import validator from 'validator';
-import axios from '../utils/axios';
 import classNames from '../utils/classNames';
 import { Link } from 'react-router-dom';
 import React, { useState } from 'react';
@@ -15,7 +14,7 @@ export default function Signin() {
   const [userPasswordMessage, setUserPasswordMessage] = useState('');
 
   const handleUsernameInputOnChange = (
-    e: React.ChangeEvent<HTMLInputElement>
+    e: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const usernameValue = e.target.value;
     setUsername(usernameValue);
@@ -27,7 +26,7 @@ export default function Signin() {
   };
 
   const handleUserPasswordInputOnChange = (
-    e: React.ChangeEvent<HTMLInputElement>
+    e: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const userPasswordValue = e.target.value;
     setUserPassword(userPasswordValue);
@@ -65,7 +64,7 @@ export default function Signin() {
               type='email'
               className={classNames(
                 'form-control',
-                usernameMessage && 'is-invalid'
+                usernameMessage && 'is-invalid',
               )}
               id='exampleInputEmail1'
               aria-describedby='emailHelp'
@@ -82,7 +81,7 @@ export default function Signin() {
               type='password'
               className={classNames(
                 'form-control',
-                userPasswordMessage && 'is-invalid'
+                userPasswordMessage && 'is-invalid',
               )}
               id='exampleInputPassword1'
               value={userPassword}
