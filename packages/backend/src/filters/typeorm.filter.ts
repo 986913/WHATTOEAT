@@ -4,11 +4,7 @@ import {
   ExceptionFilter,
   HttpStatus,
 } from '@nestjs/common';
-import {
-  QueryFailedError,
-  TypeORMError,
-  EntityPropertyNotFoundError,
-} from 'typeorm';
+import { QueryFailedError, TypeORMError } from 'typeorm';
 import { Response } from 'express';
 
 // 自定义异常过滤器: 装饰器 @Catch(TypeORMError) 指定该过滤器只捕获Typeorm异常

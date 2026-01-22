@@ -7,6 +7,7 @@ import Pagination from 'react-bootstrap/Pagination';
 import { Modal, Button } from 'react-bootstrap';
 import UserFormModal from '../../components/UserFormModal';
 import { GetUsersDTO } from '../../../../backend/src/user/dto/get-users.dto';
+import { isAxiosError } from 'axios';
 
 const DEFAULT_LIMIT = 10;
 const PLACEHOLDER_AVATAR =
@@ -169,6 +170,13 @@ export default function Users() {
       setCurrentPage(1);
       fetchUsers(1);
     } catch (err) {
+      if (isAxiosError(err)) {
+        alert(err.response?.data?.message || err?.message);
+      } else if (err instanceof Error) {
+        alert(err.message);
+      } else {
+        alert('Unknown error');
+      }
       console.error(err);
     }
   };
