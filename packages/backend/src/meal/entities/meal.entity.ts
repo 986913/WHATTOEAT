@@ -5,10 +5,12 @@ import {
   ManyToMany,
   ManyToOne,
   JoinColumn,
+  OneToMany,
 } from 'typeorm';
 import { TypeEntity } from './type.entity';
 import { UserEntity } from 'src/user/entities/user.entity';
 import { IngredientEntity } from './ingredient.entity';
+import { PlanEntity } from '../../plan/entities/plan.entity';
 
 //@Entity(meals)装饰器告诉 TypeORM：这是一个数据库的表, 表名为meals
 @Entity('meals') // 表名为复数
@@ -23,7 +25,7 @@ export class MealEntity {
   url: string;
 
   /*
-    @ManyToOne 多条日志记录对应一个用户：
+    @ManyToOne 多个meals对应一个用户：
       第一个参数： 告诉 TypeORM, 关联的是哪个实体（这里是 UserEntity)
       第二个参数： 告诉 TypeORM, UserEntity实体中是通过哪个字段反向关联回来的 (这里是UserEntity里定义的meals字段）
    */
@@ -32,7 +34,7 @@ export class MealEntity {
   user: UserEntity;
 
   /*
-      @ManyToMany 一个meal可以有多个type:
+      @ManyToMany 一个meal可以有多个types:
         第一个参数: 告诉 TypeORM 关联的是哪个实体（这里是 TypeEntity)
         第二个参数: 告诉 TypeORM TypeEntity实体中是通过哪个字段反向关联回来的 (这里是TypeEntity里定义的meals字段）
      */
@@ -46,4 +48,12 @@ export class MealEntity {
      */
   @ManyToMany(() => IngredientEntity, (type) => type.meals)
   ingredients: IngredientEntity[];
+
+  /*
+      @OneToMany 一个meal可以有多个plans:
+        第一个参数: 告诉 TypeORM 关联的是哪个实体（这里是 PlanEntity)
+        第二个参数: 告诉 TypeORM PlanEntity 实体中是通过哪个字段反向关联回来的 (这里是 PlanEntity 里定义的meal字段）
+     */
+  @OneToMany(() => PlanEntity, (plan) => plan.meal)
+  plans: PlanEntity[];
 }

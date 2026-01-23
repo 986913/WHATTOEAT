@@ -64,6 +64,18 @@ export class MealService {
     };
   }
 
+  async findOptionsByType(typeId?: number): Promise<MealEntity[]> {
+    const queryBuilder = this.mealRepo
+      .createQueryBuilder('meal')
+      .select(['meal.id', 'meal.name'])
+      .leftJoin('meal.types', 'type');
+
+    if (typeId) {
+      queryBuilder.where('type.id = :typeId', { typeId });
+    }
+
+    return queryBuilder.getMany();
+  }
   async create(meal: CreateMealDTO) {
     const { name, url, types, ingredients } = meal;
 

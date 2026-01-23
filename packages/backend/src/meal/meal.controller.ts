@@ -9,6 +9,7 @@ import {
   Body,
   Post,
   Delete,
+  ParseIntPipe,
 } from '@nestjs/common';
 import { MealService } from './meal.service';
 import { ConfigService } from '@nestjs/config';
@@ -34,6 +35,13 @@ export class MealController {
   getMeals(@Query() query: GetMealsDTO): any {
     this.logger.log('Fetching all matching meals');
     return this.mealService.findAllMatch(query);
+  }
+
+  @Get('options')
+  // (通过 QueryPara 获取typeId符合条件的meals) -- http://localhost:3001/api/v1/meals/options?typeId=2
+  async getMealswithCertainType(@Query('typeId', ParseIntPipe) typeId: number) {
+    this.logger.log(`Fetching all meals with type id as ${typeId}`);
+    return this.mealService.findOptionsByType(typeId);
   }
 
   @Post()

@@ -46,6 +46,12 @@ export const useMenuStore = create<MenuState>(() => ({
     },
     {
       id: 6,
+      name: 'Plans Management',
+      path: '/home/plans',
+      icon: <i className='fa-solid fa-record-vinyl'></i>,
+    },
+    {
+      id: 7,
       name: 'API Testing',
       path: '/home/apitest',
       icon: <i className='fa-solid fa-vial'></i>,

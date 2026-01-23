@@ -3,6 +3,7 @@ import { LogModule } from './log/log.module';
 import configuration from '../configuration';
 import { UserModule } from './user/user.module';
 import { MealModule } from './meal/meal.module';
+import { PlanModule } from './plan/plan.module';
 import { ConfigEnum } from './enum/config.enum';
 import { LogEntity } from './log/entities/log.entity';
 import { UserEntity } from './user/entities/user.entity';
@@ -13,6 +14,7 @@ import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { MealEntity } from './meal/entities/meal.entity';
 import { TypeEntity } from './meal/entities/type.entity';
 import { IngredientEntity } from './meal/entities/ingredient.entity';
+import { PlanEntity } from './plan/entities/plan.entity';
 
 @Module({
   imports: [
@@ -53,6 +55,7 @@ import { IngredientEntity } from './meal/entities/ingredient.entity';
             MealEntity,
             TypeEntity,
             IngredientEntity,
+            PlanEntity,
           ],
           logging: false, //关闭typeorm日志
         } as TypeOrmModuleOptions;
@@ -60,6 +63,7 @@ import { IngredientEntity } from './meal/entities/ingredient.entity';
     }),
     UserModule,
     MealModule,
+    PlanModule,
     LogModule, // 引入 LogModule 来注册 Winston logger(单例)
   ],
   controllers: [],
