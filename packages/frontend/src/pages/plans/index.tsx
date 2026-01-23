@@ -2,26 +2,50 @@ import React, { useEffect, useState } from 'react';
 import axios from '../../utils/axios';
 import { Form, Button, Alert, Spinner } from 'react-bootstrap';
 
+/** Helper: group plans by date + type */
+function groupPlans(plans: any[]) {
+  const grouped: any = {};
+
+  plans.forEach((p) => {
+    const date = p.date;
+    const type = p.type?.name;
+
+    if (!grouped[date]) grouped[date] = {};
+    if (!grouped[date][type]) grouped[date][type] = [];
+
+    grouped[date][type].push(p);
+  });
+
+  return grouped;
+}
+
 export default function Plans() {
-  // form state
+  // =========================
+  // Form state
+  // =========================
   const [date, setDate] = useState('');
   const [typeId, setTypeId] = useState('1');
   const [mealId, setMealId] = useState('');
 
   // dropdown meals
   const [meals, setMeals] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loadingMeals, setLoadingMeals] = useState(false);
+
+  // plans list
+  const [plans, setPlans] = useState<any[]>([]);
+  const [loadingPlans, setLoadingPlans] = useState(false);
 
   // feedback
   const [success, setSuccess] = useState('');
   const [error, setError] = useState('');
 
-  // ✅ fetch meals when type changes
+  // =========================
+  // Fetch meal options by type
+  // =========================
   useEffect(() => {
     async function fetchMeals() {
-      setLoading(true);
+      setLoadingMeals(true);
       setMealId('');
-      setSuccess('');
       setError('');
 
       try {
@@ -29,18 +53,43 @@ export default function Plans() {
         setMeals(Array.isArray(res.data) ? res.data : []);
       } catch (err) {
         setMeals([]);
-        setError('❌ Failed to load meals');
+        setError('❌ Failed to load meal options');
       }
 
-      setLoading(false);
+      setLoadingMeals(false);
     }
 
     fetchMeals();
   }, [typeId]);
 
-  // ✅ submit create plan
+  // =========================
+  // Fetch all plans
+  // =========================
+  const fetchPlans = async () => {
+    setLoadingPlans(true);
+
+    try {
+      const res = await axios.get('/plans');
+      setPlans(Array.isArray(res.data) ? res.data : []);
+    } catch (err) {
+      setError('❌ Failed to load plans');
+    }
+
+    setLoadingPlans(false);
+  };
+
+  // load plans on mount
+  useEffect(() => {
+    fetchPlans();
+  }, []);
+
+  // =========================
+  // Submit create plan
+  // =========================
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSuccess('');
+    setError('');
 
     if (!mealId) {
       setError('❌ Please select a meal');
@@ -48,28 +97,39 @@ export default function Plans() {
     }
 
     try {
-      const res = await axios.post('/plans', {
+      await axios.post('/plans', {
         date,
         typeId,
         mealId,
         userId: 1,
       });
 
-      console.log('Created plan:', res.data);
       setSuccess('✅ Plan created successfully!');
+
+      // refresh plans immediately
+      fetchPlans();
     } catch (err) {
       setError('❌ Failed to create plan (restriction violation?)');
     }
   };
 
-  return (
-    <div style={{ maxWidth: 600, margin: '40px auto' }}>
-      <h2>Create Plan Test UI</h2>
+  // =========================
+  // Debug grouped view
+  // =========================
+  const grouped = groupPlans(plans);
 
+  return (
+    <div style={{ maxWidth: 900, margin: '40px auto' }}>
+      <h2>Create Plan + Restriction Debug UI</h2>
+
+      {/* Feedback */}
       {success && <Alert variant='success'>{success}</Alert>}
       {error && <Alert variant='danger'>{error}</Alert>}
 
-      <Form onSubmit={handleSubmit}>
+      {/* =========================
+          Create Form
+      ========================= */}
+      <Form onSubmit={handleSubmit} style={{ marginBottom: 40 }}>
         {/* Date */}
         <Form.Group className='mb-3'>
           <Form.Label>Date</Form.Label>
@@ -95,13 +155,13 @@ export default function Plans() {
           </Form.Select>
         </Form.Group>
 
-        {/* Meals dropdown */}
+        {/* Meal */}
         <Form.Group className='mb-3'>
           <Form.Label>Meal</Form.Label>
 
-          {loading ? (
+          {loadingMeals ? (
             <div>
-              <Spinner animation='border' size='sm' /> Loading...
+              <Spinner animation='border' size='sm' /> Loading meals...
             </div>
           ) : (
             <Form.Select
@@ -118,9 +178,64 @@ export default function Plans() {
           )}
         </Form.Group>
 
-        {/* Submit */}
         <Button type='submit'>Create Plan</Button>
       </Form>
+
+      {/* =========================
+          Restriction Debug View
+      ========================= */}
+      <h3>Restriction Debug View</h3>
+
+      {loadingPlans ? (
+        <div style={{ marginTop: 20 }}>
+          <Spinner animation='border' size='sm' /> Loading plans...
+        </div>
+      ) : plans.length === 0 ? (
+        <p>No plans found.</p>
+      ) : (
+        Object.entries(grouped).map(([date, types]: any) => (
+          <div
+            key={date}
+            style={{
+              border: '1px solid #ddd',
+              padding: '15px',
+              marginBottom: '20px',
+              borderRadius: '12px',
+            }}
+          >
+            <h5>{date}</h5>
+
+            {['breakfast', 'lunch', 'dinner'].map((mealType) => {
+              const items = types[mealType] || [];
+
+              // ❌ Missing
+              if (items.length === 0) {
+                return (
+                  <p key={mealType} style={{ color: 'red' }}>
+                    ❌ {mealType.toUpperCase()}: Missing
+                  </p>
+                );
+              }
+
+              // ⚠️ Duplicate
+              if (items.length > 1) {
+                return (
+                  <p key={mealType} style={{ color: 'orange' }}>
+                    ⚠️ {mealType.toUpperCase()}: Duplicate ({items.length})
+                  </p>
+                );
+              }
+
+              // ✅ Normal
+              return (
+                <p key={mealType} style={{ color: 'green' }}>
+                  ✅ {mealType.toUpperCase()}: {items[0].meal?.name}
+                </p>
+              );
+            })}
+          </div>
+        ))
+      )}
     </div>
   );
 }

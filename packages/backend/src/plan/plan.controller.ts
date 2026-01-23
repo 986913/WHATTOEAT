@@ -5,6 +5,7 @@ import {
   UseFilters,
   Body,
   Post,
+  Get,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
@@ -22,6 +23,13 @@ export class PlanController {
     private readonly logger: LoggerService,
   ) {
     this.logger.log('PlanController initialized');
+  }
+
+  @Get()
+  // http://localhost:3001/api/v1/plans
+  getPlans(): any {
+    this.logger.log('get all plans');
+    return this.planService.findAll();
   }
 
   @Post()

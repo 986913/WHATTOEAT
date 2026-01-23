@@ -21,6 +21,16 @@ export class PlanService {
     private userRepo: Repository<UserEntity>,
   ) {}
 
+  findAll() {
+    return this.planRepo.find({
+      relations: {
+        type: true,
+        user: true,
+        meal: true,
+      },
+    });
+  }
+
   async create(plan: CreatePlanDTO) {
     const { date, mealId, typeId, userId = 1 } = plan;
 
