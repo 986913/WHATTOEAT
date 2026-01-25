@@ -16,7 +16,18 @@ export class IngredientService {
   }
 
   async create(dto: CreateIngredientDTO) {
-    const ingredient = this.ingredientRepo.create(dto);
+    const normalized = dto.name.trim().toLowerCase();
+    const existing = await this.ingredientRepo
+      .createQueryBuilder('ing')
+      .where('LOWER(ing.name) = :name', { name: normalized })
+      .getOne();
+
+    if (existing) return existing;
+
+    const ingredient = this.ingredientRepo.create({
+      name: dto.name.trim(),
+    });
+
     return this.ingredientRepo.save(ingredient);
   }
 }
