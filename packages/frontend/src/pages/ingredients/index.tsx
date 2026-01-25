@@ -3,10 +3,18 @@ import axios from '../../utils/axios';
 import Table from 'react-bootstrap/Table';
 import Button from 'react-bootstrap/Button';
 import PageHeader from '../../components/PageHeader';
+import AppToast from '../../components/AppToast';
 import IngredientModal from './IngredientModal';
 import ConfirmModal from '../../components/ConfirmModal';
 
 export default function Ingredients() {
+  const [toastShow, setToastShow] = useState(false);
+  const [toastMsg, setToastMsg] = useState('');
+  const notify = (msg: string) => {
+    setToastMsg(msg);
+    setToastShow(true);
+  };
+
   const [ingredients, setIngredients] = useState<any[]>([]);
   const [showModal, setShowModal] = useState(false);
 
@@ -39,8 +47,10 @@ export default function Ingredients() {
   const save = async () => {
     if (editing) {
       await axios.put(`/ingredients/${editing.id}`, { name });
+      notify('Meal updated successfully ✏️');
     } else {
       await axios.post('/ingredients', { name });
+      notify('Ingredient created successfully ✅');
     }
 
     setShowModal(false);
@@ -49,6 +59,7 @@ export default function Ingredients() {
 
   const confirmDelete = async () => {
     await axios.delete(`/ingredients/${deleteTarget.id}`);
+    notify('Meal deleted successfully 🗑️');
     setDeleteTarget(null);
     fetchAll();
   };
@@ -111,9 +122,15 @@ export default function Ingredients() {
       <ConfirmModal
         show={!!deleteTarget}
         title='Delete Ingredient'
-        message='Are you sure?'
+        message='Are you sure you want to delete this ingredient ?'
         onCancel={() => setDeleteTarget(null)}
         onConfirm={confirmDelete}
+      />
+
+      <AppToast
+        show={toastShow}
+        message={toastMsg}
+        onClose={() => setToastShow(false)}
       />
     </div>
   );

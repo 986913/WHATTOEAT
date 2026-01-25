@@ -1,10 +1,12 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import '../../App.css';
 import './index.css';
 import axios from '../../utils/axios';
 import Table from 'react-bootstrap/Table';
 import Pagination from 'react-bootstrap/Pagination';
-import { Modal, Button } from 'react-bootstrap';
+import { Button } from 'react-bootstrap';
+import AppToast from '../../components/AppToast';
+import ConfirmModal from '../../components/ConfirmModal';
 import UserFormModal from '../../components/UserFormModal';
 import { GetUsersDTO } from '../../../../backend/src/user/dto/get-users.dto';
 import { isAxiosError } from 'axios';
@@ -14,6 +16,13 @@ const PLACEHOLDER_AVATAR =
   'https://i.pinimg.com/736x/c9/b6/f4/c9b6f424a544f3e1fa9a6d73b170b79e.jpg';
 
 export default function Users() {
+  const [toastShow, setToastShow] = useState(false);
+  const [toastMsg, setToastMsg] = useState('');
+  const notify = (msg: string) => {
+    setToastMsg(msg);
+    setToastShow(true);
+  };
+
   // ================= Filters =================
   const [userNameInputVal, setUserNameInputVal] = useState('');
   const [roleInputVal, setRoleInputVal] = useState('');
@@ -143,6 +152,7 @@ export default function Users() {
       roles: editRoles,
     });
     setShowEditModal(false);
+    notify('User updated successfully ✏️');
     fetchUsers(currentPage);
   };
 
@@ -150,6 +160,7 @@ export default function Users() {
     if (!selectedUser) return;
     await axios.delete(`/users/${selectedUser.id}`);
     setShowDeleteModal(false);
+    notify('User deleted successfully 🗑️');
     fetchUsers(currentPage);
   };
 
@@ -167,6 +178,7 @@ export default function Users() {
       });
 
       setShowCreateModal(false);
+      notify('User created successfully ✅');
       setCurrentPage(1);
       fetchUsers(1);
     } catch (err) {
@@ -390,20 +402,19 @@ export default function Users() {
       />
 
       {/* Delete Modal */}
-      <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)}>
-        <Modal.Header closeButton>
-          <Modal.Title>Delete User</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>Are you sure you want to delete this user?</Modal.Body>
-        <Modal.Footer>
-          <Button variant='secondary' onClick={() => setShowDeleteModal(false)}>
-            Cancel
-          </Button>
-          <Button variant='danger' onClick={handleDelete}>
-            Delete
-          </Button>
-        </Modal.Footer>
-      </Modal>
+      <ConfirmModal
+        show={!!showDeleteModal}
+        title='Delete User'
+        message='Are you sure you want to delete this user ?'
+        onCancel={() => setShowDeleteModal(false)}
+        onConfirm={handleDelete}
+      />
+
+      <AppToast
+        show={toastShow}
+        message={toastMsg}
+        onClose={() => setToastShow(false)}
+      />
     </div>
   );
 }

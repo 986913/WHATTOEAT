@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import '../../App.css';
 import './index.css';
 import axios from '../../utils/axios';
 import TypeSelector from '../../components/TypeSelector';
+import AppToast from '../../components/AppToast';
 import IngredientSelector from '../../components/IngredientSelector';
 import ConfirmModal from '../../components/ConfirmModal';
 import Table from 'react-bootstrap/Table';
@@ -30,6 +31,13 @@ export default function Meals() {
   // ================= Ingredient Options =================
   const [ingredientOptions, setIngredientOptions] = useState<any[]>([]);
 
+  const [toastShow, setToastShow] = useState(false);
+  const [toastMsg, setToastMsg] = useState('');
+  const notify = (msg: string) => {
+    setToastMsg(msg);
+    setToastShow(true);
+  };
+
   // ================= Create Modal =================
   const [showModal, setShowModal] = useState(false);
 
@@ -42,6 +50,10 @@ export default function Meals() {
 
   const [ingredientSearch, setIngredientSearch] = useState('');
   const [creatingIngredient, setCreatingIngredient] = useState(false);
+  const isCreateFormValid =
+    mealName.trim() !== '' &&
+    selectedTypes.length > 0 &&
+    selectedIngredientIds.length > 0;
 
   // ================= Edit Modal =================
   const [showEditModal, setShowEditModal] = useState(false);
@@ -54,6 +66,10 @@ export default function Meals() {
 
   const [editIngredientSearch, setEditIngredientSearch] = useState('');
   const [creatingEditIngredient, setCreatingEditIngredient] = useState(false);
+  const isEditFormValid =
+    editMealName.trim() !== '' &&
+    editTypes.length > 0 &&
+    editIngredientIds.length > 0;
 
   // ================= Delete Modal =================
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -156,9 +172,8 @@ export default function Meals() {
       types: selectedTypes,
       ingredientIds: selectedIngredientIds,
     });
-
     setShowModal(false);
-
+    notify('Meal created successfully ✅');
     setMealName('');
     setMealUrl('');
     setSelectedTypes([]);
@@ -193,6 +208,7 @@ export default function Meals() {
     });
 
     setShowEditModal(false);
+    notify('Meal updated successfully ✏️');
     fetchMeals(currentPage);
   };
 
@@ -207,6 +223,7 @@ export default function Meals() {
   const handleDeleteMeal = async () => {
     await axios.delete(`/meals/${selectedMeal.id}`);
     setShowDeleteModal(false);
+    notify('Meal deleted successfully 🗑️');
     fetchMeals(currentPage);
   };
 
@@ -359,6 +376,10 @@ export default function Meals() {
 
         <Modal.Body>
           <Form>
+            {mealName.trim() === '' && (
+              <div className='text-warning small'>Meal name is required</div>
+            )}
+
             <Form.Control
               placeholder='Meal Name'
               className='mb-2'
@@ -372,7 +393,12 @@ export default function Meals() {
               value={mealUrl}
               onChange={(e) => setMealUrl(e.target.value)}
             />
+
             <Form.Label>Meal Types</Form.Label>
+
+            {selectedTypes.length === 0 && (
+              <div className='text-warning small'>Select at least one type</div>
+            )}
             <TypeSelector
               allTypes={ALL_TYPES}
               selected={selectedTypes}
@@ -381,6 +407,11 @@ export default function Meals() {
 
             {/* Ingredients */}
             <Form.Label>Ingredients</Form.Label>
+            {selectedIngredientIds.length === 0 && (
+              <div className='text-warning small'>
+                Select at least one ingredient
+              </div>
+            )}
             <IngredientSelector
               options={ingredientOptions}
               selectedIds={selectedIngredientIds}
@@ -394,7 +425,11 @@ export default function Meals() {
         </Modal.Body>
 
         <Modal.Footer>
-          <Button variant='success' onClick={handleCreateMeal}>
+          <Button
+            variant='success'
+            onClick={handleCreateMeal}
+            disabled={!isCreateFormValid}
+          >
             Create
           </Button>
         </Modal.Footer>
@@ -443,7 +478,11 @@ export default function Meals() {
         </Modal.Body>
 
         <Modal.Footer>
-          <Button variant='success' onClick={handleUpdateMeal}>
+          <Button
+            variant='success'
+            onClick={handleUpdateMeal}
+            disabled={!isEditFormValid}
+          >
             Save Changes
           </Button>
         </Modal.Footer>
@@ -453,11 +492,17 @@ export default function Meals() {
       {/* ================= Delete Modal ====================== */}
       {/* ===================================================== */}
       <ConfirmModal
-        show={!!selectedMeal}
+        show={!!showDeleteModal}
         title='Delete Meal'
-        message='Are you sure?'
+        message='Are you sure you want to delete this meal ?'
         onCancel={() => setSelectedMeal(null)}
         onConfirm={handleDeleteMeal}
+      />
+
+      <AppToast
+        show={toastShow}
+        message={toastMsg}
+        onClose={() => setToastShow(false)}
       />
     </div>
   );
