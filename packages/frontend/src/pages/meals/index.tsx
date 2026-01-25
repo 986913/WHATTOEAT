@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import '../../App.css';
 import './index.css';
 import axios from '../../utils/axios';
+import TypeSelector from '../../components/TypeSelector';
 import IngredientSelector from '../../components/IngredientSelector';
 import ConfirmModal from '../../components/ConfirmModal';
 import Table from 'react-bootstrap/Table';
@@ -371,10 +372,15 @@ export default function Meals() {
               value={mealUrl}
               onChange={(e) => setMealUrl(e.target.value)}
             />
+            <Form.Label>Meal Types</Form.Label>
+            <TypeSelector
+              allTypes={ALL_TYPES}
+              selected={selectedTypes}
+              setSelected={setSelectedTypes}
+            />
 
             {/* Ingredients */}
             <Form.Label>Ingredients</Form.Label>
-
             <IngredientSelector
               options={ingredientOptions}
               selectedIds={selectedIngredientIds}
@@ -416,9 +422,14 @@ export default function Meals() {
               onChange={(e) => setEditMealUrl(e.target.value)}
             />
 
-            {/* Ingredients */}
-            <Form.Label>Ingredients</Form.Label>
+            <Form.Label>Meal Types</Form.Label>
+            <TypeSelector
+              allTypes={ALL_TYPES}
+              selected={editTypes}
+              setSelected={setEditTypes}
+            />
 
+            <Form.Label>Ingredients</Form.Label>
             <IngredientSelector
               options={ingredientOptions}
               selectedIds={editIngredientIds}

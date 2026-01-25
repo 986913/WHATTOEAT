@@ -124,7 +124,7 @@ export default function Plans() {
 
   return (
     <div className='page'>
-      <h2 className='page-title'>🍱 Plan Dashboard</h2>
+      <h2 className='page-title'> Plans </h2>
 
       {/* Feedback */}
       {success && <Alert variant='success'>{success}</Alert>}
