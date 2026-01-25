@@ -3,6 +3,9 @@ import {
   Get,
   Post,
   Body,
+  Put,
+  Delete,
+  Param,
   Inject,
   LoggerService,
   UseFilters,
@@ -31,5 +34,15 @@ export class IngredientController {
   @Post()
   create(@Body() dto: CreateIngredientDTO) {
     return this.ingredientService.create(dto);
+  }
+
+  @Put('/:id')
+  update(@Param('id') id: number, @Body() dto: CreateIngredientDTO) {
+    return this.ingredientService.update(id, dto);
+  }
+
+  @Delete(':id')
+  remove(@Param('id') id: number) {
+    return this.ingredientService.remove(id);
   }
 }

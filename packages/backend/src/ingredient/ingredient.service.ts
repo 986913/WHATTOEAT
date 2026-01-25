@@ -3,6 +3,7 @@ import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { IngredientEntity } from './entities/ingredient.entity';
 import { CreateIngredientDTO } from './dto/create-ingredient.dto';
+import { UpdateIngredientDTO } from './dto/update-ingredient.dto';
 
 @Injectable()
 export class IngredientService {
@@ -29,5 +30,17 @@ export class IngredientService {
     });
 
     return this.ingredientRepo.save(ingredient);
+  }
+
+  async update(id: number, dto: UpdateIngredientDTO) {
+    const ingredient = await this.ingredientRepo.findOneBy({ id });
+    if (!ingredient) throw new Error('Ingredient not found');
+
+    ingredient.name = dto.name.trim();
+    return this.ingredientRepo.save(ingredient);
+  }
+
+  async remove(id: number) {
+    return this.ingredientRepo.delete(id);
   }
 }

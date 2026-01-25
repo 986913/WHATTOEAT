@@ -7,7 +7,7 @@ import {
 } from 'typeorm';
 import { MealEntity } from 'src/meal/entities/meal.entity';
 
-//@Entity(types)装饰器告诉 TypeORM：这是一个数据库的表, 表名为types
+//@Entity(ingredients)装饰器告诉 TypeORM：这是一个数据库的表, 表名为ingredients
 @Entity('ingredients') // 表名为复数
 export class IngredientEntity {
   @PrimaryGeneratedColumn()
