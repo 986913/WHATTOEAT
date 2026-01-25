@@ -1,18 +1,8 @@
-.plans-page {
-  max-width: 1200px;
-  margin: 30px auto;
-}
-
-.page-title {
-  margin-bottom: 20px;
-  font-weight: bold;
-}
-
 /* Layout */
 .plans-layout {
   display: flex;
   gap: 20px;
-  height: 85vh;
+  height: 80vh;
 }
 
 /* Left Table Panel */

@@ -2,60 +2,14 @@ import React, { useEffect, useState } from 'react';
 import '../../App.css';
 import './index.css';
 import axios from '../../utils/axios';
-
+import IngredientSelector from '../../components/IngredientSelector';
+import ConfirmModal from '../../components/ConfirmModal';
 import Table from 'react-bootstrap/Table';
 import Pagination from 'react-bootstrap/Pagination';
 import { Modal, Button, Form } from 'react-bootstrap';
 
 const DEFAULT_LIMIT = 10;
 const ALL_TYPES = ['breakfast', 'lunch', 'dinner', 'snack'];
-
-/* ===================================================== */
-/* ================= Ingredient Tags UI ================= */
-/* ===================================================== */
-function IngredientTags({
-  ids,
-  options,
-  onRemove,
-}: {
-  ids: number[];
-  options: any[];
-  onRemove: (id: number) => void;
-}) {
-  const selected = options.filter((ing) => ids.includes(ing.id));
-  if (selected.length === 0) return null;
-
-  return (
-    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-      {selected.map((ing) => (
-        <span
-          key={ing.id}
-          style={{
-            background: '#f1f3f5',
-            borderRadius: '16px',
-            padding: '4px 10px',
-            fontSize: '13px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-          }}
-        >
-          {ing.name}
-          <span
-            style={{
-              cursor: 'pointer',
-              fontWeight: 'bold',
-              color: '#666',
-            }}
-            onClick={() => onRemove(ing.id)}
-          >
-            ×
-          </span>
-        </span>
-      ))}
-    </div>
-  );
-}
 
 export default function Meals() {
   // ================= Filters =================
@@ -256,21 +210,10 @@ export default function Meals() {
   };
 
   /* ===================================================== */
-  /* ================= Ingredient Filters ================= */
-  /* ===================================================== */
-  const filteredIngredients = ingredientOptions.filter((ing) =>
-    ing.name.toLowerCase().includes(ingredientSearch.toLowerCase()),
-  );
-
-  const filteredEditIngredients = ingredientOptions.filter((ing) =>
-    ing.name.toLowerCase().includes(editIngredientSearch.toLowerCase()),
-  );
-
-  /* ===================================================== */
   /* ================= Render ============================= */
   /* ===================================================== */
   return (
-    <div className='meals-page'>
+    <div className='page'>
       {/* ================= Header ================= */}
       <div
         className='page-header'
@@ -429,101 +372,18 @@ export default function Meals() {
               onChange={(e) => setMealUrl(e.target.value)}
             />
 
-            {/* Types */}
-            <Form.Label>Meal Types</Form.Label>
-            <div
-              style={{
-                display: 'flex',
-                gap: '10px',
-                flexWrap: 'wrap',
-                marginBottom: '15px',
-              }}
-            >
-              {ALL_TYPES.map((t) => (
-                <Button
-                  key={t}
-                  size='sm'
-                  variant={
-                    selectedTypes.includes(t) ? 'primary' : 'outline-secondary'
-                  }
-                  style={{ borderRadius: '20px', padding: '4px 14px' }}
-                  onClick={() =>
-                    setSelectedTypes((prev) =>
-                      prev.includes(t)
-                        ? prev.filter((x) => x !== t)
-                        : [...prev, t],
-                    )
-                  }
-                >
-                  {t}
-                </Button>
-              ))}
-            </div>
-
             {/* Ingredients */}
             <Form.Label>Ingredients</Form.Label>
 
-            <IngredientTags
-              ids={selectedIngredientIds}
+            <IngredientSelector
               options={ingredientOptions}
-              onRemove={(id) =>
-                setSelectedIngredientIds((prev) => prev.filter((x) => x !== id))
-              }
+              selectedIds={selectedIngredientIds}
+              setSelectedIds={setSelectedIngredientIds}
+              search={ingredientSearch}
+              setSearch={setIngredientSearch}
+              creating={creatingIngredient}
+              onCreateIngredient={handleCreateIngredient}
             />
-
-            <Form.Control
-              className='mt-2'
-              placeholder='Search or create ingredient...'
-              value={ingredientSearch}
-              onChange={(e) => setIngredientSearch(e.target.value)}
-            />
-
-            <div
-              style={{
-                marginTop: '10px',
-                border: '1px solid #eee',
-                borderRadius: '12px',
-                maxHeight: '160px',
-                overflowY: 'auto',
-                padding: '8px',
-                background: '#fafafa',
-              }}
-            >
-              {filteredIngredients.length === 0 ? (
-                <Button
-                  size='sm'
-                  variant='outline-success'
-                  disabled={creatingIngredient}
-                  onClick={handleCreateIngredient}
-                >
-                  + Create "{ingredientSearch}"
-                </Button>
-              ) : (
-                filteredIngredients.map((ing) => (
-                  <div
-                    key={ing.id}
-                    onClick={() =>
-                      setSelectedIngredientIds((prev) =>
-                        prev.includes(ing.id)
-                          ? prev.filter((x) => x !== ing.id)
-                          : [...prev, ing.id],
-                      )
-                    }
-                    style={{
-                      padding: '8px 10px',
-                      borderRadius: '10px',
-                      cursor: 'pointer',
-                      background: selectedIngredientIds.includes(ing.id)
-                        ? '#dbeafe'
-                        : 'transparent',
-                      marginBottom: '4px',
-                    }}
-                  >
-                    {ing.name}
-                  </div>
-                ))
-              )}
-            </div>
           </Form>
         </Modal.Body>
 
@@ -556,101 +416,18 @@ export default function Meals() {
               onChange={(e) => setEditMealUrl(e.target.value)}
             />
 
-            {/* Types */}
-            <Form.Label>Meal Types</Form.Label>
-            <div
-              style={{
-                display: 'flex',
-                gap: '10px',
-                flexWrap: 'wrap',
-                marginBottom: '15px',
-              }}
-            >
-              {ALL_TYPES.map((t) => (
-                <Button
-                  key={t}
-                  size='sm'
-                  variant={
-                    editTypes.includes(t) ? 'primary' : 'outline-secondary'
-                  }
-                  style={{ borderRadius: '20px', padding: '4px 14px' }}
-                  onClick={() =>
-                    setEditTypes((prev) =>
-                      prev.includes(t)
-                        ? prev.filter((x) => x !== t)
-                        : [...prev, t],
-                    )
-                  }
-                >
-                  {t}
-                </Button>
-              ))}
-            </div>
-
             {/* Ingredients */}
             <Form.Label>Ingredients</Form.Label>
 
-            <IngredientTags
-              ids={editIngredientIds}
+            <IngredientSelector
               options={ingredientOptions}
-              onRemove={(id) =>
-                setEditIngredientIds((prev) => prev.filter((x) => x !== id))
-              }
+              selectedIds={editIngredientIds}
+              setSelectedIds={setEditIngredientIds}
+              search={editIngredientSearch}
+              setSearch={setEditIngredientSearch}
+              creating={creatingEditIngredient}
+              onCreateIngredient={handleCreateIngredientInEdit}
             />
-
-            <Form.Control
-              className='mt-2'
-              placeholder='Search or create ingredient...'
-              value={editIngredientSearch}
-              onChange={(e) => setEditIngredientSearch(e.target.value)}
-            />
-
-            <div
-              style={{
-                marginTop: '10px',
-                border: '1px solid #eee',
-                borderRadius: '12px',
-                maxHeight: '160px',
-                overflowY: 'auto',
-                padding: '8px',
-                background: '#fafafa',
-              }}
-            >
-              {filteredEditIngredients.length === 0 ? (
-                <Button
-                  size='sm'
-                  variant='outline-success'
-                  disabled={creatingEditIngredient}
-                  onClick={handleCreateIngredientInEdit}
-                >
-                  + Create "{editIngredientSearch}"
-                </Button>
-              ) : (
-                filteredEditIngredients.map((ing) => (
-                  <div
-                    key={ing.id}
-                    onClick={() =>
-                      setEditIngredientIds((prev) =>
-                        prev.includes(ing.id)
-                          ? prev.filter((x) => x !== ing.id)
-                          : [...prev, ing.id],
-                      )
-                    }
-                    style={{
-                      padding: '8px 10px',
-                      borderRadius: '10px',
-                      cursor: 'pointer',
-                      background: editIngredientIds.includes(ing.id)
-                        ? '#dbeafe'
-                        : 'transparent',
-                      marginBottom: '4px',
-                    }}
-                  >
-                    {ing.name}
-                  </div>
-                ))
-              )}
-            </div>
           </Form>
         </Modal.Body>
 
@@ -664,19 +441,13 @@ export default function Meals() {
       {/* ===================================================== */}
       {/* ================= Delete Modal ====================== */}
       {/* ===================================================== */}
-      <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)}>
-        <Modal.Header closeButton>
-          <Modal.Title>Delete Meal</Modal.Title>
-        </Modal.Header>
-
-        <Modal.Body>Are you sure you want to delete this meal?</Modal.Body>
-
-        <Modal.Footer>
-          <Button variant='danger' onClick={handleDeleteMeal}>
-            Delete
-          </Button>
-        </Modal.Footer>
-      </Modal>
+      <ConfirmModal
+        show={!!selectedMeal}
+        title='Delete Meal'
+        message='Are you sure?'
+        onCancel={() => setSelectedMeal(null)}
+        onConfirm={handleDeleteMeal}
+      />
     </div>
   );
 }

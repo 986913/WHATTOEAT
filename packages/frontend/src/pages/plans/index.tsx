@@ -123,7 +123,7 @@ export default function Plans() {
   const grouped = groupPlans(plans);
 
   return (
-    <div className='plans-page'>
+    <div className='page'>
       <h2 className='page-title'>🍱 Plan Dashboard</h2>
 
       {/* Feedback */}

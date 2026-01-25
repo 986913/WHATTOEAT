@@ -10,6 +10,7 @@ import Menus from './pages/menus';
 import Meals from './pages/meals';
 import Plans from './pages/plans';
 import Ingredients from './pages/ingredients';
+import './styles/base.css';
 
 function App() {
   return (

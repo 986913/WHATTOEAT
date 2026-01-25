@@ -183,7 +183,7 @@ export default function Users() {
 
   // ================= Render =================
   return (
-    <div className='users-page'>
+    <div className='page'>
       {/* Header */}
       <div className='page-header'>
         <h3 className='page-title'>Users</h3>
