@@ -445,6 +445,10 @@ export default function Meals() {
 
         <Modal.Body>
           <Form>
+            {editMealName.trim() === '' && (
+              <div className='text-warning small'>Meal name is required</div>
+            )}
+
             <Form.Control
               className='mb-2'
               value={editMealName}
@@ -458,6 +462,9 @@ export default function Meals() {
             />
 
             <Form.Label>Meal Types</Form.Label>
+            {editTypes.length === 0 && (
+              <div className='text-warning small'>Select at least one type</div>
+            )}
             <TypeSelector
               allTypes={ALL_TYPES}
               selected={editTypes}
@@ -465,6 +472,11 @@ export default function Meals() {
             />
 
             <Form.Label>Ingredients</Form.Label>
+            {editIngredientIds.length === 0 && (
+              <div className='text-warning small'>
+                Select at least one ingredient
+              </div>
+            )}
             <IngredientSelector
               options={ingredientOptions}
               selectedIds={editIngredientIds}
