@@ -42,8 +42,38 @@ export default function Meals() {
 
   // Ingredient Options
   const [ingredientOptions, setIngredientOptions] = useState<any[]>([]);
+  const [ingredientSearch, setIngredientSearch] = useState('');
+  const [creatingIngredient, setCreatingIngredient] = useState(false);
   const [selectedIngredientIds, setSelectedIngredientIds] = useState<number[]>(
     [],
+  );
+  const handleCreateIngredient = async () => {
+    if (!ingredientSearch.trim()) return;
+
+    try {
+      setCreatingIngredient(true);
+
+      // 1. POST create ingredient
+      const res = await axios.post('/ingredients', {
+        name: ingredientSearch.trim(),
+      });
+
+      const newIngredient = res.data;
+      // 2. Add into options list
+      setIngredientOptions((prev) => [...prev, newIngredient]);
+      // 3. Auto select it
+      setSelectedIngredientIds((prev) => [...prev, newIngredient.id]);
+      // 4. Clear search
+      setIngredientSearch('');
+    } catch (err) {
+      console.error('Error creating ingredient:', err);
+      alert('创建 ingredient 失败');
+    } finally {
+      setCreatingIngredient(false);
+    }
+  };
+  const filteredIngredients = ingredientOptions.filter((ing) =>
+    ing.name.toLowerCase().includes(ingredientSearch.toLowerCase()),
   );
 
   const ALL_TYPES = ['breakfast', 'lunch', 'dinner', 'snack'];
@@ -113,6 +143,7 @@ export default function Meals() {
       setMealUrl('');
       setSelectedTypes([]);
       setSelectedIngredientIds([]);
+      setIngredientSearch('');
 
       fetchMeals(1);
     } catch (error) {
@@ -338,29 +369,84 @@ export default function Meals() {
             </Form.Group>
 
             {/* Ingredients */}
+            {/* ================= Ingredients Searchable Dropdown ================= */}
+            {/* ================= Ingredients Searchable + Create New ================= */}
             <Form.Group className='mb-3'>
               <Form.Label>Ingredients</Form.Label>
 
-              {ingredientOptions.length === 0 ? (
-                <div style={{ fontSize: '14px', color: '#666' }}>
-                  No ingredients found
+              {/* Search Input */}
+              <Form.Control
+                type='text'
+                placeholder='Search ingredient...'
+                value={ingredientSearch}
+                onChange={(e) => setIngredientSearch(e.target.value)}
+                className='mb-2'
+              />
+
+              {/* Dropdown Box */}
+              <div
+                style={{
+                  border: '1px solid #ddd',
+                  borderRadius: '6px',
+                  maxHeight: '180px',
+                  overflowY: 'auto',
+                  padding: '8px',
+                }}
+              >
+                {/* If no match → show create option */}
+                {filteredIngredients.length === 0 ? (
+                  <div style={{ fontSize: '14px', color: '#666' }}>
+                    <div>No matching ingredients.</div>
+
+                    <Button
+                      size='sm'
+                      variant='outline-success'
+                      style={{ marginTop: '8px' }}
+                      disabled={creatingIngredient}
+                      onClick={handleCreateIngredient}
+                    >
+                      {creatingIngredient
+                        ? 'Creating...'
+                        : `+ Create "${ingredientSearch}"`}
+                    </Button>
+                  </div>
+                ) : (
+                  filteredIngredients.map((ing) => (
+                    <div
+                      key={ing.id}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        padding: '4px 0',
+                      }}
+                    >
+                      <Form.Check
+                        type='checkbox'
+                        checked={selectedIngredientIds.includes(ing.id)}
+                        onChange={(e) =>
+                          setSelectedIngredientIds((prev) =>
+                            e.target.checked
+                              ? [...prev, ing.id]
+                              : prev.filter((x) => x !== ing.id),
+                          )
+                        }
+                      />
+                      <span>{ing.name}</span>
+                    </div>
+                  ))
+                )}
+              </div>
+
+              {/* Selected Preview */}
+              {selectedIngredientIds.length > 0 && (
+                <div style={{ marginTop: '8px', fontSize: '14px' }}>
+                  <strong>Selected:</strong>{' '}
+                  {ingredientOptions
+                    .filter((ing) => selectedIngredientIds.includes(ing.id))
+                    .map((ing) => ing.name)
+                    .join(', ')}
                 </div>
-              ) : (
-                ingredientOptions.map((ing) => (
-                  <Form.Check
-                    key={ing.id}
-                    type='checkbox'
-                    label={ing.name}
-                    checked={selectedIngredientIds.includes(ing.id)}
-                    onChange={(e) =>
-                      setSelectedIngredientIds((prev) =>
-                        e.target.checked
-                          ? [...prev, ing.id]
-                          : prev.filter((x) => x !== ing.id),
-                      )
-                    }
-                  />
-                ))
               )}
             </Form.Group>
           </Form>

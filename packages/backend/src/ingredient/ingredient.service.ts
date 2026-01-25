@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { IngredientEntity } from './entities/ingredient.entity';
+import { CreateIngredientDTO } from './dto/create-ingredient.dto';
 
 @Injectable()
 export class IngredientService {
@@ -12,5 +13,10 @@ export class IngredientService {
 
   findAll() {
     return this.ingredientRepo.find();
+  }
+
+  async create(dto: CreateIngredientDTO) {
+    const ingredient = this.ingredientRepo.create(dto);
+    return this.ingredientRepo.save(ingredient);
   }
 }

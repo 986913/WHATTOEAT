@@ -1,6 +1,8 @@
 import {
   Controller,
   Get,
+  Post,
+  Body,
   Inject,
   LoggerService,
   UseFilters,
@@ -8,6 +10,7 @@ import {
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { TypeormFilter } from 'src/filters/typeorm.filter';
 import { IngredientService } from './ingredient.service';
+import { CreateIngredientDTO } from './dto/create-ingredient.dto';
 
 @Controller('ingredients')
 @UseFilters(new TypeormFilter())
@@ -23,5 +26,10 @@ export class IngredientController {
   @Get()
   getAll() {
     return this.ingredientService.findAll();
+  }
+
+  @Post()
+  create(@Body() dto: CreateIngredientDTO) {
+    return this.ingredientService.create(dto);
   }
 }
