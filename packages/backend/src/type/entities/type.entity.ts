@@ -7,7 +7,7 @@ import {
   OneToMany,
 } from 'typeorm';
 import { PlanEntity } from '../../plan/entities/plan.entity';
-import { MealEntity } from './meal.entity';
+import { MealEntity } from '../../meal/entities/meal.entity';
 
 export enum MealType {
   BREAKFAST = 'breakfast',

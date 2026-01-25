@@ -3,7 +3,7 @@ import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { PlanEntity } from './entities/plan.entity';
 import { MealEntity } from 'src/meal/entities/meal.entity';
-import { TypeEntity } from 'src/meal/entities/type.entity';
+import { TypeEntity } from 'src/type/entities/type.entity';
 import { CreatePlanDTO } from './dto/create-plan.dto';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
 import { UserEntity } from 'src/user/entities/user.entity';

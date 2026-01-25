@@ -7,9 +7,9 @@ import {
   JoinColumn,
   OneToMany,
 } from 'typeorm';
-import { TypeEntity } from './type.entity';
+import { TypeEntity } from '../../type/entities/type.entity';
 import { UserEntity } from 'src/user/entities/user.entity';
-import { IngredientEntity } from './ingredient.entity';
+import { IngredientEntity } from 'src/ingredient/entities/ingredient.entity';
 import { PlanEntity } from '../../plan/entities/plan.entity';
 
 //@Entity(meals)装饰器告诉 TypeORM：这是一个数据库的表, 表名为meals

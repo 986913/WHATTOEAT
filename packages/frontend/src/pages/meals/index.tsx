@@ -9,46 +9,56 @@ import { Modal, Button, Form } from 'react-bootstrap';
 const DEFAULT_LIMIT = 10;
 
 export default function Meals() {
-  // ===== Filters =====
+  // ================= Filters =================
   const [typeInputVal, setTypeInputVal] = useState<string | undefined>(
     undefined,
   );
 
-  // ===== Data =====
+  // ================= Data =================
   const [meals, setMeals] = useState<any[]>([]);
 
-  // ===== Pagination =====
+  // ================= Pagination =================
   const [currentPage, setCurrentPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
   const [limit] = useState(DEFAULT_LIMIT);
 
-  // ===== Derived state =====
+  const totalPages = Math.ceil(totalCount / limit);
+
+  // ================= Derived =================
   const isFilterDirty = Boolean(typeInputVal);
 
-  // ===== Create Modal =====
+  // ================= Create Modal =================
   const [showModal, setShowModal] = useState(false);
 
-  // ===== Delete Modal =====
+  // ================= Delete Modal =================
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedMeal, setSelectedMeal] = useState<any>(null);
 
-  // ===== Create Form =====
+  // ================= Create Form =================
   const [mealName, setMealName] = useState('');
   const [mealUrl, setMealUrl] = useState('');
+
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
-  const [ingredientsInput, setIngredientsInput] = useState('');
+
+  // Ingredient Options
+  const [ingredientOptions, setIngredientOptions] = useState<any[]>([]);
+  const [selectedIngredientIds, setSelectedIngredientIds] = useState<number[]>(
+    [],
+  );
 
   const ALL_TYPES = ['breakfast', 'lunch', 'dinner', 'snack'];
 
-  // ===== Fetch Meals =====
+  // ================= Fetch Meals =================
   const fetchMeals = async (page: number, type?: string) => {
     const params: any = { page, limit };
     if (type !== undefined) params.type = type;
 
     try {
       const res = await axios.get('/meals', { params });
+
       const data = res.data.meals || [];
       setMeals(data);
+
       setTotalCount(res.data.mealsTotalCount || data.length);
       setCurrentPage(res.data.currPage || page);
     } catch (error) {
@@ -58,38 +68,52 @@ export default function Meals() {
     }
   };
 
+  // ================= Fetch Ingredients =================
+  const fetchIngredients = async () => {
+    try {
+      const res = await axios.get('/ingredients');
+      setIngredientOptions(res.data || []);
+    } catch (err) {
+      console.error('Error fetching ingredients:', err);
+      setIngredientOptions([]);
+    }
+  };
+
+  // Initial load meals
   useEffect(() => {
     fetchMeals(currentPage, typeInputVal);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage]);
 
-  const totalPages = Math.ceil(totalCount / limit);
+  // Initial load ingredients
+  useEffect(() => {
+    fetchIngredients();
+  }, []);
 
+  // ================= Clear Filters =================
   const clearAllFilters = async () => {
     setTypeInputVal(undefined);
     setCurrentPage(1);
     await fetchMeals(1);
   };
 
-  // ===== Create Meal =====
+  // ================= Create Meal =================
   const handleCreateMeal = async () => {
-    const ingredients = ingredientsInput
-      .split(',')
-      .map((i) => i.trim())
-      .filter(Boolean);
-
     try {
       await axios.post('/meals', {
         name: mealName,
         url: mealUrl,
         types: selectedTypes,
-        ingredients,
+        ingredientIds: selectedIngredientIds, // ✅正确字段
       });
+
+      // reset
       setShowModal(false);
       setMealName('');
       setMealUrl('');
       setSelectedTypes([]);
-      setIngredientsInput('');
+      setSelectedIngredientIds([]);
+
       fetchMeals(1);
     } catch (error) {
       console.error('Error creating meal:', error);
@@ -97,7 +121,7 @@ export default function Meals() {
     }
   };
 
-  // ===== Delete Meal =====
+  // ================= Delete Meal =================
   const openDeleteModal = (meal: any) => {
     setSelectedMeal(meal);
     setShowDeleteModal(true);
@@ -105,6 +129,7 @@ export default function Meals() {
 
   const handleDeleteMeal = async () => {
     if (!selectedMeal) return;
+
     try {
       await axios.delete(`/meals/${selectedMeal.id}`);
       setShowDeleteModal(false);
@@ -117,6 +142,7 @@ export default function Meals() {
 
   return (
     <div className='meals-page'>
+      {/* ================= Header ================= */}
       <div
         className='page-header'
         style={{
@@ -126,6 +152,7 @@ export default function Meals() {
         }}
       >
         <h3 className='page-title'>Meals</h3>
+
         <Button variant='success' onClick={() => setShowModal(true)}>
           + Create Meal
         </Button>
@@ -144,6 +171,7 @@ export default function Meals() {
             }}
           >
             <option value=''>All Types</option>
+
             {ALL_TYPES.map((t) => (
               <option key={t} value={t}>
                 {t.charAt(0).toUpperCase() + t.slice(1)}
@@ -181,6 +209,7 @@ export default function Meals() {
             <th>Action</th>
           </tr>
         </thead>
+
         <tbody>
           {meals.length === 0 ? (
             <tr>
@@ -192,7 +221,9 @@ export default function Meals() {
             meals.map((meal, index) => (
               <tr key={meal.id}>
                 <td>{(currentPage - 1) * limit + index + 1}</td>
+
                 <td>{meal.name}</td>
+
                 <td>
                   {meal.url ? (
                     <a href={meal.url} target='_blank' rel='noreferrer'>
@@ -202,9 +233,15 @@ export default function Meals() {
                     '-'
                   )}
                 </td>
+
                 <td>{meal.types?.map((t: any) => t.name).join(', ')}</td>
+
                 <td>{meal.user?.username ?? '-'}</td>
-                <td>{meal.ingredients?.map((i: any) => i.name).join(', ')}</td>
+
+                <td>
+                  {meal.ingredients?.map((i: any) => i.name).join(', ') || '-'}
+                </td>
+
                 <td>
                   <Button variant='primary' size='sm' disabled>
                     Edit
@@ -230,6 +267,7 @@ export default function Meals() {
             disabled={currentPage === 1}
             onClick={() => setCurrentPage((p) => p - 1)}
           />
+
           {Array.from({ length: totalPages }).map((_, i) => {
             const page = i + 1;
             return (
@@ -242,6 +280,7 @@ export default function Meals() {
               </Pagination.Item>
             );
           })}
+
           <Pagination.Next
             disabled={currentPage === totalPages}
             onClick={() => setCurrentPage((p) => p + 1)}
@@ -254,8 +293,10 @@ export default function Meals() {
         <Modal.Header closeButton>
           <Modal.Title>Create Meal</Modal.Title>
         </Modal.Header>
+
         <Modal.Body>
           <Form>
+            {/* Meal Name */}
             <Form.Group className='mb-3'>
               <Form.Label>Meal Name</Form.Label>
               <Form.Control
@@ -264,6 +305,8 @@ export default function Meals() {
                 onChange={(e) => setMealName(e.target.value)}
               />
             </Form.Group>
+
+            {/* Meal URL */}
             <Form.Group className='mb-3'>
               <Form.Label>Meal URL</Form.Label>
               <Form.Control
@@ -272,13 +315,16 @@ export default function Meals() {
                 onChange={(e) => setMealUrl(e.target.value)}
               />
             </Form.Group>
+
+            {/* Meal Types */}
             <Form.Group className='mb-3'>
               <Form.Label>Meal Types</Form.Label>
+
               {ALL_TYPES.map((t) => (
                 <Form.Check
                   key={t}
                   type='checkbox'
-                  label={t.charAt(0).toUpperCase() + t.slice(1)}
+                  label={t}
                   checked={selectedTypes.includes(t)}
                   onChange={(e) =>
                     setSelectedTypes((prev) =>
@@ -290,21 +336,41 @@ export default function Meals() {
                 />
               ))}
             </Form.Group>
+
+            {/* Ingredients */}
             <Form.Group className='mb-3'>
-              <Form.Label>Ingredients (comma separated)</Form.Label>
-              <Form.Control
-                type='text'
-                value={ingredientsInput}
-                onChange={(e) => setIngredientsInput(e.target.value)}
-                placeholder='e.g. egg, tomato, cheese'
-              />
+              <Form.Label>Ingredients</Form.Label>
+
+              {ingredientOptions.length === 0 ? (
+                <div style={{ fontSize: '14px', color: '#666' }}>
+                  No ingredients found
+                </div>
+              ) : (
+                ingredientOptions.map((ing) => (
+                  <Form.Check
+                    key={ing.id}
+                    type='checkbox'
+                    label={ing.name}
+                    checked={selectedIngredientIds.includes(ing.id)}
+                    onChange={(e) =>
+                      setSelectedIngredientIds((prev) =>
+                        e.target.checked
+                          ? [...prev, ing.id]
+                          : prev.filter((x) => x !== ing.id),
+                      )
+                    }
+                  />
+                ))
+              )}
             </Form.Group>
           </Form>
         </Modal.Body>
+
         <Modal.Footer>
           <Button variant='secondary' onClick={() => setShowModal(false)}>
             Cancel
           </Button>
+
           <Button variant='success' onClick={handleCreateMeal}>
             Create!
           </Button>
@@ -316,11 +382,14 @@ export default function Meals() {
         <Modal.Header closeButton>
           <Modal.Title>Delete Meal</Modal.Title>
         </Modal.Header>
+
         <Modal.Body>Are you sure you want to delete this meal?</Modal.Body>
+
         <Modal.Footer>
           <Button variant='secondary' onClick={() => setShowDeleteModal(false)}>
             Cancel
           </Button>
+
           <Button variant='danger' onClick={handleDeleteMeal}>
             Delete
           </Button>

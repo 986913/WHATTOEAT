@@ -1,10 +1,10 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { PlanEntity } from './entities/plan.entity';
-import { TypeEntity } from 'src/meal/entities/type.entity';
+import { TypeEntity } from 'src/type/entities/type.entity';
 import { MealEntity } from 'src/meal/entities/meal.entity';
 import { UserEntity } from 'src/user/entities/user.entity';
-import { IngredientEntity } from 'src/meal/entities/ingredient.entity';
+import { IngredientEntity } from 'src/ingredient/entities/ingredient.entity';
 import { PlanController } from './plan.controller';
 import { PlanService } from './plan.service';
 

@@ -6,7 +6,7 @@ import {
   JoinColumn,
   Index,
 } from 'typeorm';
-import { TypeEntity } from '../../meal/entities/type.entity';
+import { TypeEntity } from '../../type/entities/type.entity';
 import { MealEntity } from '../../meal/entities/meal.entity';
 import { UserEntity } from 'src/user/entities/user.entity';
 

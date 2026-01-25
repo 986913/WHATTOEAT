@@ -12,9 +12,10 @@ import { ProfileEntity } from './user/entities/profile.entity';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { MealEntity } from './meal/entities/meal.entity';
-import { TypeEntity } from './meal/entities/type.entity';
-import { IngredientEntity } from './meal/entities/ingredient.entity';
+import { TypeEntity } from './type/entities/type.entity';
+import { IngredientEntity } from './ingredient/entities/ingredient.entity';
 import { PlanEntity } from './plan/entities/plan.entity';
+import { IngredientModule } from './ingredient/ingredient.module';
 
 @Module({
   imports: [
@@ -63,6 +64,7 @@ import { PlanEntity } from './plan/entities/plan.entity';
     }),
     UserModule,
     MealModule,
+    IngredientModule,
     PlanModule,
     LogModule, // 引入 LogModule 来注册 Winston logger(单例)
   ],

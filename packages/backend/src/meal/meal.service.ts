@@ -1,9 +1,9 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { Repository } from 'typeorm';
+import { Repository, In } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { MealEntity } from './entities/meal.entity';
-import { TypeEntity } from './entities/type.entity';
-import { IngredientEntity } from './entities/ingredient.entity';
+import { TypeEntity } from 'src/type/entities/type.entity';
+import { IngredientEntity } from 'src/ingredient/entities/ingredient.entity';
 import { GetMealsDTO } from './dto/get-meals.dto';
 import { CreateMealDTO } from './dto/create-meal.dto';
 
@@ -76,51 +76,29 @@ export class MealService {
 
     return queryBuilder.getMany();
   }
-  async create(meal: CreateMealDTO) {
-    const { name, url, types, ingredients } = meal;
 
-    // ===== 1. 处理 types =====
-    const typeEntities: TypeEntity[] = [];
-    for (const typeName of types) {
-      let type = await this.typeRepo.findOne({
-        where: { name: typeName },
-      });
+  async create(dto: CreateMealDTO) {
+    const { name, url, types, ingredientIds } = dto;
 
-      if (!type) {
-        type = this.typeRepo.create({ name: typeName });
-        await this.typeRepo.save(type);
-      }
-      typeEntities.push(type);
-    }
+    // 1. Types enum → entity
+    const typeEntities = await this.typeRepo.find({
+      where: types.map((t) => ({ name: t })),
+    });
 
-    // ===== 2. 处理 ingredients =====
-    const ingredientEntities: IngredientEntity[] = [];
-    for (const ingName of ingredients) {
-      const normalized = ingName.trim().replace(/\s+/g, ' ').toLowerCase();
-      // 查找数据库里有没有对应的 ingredient（用 LOWER() 比较大小写）
-      let ingredient = await this.ingredientRepo
-        .createQueryBuilder('ingredients')
-        .where('LOWER(ingredients.name) = :name', { name: normalized })
-        .getOne();
+    // 2. Ingredient ids → entity
+    const ingredientEntities = await this.ingredientRepo.findBy({
+      id: In(ingredientIds),
+    });
 
-      if (!ingredient) {
-        ingredient = this.ingredientRepo.create({ name: ingName }); // 保留原始大小写存入数据库
-        await this.ingredientRepo.save(ingredient);
-      }
-      ingredientEntities.push(ingredient);
-    }
-
-    // ===== 3. 创建 Meal =====
-    const newMeal = this.mealRepo.create({
+    // 3. Create Meal
+    const meal = this.mealRepo.create({
       name,
       url,
       types: typeEntities,
       ingredients: ingredientEntities,
-      // 暂时不关心谁创造的meal，可以先不设置 user
-      // user: someUserEntity,
     });
 
-    return await this.mealRepo.save(newMeal);
+    return this.mealRepo.save(meal);
   }
 
   async remove(mealId: number) {
