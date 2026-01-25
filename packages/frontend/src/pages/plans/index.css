@@ -1,0 +1,69 @@
+.plans-page {
+  max-width: 1200px;
+  margin: 30px auto;
+}
+
+.page-title {
+  margin-bottom: 20px;
+  font-weight: bold;
+}
+
+/* Layout */
+.plans-layout {
+  display: flex;
+  gap: 20px;
+  height: 85vh;
+}
+
+/* Left Table Panel */
+.plans-left {
+  flex: 2;
+  border: 1px solid #ddd;
+  padding: 15px;
+  border-radius: 12px;
+  overflow-y: auto;
+}
+
+/* Right Tools Panel */
+.plans-right {
+  flex: 1;
+  border: 1px solid #ddd;
+  padding: 15px;
+  border-radius: 12px;
+  overflow-y: auto;
+}
+
+/* Table Empty */
+.table-empty {
+  text-align: center;
+  padding: 20px;
+  color: gray;
+  font-style: italic;
+}
+
+/* Loading */
+.loading-box {
+  margin-top: 15px;
+}
+
+/* Debug */
+.debug-box {
+  margin-top: 25px;
+}
+
+.debug-day {
+  border-bottom: 1px solid #eee;
+  padding: 10px 0;
+}
+
+.missing {
+  color: red;
+}
+
+.duplicate {
+  color: orange;
+}
+
+.ok {
+  color: green;
+}

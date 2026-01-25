@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import './index.css';
+import { useEffect, useState } from 'react';
 import axios from '../../utils/axios';
-import { Form, Button, Alert, Spinner } from 'react-bootstrap';
+import { Form, Button, Alert, Spinner, Table, Modal } from 'react-bootstrap';
 
 /** Helper: group plans by date + type */
 function groupPlans(plans: any[]) {
@@ -26,6 +27,9 @@ export default function Plans() {
   const [date, setDate] = useState('');
   const [typeId, setTypeId] = useState('1');
   const [mealId, setMealId] = useState('');
+
+  // Modal state
+  const [showModal, setShowModal] = useState(false);
 
   // dropdown meals
   const [meals, setMeals] = useState<any[]>([]);
@@ -86,8 +90,7 @@ export default function Plans() {
   // =========================
   // Submit create plan
   // =========================
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async () => {
     setSuccess('');
     setError('');
 
@@ -105,6 +108,7 @@ export default function Plans() {
       });
 
       setSuccess('✅ Plan created successfully!');
+      setShowModal(false);
 
       // refresh plans immediately
       fetchPlans();
@@ -114,128 +118,181 @@ export default function Plans() {
   };
 
   // =========================
-  // Debug grouped view
+  // Grouped debug view
   // =========================
   const grouped = groupPlans(plans);
 
   return (
-    <div style={{ maxWidth: 900, margin: '40px auto' }}>
-      <h2>Create Plan + Restriction Debug UI</h2>
+    <div className='plans-page'>
+      <h2 className='page-title'>🍱 Plan Dashboard</h2>
 
       {/* Feedback */}
       {success && <Alert variant='success'>{success}</Alert>}
       {error && <Alert variant='danger'>{error}</Alert>}
 
-      {/* =========================
-          Create Form
-      ========================= */}
-      <Form onSubmit={handleSubmit} style={{ marginBottom: 40 }}>
-        {/* Date */}
-        <Form.Group className='mb-3'>
-          <Form.Label>Date</Form.Label>
-          <Form.Control
-            type='date'
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-            required
-          />
-        </Form.Group>
+      <div className='plans-layout'>
+        {/* ================= LEFT: Plans Table ================= */}
+        <div className='plans-left'>
+          <h3>📋 All Plans</h3>
 
-        {/* Type */}
-        <Form.Group className='mb-3'>
-          <Form.Label>Meal Type</Form.Label>
-          <Form.Select
-            value={typeId}
-            onChange={(e) => setTypeId(e.target.value)}
-          >
-            <option value='1'>Breakfast</option>
-            <option value='2'>Lunch</option>
-            <option value='3'>Dinner</option>
-            <option value='4'>Snack</option>
-          </Form.Select>
-        </Form.Group>
-
-        {/* Meal */}
-        <Form.Group className='mb-3'>
-          <Form.Label>Meal</Form.Label>
-
-          {loadingMeals ? (
-            <div>
-              <Spinner animation='border' size='sm' /> Loading meals...
+          {loadingPlans ? (
+            <div className='loading-box'>
+              <Spinner animation='border' size='sm' /> Loading plans...
             </div>
           ) : (
-            <Form.Select
-              value={mealId}
-              onChange={(e) => setMealId(e.target.value)}
-            >
-              <option value=''>-- Select Meal --</option>
-              {meals.map((m) => (
-                <option key={m.id} value={m.id}>
-                  {m.name}
-                </option>
-              ))}
-            </Form.Select>
+            <Table striped bordered hover className='plans-table'>
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Type</th>
+                  <th>Meal</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {plans.length === 0 ? (
+                  <tr>
+                    <td colSpan={4} className='table-empty'>
+                      No Plans Found
+                    </td>
+                  </tr>
+                ) : (
+                  plans.map((plan) => (
+                    <tr key={plan.id}>
+                      <td>{plan.date}</td>
+                      <td>{plan.type?.name ?? '-'}</td>
+                      <td>{plan.meal?.name ?? '-'}</td>
+
+                      <td>
+                        <Button size='sm' disabled>
+                          Edit
+                        </Button>{' '}
+                        <Button size='sm' variant='danger' disabled>
+                          Delete
+                        </Button>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </Table>
           )}
-        </Form.Group>
-
-        <Button type='submit'>Create Plan</Button>
-      </Form>
-
-      {/* =========================
-          Restriction Debug View
-      ========================= */}
-      <h3>Restriction Debug View</h3>
-
-      {loadingPlans ? (
-        <div style={{ marginTop: 20 }}>
-          <Spinner animation='border' size='sm' /> Loading plans...
         </div>
-      ) : plans.length === 0 ? (
-        <p>No plans found.</p>
-      ) : (
-        Object.entries(grouped).map(([date, types]: any) => (
-          <div
-            key={date}
-            style={{
-              border: '1px solid #ddd',
-              padding: '15px',
-              marginBottom: '20px',
-              borderRadius: '12px',
-            }}
-          >
-            <h5>{date}</h5>
 
-            {['breakfast', 'lunch', 'dinner'].map((mealType) => {
-              const items = types[mealType] || [];
+        {/* ================= RIGHT: Create + Debug ================= */}
+        <div className='plans-right'>
+          <h3>⚙️ Plan Tools</h3>
 
-              // ❌ Missing
-              if (items.length === 0) {
-                return (
-                  <p key={mealType} style={{ color: 'red' }}>
-                    ❌ {mealType.toUpperCase()}: Missing
-                  </p>
-                );
-              }
+          {/* Create Plan Button */}
+          <Button variant='success' onClick={() => setShowModal(true)}>
+            + Create Plan
+          </Button>
 
-              // ⚠️ Duplicate
-              if (items.length > 1) {
-                return (
-                  <p key={mealType} style={{ color: 'orange' }}>
-                    ⚠️ {mealType.toUpperCase()}: Duplicate ({items.length})
-                  </p>
-                );
-              }
+          {/* ================= Modal ================= */}
+          <Modal show={showModal} onHide={() => setShowModal(false)}>
+            <Modal.Header closeButton>
+              <Modal.Title>Create Plan</Modal.Title>
+            </Modal.Header>
 
-              // ✅ Normal
-              return (
-                <p key={mealType} style={{ color: 'green' }}>
-                  ✅ {mealType.toUpperCase()}: {items[0].meal?.name}
-                </p>
-              );
-            })}
+            <Modal.Body>
+              <Form>
+                {/* Date */}
+                <Form.Group className='mb-3'>
+                  <Form.Label>Date</Form.Label>
+                  <Form.Control
+                    type='date'
+                    value={date}
+                    onChange={(e) => setDate(e.target.value)}
+                  />
+                </Form.Group>
+
+                {/* Type */}
+                <Form.Group className='mb-3'>
+                  <Form.Label>Meal Type</Form.Label>
+                  <Form.Select
+                    value={typeId}
+                    onChange={(e) => setTypeId(e.target.value)}
+                  >
+                    <option value='1'>Breakfast</option>
+                    <option value='2'>Lunch</option>
+                    <option value='3'>Dinner</option>
+                  </Form.Select>
+                </Form.Group>
+
+                {/* Meal */}
+                <Form.Group className='mb-3'>
+                  <Form.Label>Meal</Form.Label>
+
+                  {loadingMeals ? (
+                    <div>
+                      <Spinner animation='border' size='sm' /> Loading meals...
+                    </div>
+                  ) : (
+                    <Form.Select
+                      value={mealId}
+                      onChange={(e) => setMealId(e.target.value)}
+                    >
+                      <option value=''>-- Select Meal --</option>
+                      {meals.map((m) => (
+                        <option key={m.id} value={m.id}>
+                          {m.name}
+                        </option>
+                      ))}
+                    </Form.Select>
+                  )}
+                </Form.Group>
+              </Form>
+            </Modal.Body>
+
+            <Modal.Footer>
+              <Button variant='secondary' onClick={() => setShowModal(false)}>
+                Cancel
+              </Button>
+              <Button variant='success' onClick={handleSubmit}>
+                Create!
+              </Button>
+            </Modal.Footer>
+          </Modal>
+
+          {/* ================= Restriction Debug View ================= */}
+          <div className='debug-box'>
+            <h4>Restriction Debug</h4>
+
+            {Object.entries(grouped).map(([date, types]: any) => (
+              <div key={date} className='debug-day'>
+                <strong>{date}</strong>
+
+                {['breakfast', 'lunch', 'dinner'].map((mealType) => {
+                  const items = types[mealType] || [];
+
+                  if (items.length === 0) {
+                    return (
+                      <p key={mealType} className='missing'>
+                        ❌ {mealType.toUpperCase()} Missing
+                      </p>
+                    );
+                  }
+
+                  if (items.length > 1) {
+                    return (
+                      <p key={mealType} className='duplicate'>
+                        ⚠️ {mealType.toUpperCase()} Duplicate
+                      </p>
+                    );
+                  }
+
+                  return (
+                    <p key={mealType} className='ok'>
+                      ✅ {mealType.toUpperCase()}: {items[0].meal?.name}
+                    </p>
+                  );
+                })}
+              </div>
+            ))}
           </div>
-        ))
-      )}
+        </div>
+      </div>
     </div>
   );
 }

@@ -28,6 +28,12 @@ export class PlanService {
         user: true,
         meal: true,
       },
+      order: {
+        date: 'DESC',
+        type: {
+          id: 'ASC',
+        },
+      },
     });
   }
 
