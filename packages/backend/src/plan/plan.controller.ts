@@ -6,6 +6,8 @@ import {
   Body,
   Post,
   Get,
+  Delete,
+  Param,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
@@ -37,5 +39,12 @@ export class PlanController {
   addPlan(@Body() dto: CreatePlanDTO): any {
     this.logger.log('Adding a new plan');
     return this.planService.create(dto);
+  }
+
+  @Delete('/:id')
+  // (通过 PathPara 删除一个plan) -- http://localhost:3001/api/v1/plans/[1]
+  deleteUser(@Param('id') planId: number): any {
+    this.logger.log(`Deleting plan with ID: ${planId}`);
+    return this.planService.remove(planId);
   }
 }

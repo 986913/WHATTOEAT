@@ -1,7 +1,12 @@
 import './index.css';
 import { useEffect, useState } from 'react';
 import axios from '../../utils/axios';
-import { Form, Button, Alert, Spinner, Table, Modal } from 'react-bootstrap';
+
+import ConfirmModal from '../../components/ConfirmModal';
+import AppToast from '../../components/AppToast';
+import { useToast } from '../../hooks/useToast';
+
+import { Form, Button, Spinner, Table, Modal } from 'react-bootstrap';
 
 /** Helper: group plans by date + type */
 function groupPlans(plans: any[]) {
@@ -21,6 +26,8 @@ function groupPlans(plans: any[]) {
 }
 
 export default function Plans() {
+  const { toast, notify } = useToast();
+
   // =========================
   // Form state
   // =========================
@@ -39,9 +46,8 @@ export default function Plans() {
   const [plans, setPlans] = useState<any[]>([]);
   const [loadingPlans, setLoadingPlans] = useState(false);
 
-  // feedback
-  const [success, setSuccess] = useState('');
-  const [error, setError] = useState('');
+  // Delete state
+  const [selectedPlan, setSelectedPlan] = useState<any>(null);
 
   // =========================
   // Fetch meal options by type
@@ -50,14 +56,13 @@ export default function Plans() {
     async function fetchMeals() {
       setLoadingMeals(true);
       setMealId('');
-      setError('');
 
       try {
         const res = await axios.get(`/meals/options?typeId=${typeId}`);
         setMeals(Array.isArray(res.data) ? res.data : []);
-      } catch (err) {
+      } catch {
         setMeals([]);
-        setError('❌ Failed to load meal options');
+        notify('Failed to load meal options ❌', 'danger');
       }
 
       setLoadingMeals(false);
@@ -75,27 +80,23 @@ export default function Plans() {
     try {
       const res = await axios.get('/plans');
       setPlans(Array.isArray(res.data) ? res.data : []);
-    } catch (err) {
-      setError('❌ Failed to load plans');
+    } catch {
+      notify('Failed to load plans ❌', 'danger');
     }
 
     setLoadingPlans(false);
   };
 
-  // load plans on mount
   useEffect(() => {
     fetchPlans();
   }, []);
 
   // =========================
-  // Submit create plan
+  // Create Plan
   // =========================
   const handleSubmit = async () => {
-    setSuccess('');
-    setError('');
-
     if (!mealId) {
-      setError('❌ Please select a meal');
+      notify('Please select a meal ❌', 'danger');
       return;
     }
 
@@ -107,28 +108,41 @@ export default function Plans() {
         userId: 1,
       });
 
-      setSuccess('✅ Plan created successfully!');
+      notify('Plan created successfully ✅', 'success');
       setShowModal(false);
 
-      // refresh plans immediately
       fetchPlans();
-    } catch (err) {
-      setError('❌ Failed to create plan (restriction violation?)');
+    } catch {
+      notify('Failed to create plan ❌', 'danger');
     }
   };
 
   // =========================
-  // Grouped debug view
+  // Delete Plan
+  // =========================
+  const handleDeletePlan = async () => {
+    if (!selectedPlan) return;
+
+    try {
+      await axios.delete(`/plans/${selectedPlan.id}`);
+
+      notify('Plan deleted successfully 🗑️', 'success');
+      setSelectedPlan(null);
+
+      fetchPlans();
+    } catch {
+      notify('Failed to delete plan ❌', 'danger');
+    }
+  };
+
+  // =========================
+  // Debug grouped view
   // =========================
   const grouped = groupPlans(plans);
 
   return (
     <div className='page'>
-      <h2 className='page-title'> Plans </h2>
-
-      {/* Feedback */}
-      {success && <Alert variant='success'>{success}</Alert>}
-      {error && <Alert variant='danger'>{error}</Alert>}
+      <h2 className='page-title'>Plans</h2>
 
       <div className='plans-layout'>
         {/* ================= LEFT: Plans Table ================= */}
@@ -168,7 +182,11 @@ export default function Plans() {
                         <Button size='sm' disabled>
                           Edit
                         </Button>{' '}
-                        <Button size='sm' variant='danger' disabled>
+                        <Button
+                          size='sm'
+                          variant='danger'
+                          onClick={() => setSelectedPlan(plan)}
+                        >
                           Delete
                         </Button>
                       </td>
@@ -180,16 +198,15 @@ export default function Plans() {
           )}
         </div>
 
-        {/* ================= RIGHT: Create + Debug ================= */}
+        {/* ================= RIGHT: Tools ================= */}
         <div className='plans-right'>
           <h3>⚙️ Plan Tools</h3>
 
-          {/* Create Plan Button */}
           <Button variant='success' onClick={() => setShowModal(true)}>
             + Create Plan
           </Button>
 
-          {/* ================= Modal ================= */}
+          {/* ================= Create Modal ================= */}
           <Modal show={showModal} onHide={() => setShowModal(false)}>
             <Modal.Header closeButton>
               <Modal.Title>Create Plan</Modal.Title>
@@ -250,12 +267,12 @@ export default function Plans() {
                 Cancel
               </Button>
               <Button variant='success' onClick={handleSubmit}>
-                Create!
+                Create
               </Button>
             </Modal.Footer>
           </Modal>
 
-          {/* ================= Restriction Debug View ================= */}
+          {/* ================= Restriction Debug ================= */}
           <div className='debug-box'>
             <h4>Restriction Debug</h4>
 
@@ -293,6 +310,23 @@ export default function Plans() {
           </div>
         </div>
       </div>
+
+      {/* ================= Delete Confirm ================= */}
+      <ConfirmModal
+        show={!!selectedPlan}
+        title='Delete Plan'
+        message='Are you sure you want to delete this plan?'
+        onCancel={() => setSelectedPlan(null)}
+        onConfirm={handleDeletePlan}
+      />
+
+      {/* ================= Toast Notification ================= */}
+      <AppToast
+        show={toast.show}
+        message={toast.message}
+        variant={toast.variant}
+        onClose={toast.close}
+      />
     </div>
   );
 }

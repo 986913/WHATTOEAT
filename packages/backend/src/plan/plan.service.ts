@@ -21,6 +21,20 @@ export class PlanService {
     private userRepo: Repository<UserEntity>,
   ) {}
 
+  private async ensurePlanExists(planId: number): Promise<PlanEntity> {
+    const exists = await this.findById(planId);
+    if (!exists) {
+      throw new NotFoundException(`Plan with ${planId} 不存在`);
+    }
+    return exists;
+  }
+
+  findById(planId: number) {
+    return this.planRepo.findOne({
+      where: { id: planId },
+    });
+  }
+
   findAll() {
     return this.planRepo.find({
       relations: {
@@ -85,5 +99,11 @@ export class PlanService {
     });
 
     return this.planRepo.save(newPlan);
+  }
+
+  async remove(planId: number) {
+    const foundPlan = await this.ensurePlanExists(planId);
+    // 使用 remove 方法（而不是 delete）以触发 TypeORM 的级联逻辑
+    return this.planRepo.remove(foundPlan);
   }
 }
