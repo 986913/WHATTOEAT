@@ -33,7 +33,9 @@ export class PlanEntity {
       第一个参数： 告诉 TypeORM, 关联的是哪个实体（这里是 MealEntity)
       第二个参数： 告诉 TypeORM, MealEntity 实体中是通过哪个字段反向关联回来的 (这里是 MealEntity 里定义的plans字段）
    */
-  @ManyToOne(() => MealEntity, (meal) => meal.plans)
+  @ManyToOne(() => MealEntity, (meal) => meal.plans, {
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'meal_id' }) // 👈 在当前表plans中添加外键字段(meal_id)，指向meals表的主键, 多对一关系
   meal: MealEntity;
 

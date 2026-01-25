@@ -171,6 +171,55 @@ export default function Meals() {
     }
   };
 
+  // ===== Edit Modal =====
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingMeal, setEditingMeal] = useState<any>(null);
+
+  // Edit form state
+  const [editMealName, setEditMealName] = useState('');
+  const [editMealUrl, setEditMealUrl] = useState('');
+  const [editTypes, setEditTypes] = useState<string[]>([]);
+  const [editIngredientIds, setEditIngredientIds] = useState<number[]>([]);
+  const [editIngredientSearch, setEditIngredientSearch] = useState('');
+
+  const openEditModal = (meal: any) => {
+    setEditingMeal(meal);
+
+    // preload values
+    setEditMealName(meal.name);
+    setEditMealUrl(meal.url || '');
+
+    setEditTypes(meal.types?.map((t: any) => t.name) || []);
+
+    setEditIngredientIds(meal.ingredients?.map((i: any) => i.id) || []);
+
+    setShowEditModal(true);
+  };
+
+  const handleUpdateMeal = async () => {
+    if (!editingMeal) return;
+
+    try {
+      await axios.put(`/meals/${editingMeal.id}`, {
+        name: editMealName,
+        url: editMealUrl,
+        types: editTypes,
+        ingredientIds: editIngredientIds,
+      });
+
+      setShowEditModal(false);
+      setEditingMeal(null);
+
+      fetchMeals(currentPage);
+    } catch (err) {
+      console.error('Error updating meal:', err);
+      alert('更新 meal 失败');
+    }
+  };
+  const filteredEditIngredients = ingredientOptions.filter((ing) =>
+    ing.name.toLowerCase().includes(editIngredientSearch.toLowerCase()),
+  );
+
   return (
     <div className='meals-page'>
       {/* ================= Header ================= */}
@@ -274,9 +323,14 @@ export default function Meals() {
                 </td>
 
                 <td>
-                  <Button variant='primary' size='sm' disabled>
+                  <Button
+                    variant='primary'
+                    size='sm'
+                    onClick={() => openEditModal(meal)}
+                  >
                     Edit
-                  </Button>{' '}
+                  </Button>
+
                   <Button
                     variant='danger'
                     size='sm'
@@ -478,6 +532,116 @@ export default function Meals() {
 
           <Button variant='danger' onClick={handleDeleteMeal}>
             Delete
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* ================= Edit Meal Modal ================= */}
+      <Modal show={showEditModal} onHide={() => setShowEditModal(false)}>
+        <Modal.Header closeButton>
+          <Modal.Title>Edit Meal</Modal.Title>
+        </Modal.Header>
+
+        <Modal.Body>
+          <Form>
+            {/* Name */}
+            <Form.Group className='mb-3'>
+              <Form.Label>Meal Name</Form.Label>
+              <Form.Control
+                type='text'
+                value={editMealName}
+                onChange={(e) => setEditMealName(e.target.value)}
+              />
+            </Form.Group>
+
+            {/* URL */}
+            <Form.Group className='mb-3'>
+              <Form.Label>Meal URL</Form.Label>
+              <Form.Control
+                type='text'
+                value={editMealUrl}
+                onChange={(e) => setEditMealUrl(e.target.value)}
+              />
+            </Form.Group>
+
+            {/* Types */}
+            <Form.Group className='mb-3'>
+              <Form.Label>Meal Types</Form.Label>
+
+              {ALL_TYPES.map((t) => (
+                <Form.Check
+                  key={t}
+                  type='checkbox'
+                  label={t}
+                  checked={editTypes.includes(t)}
+                  onChange={(e) =>
+                    setEditTypes((prev) =>
+                      e.target.checked
+                        ? [...prev, t]
+                        : prev.filter((x) => x !== t),
+                    )
+                  }
+                />
+              ))}
+            </Form.Group>
+
+            {/* Ingredients Search */}
+            <Form.Group className='mb-3'>
+              <Form.Label>Ingredients</Form.Label>
+
+              <Form.Control
+                type='text'
+                placeholder='Search ingredient...'
+                value={editIngredientSearch}
+                onChange={(e) => setEditIngredientSearch(e.target.value)}
+                className='mb-2'
+              />
+
+              <div
+                style={{
+                  border: '1px solid #ddd',
+                  borderRadius: '6px',
+                  maxHeight: '180px',
+                  overflowY: 'auto',
+                  padding: '8px',
+                }}
+              >
+                {filteredEditIngredients.map((ing) => (
+                  <div
+                    key={ing.id}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      padding: '4px 0',
+                    }}
+                  >
+                    <Form.Check
+                      type='checkbox'
+                      checked={editIngredientIds.includes(ing.id)}
+                      onChange={(e) =>
+                        setEditIngredientIds((prev) =>
+                          e.target.checked
+                            ? [...prev, ing.id]
+                            : prev.filter((x) => x !== ing.id),
+                        )
+                      }
+                    />
+                    <span>{ing.name}</span>
+                  </div>
+                ))}
+              </div>
+            </Form.Group>
+          </Form>
+        </Modal.Body>
+
+        <Modal.Footer>
+          <Button variant='secondary' onClick={() => setShowEditModal(false)}>
+            Cancel
+          </Button>
+
+          <Button variant='success' onClick={handleUpdateMeal}>
+            Save Changes
           </Button>
         </Modal.Footer>
       </Modal>

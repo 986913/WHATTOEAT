@@ -6,6 +6,7 @@ import { TypeEntity } from 'src/type/entities/type.entity';
 import { IngredientEntity } from 'src/ingredient/entities/ingredient.entity';
 import { GetMealsDTO } from './dto/get-meals.dto';
 import { CreateMealDTO } from './dto/create-meal.dto';
+import { UpdateMealDTO } from './dto/update-meal.dto';
 
 @Injectable()
 export class MealService {
@@ -18,7 +19,7 @@ export class MealService {
     private ingredientRepo: Repository<IngredientEntity>,
   ) {}
 
-  private async ensureUserExists(mealId: number): Promise<MealEntity> {
+  private async ensureMealExists(mealId: number): Promise<MealEntity> {
     const exists = await this.findById(mealId);
     if (!exists) {
       throw new NotFoundException(`Meal id with ${mealId} 不存在`);
@@ -101,8 +102,36 @@ export class MealService {
     return this.mealRepo.save(meal);
   }
 
+  async update(mealId: number, dto: UpdateMealDTO) {
+    const meal = await this.ensureMealExists(mealId);
+
+    const { name, url, types, ingredientIds } = dto;
+
+    // ===== update basic fields =====
+    if (name !== undefined) meal.name = name;
+    if (url !== undefined) meal.url = url;
+
+    // ===== update types =====
+    if (types) {
+      const typeEntities = await this.typeRepo.find({
+        where: types.map((t) => ({ name: t })),
+      });
+      meal.types = typeEntities;
+    }
+
+    // ===== update ingredients =====
+    if (ingredientIds) {
+      const ingredientEntities = await this.ingredientRepo.find({
+        where: { id: In(ingredientIds) },
+      });
+      meal.ingredients = ingredientEntities;
+    }
+
+    return this.mealRepo.save(meal);
+  }
+
   async remove(mealId: number) {
-    const foundMeal = await this.ensureUserExists(mealId);
+    const foundMeal = await this.ensureMealExists(mealId);
     // 使用 remove 方法（而不是 delete）以触发 TypeORM 的级联逻辑
     return this.mealRepo.remove(foundMeal);
   }

@@ -9,6 +9,7 @@ import {
   Body,
   Post,
   Delete,
+  Put,
   ParseIntPipe,
 } from '@nestjs/common';
 import { MealService } from './meal.service';
@@ -17,6 +18,7 @@ import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { TypeormFilter } from 'src/filters/typeorm.filter';
 import { GetMealsDTO } from './dto/get-meals.dto';
 import { CreateMealDTO } from './dto/create-meal.dto';
+import { UpdateMealDTO } from './dto/update-meal.dto';
 
 @Controller('meals')
 @UseFilters(new TypeormFilter())
@@ -56,6 +58,12 @@ export class MealController {
   getMeal(@Param('id') mealId: number): any {
     this.logger.log(`Fetching single meal, id is ${mealId}`);
     return this.mealService.findById(mealId);
+  }
+
+  @Put('/:id')
+  // (通过 PathPara 更新一个meal) -- http://localhost:3001/api/v1/meals/[1]
+  updateMeal(@Param('id') id: number, @Body() dto: UpdateMealDTO) {
+    return this.mealService.update(id, dto);
   }
 
   @Delete('/:id')
