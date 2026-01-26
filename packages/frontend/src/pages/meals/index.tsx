@@ -3,6 +3,7 @@ import '../../App.css';
 import './index.css';
 import axios from '../../utils/axios';
 import TypeSelector from '../../components/TypeSelector';
+import { useToast } from '../../hooks/useToast';
 import AppToast from '../../components/AppToast';
 import IngredientSelector from '../../components/IngredientSelector';
 import ConfirmModal from '../../components/ConfirmModal';
@@ -14,6 +15,8 @@ const DEFAULT_LIMIT = 10;
 const ALL_TYPES = ['breakfast', 'lunch', 'dinner', 'snack'];
 
 export default function Meals() {
+  const { toast, success, error } = useToast();
+
   // ================= Filters =================
   const [typeInputVal, setTypeInputVal] = useState<string | undefined>();
 
@@ -30,13 +33,6 @@ export default function Meals() {
 
   // ================= Ingredient Options =================
   const [ingredientOptions, setIngredientOptions] = useState<any[]>([]);
-
-  const [toastShow, setToastShow] = useState(false);
-  const [toastMsg, setToastMsg] = useState('');
-  const notify = (msg: string) => {
-    setToastMsg(msg);
-    setToastShow(true);
-  };
 
   // ================= Create Modal =================
   const [showModal, setShowModal] = useState(false);
@@ -166,21 +162,26 @@ export default function Meals() {
   /* ================= Create Meal ======================== */
   /* ===================================================== */
   const handleCreateMeal = async () => {
-    await axios.post('/meals', {
-      name: mealName,
-      url: mealUrl,
-      types: selectedTypes,
-      ingredientIds: selectedIngredientIds,
-    });
-    setShowModal(false);
-    notify('Meal created successfully ✅');
-    setMealName('');
-    setMealUrl('');
-    setSelectedTypes([]);
-    setSelectedIngredientIds([]);
-    setIngredientSearch('');
+    try {
+      await axios.post('/meals', {
+        name: mealName,
+        url: mealUrl,
+        types: selectedTypes,
+        ingredientIds: selectedIngredientIds,
+      });
+      setShowModal(false);
+      success('Meal created successfully ✅');
+      setMealName('');
+      setMealUrl('');
+      setSelectedTypes([]);
+      setSelectedIngredientIds([]);
+      setIngredientSearch('');
 
-    fetchMeals(1);
+      fetchMeals(1);
+    } catch (err) {
+      console.error(err);
+      error(err);
+    }
   };
 
   /* ===================================================== */
@@ -200,16 +201,21 @@ export default function Meals() {
   };
 
   const handleUpdateMeal = async () => {
-    await axios.put(`/meals/${editingMeal.id}`, {
-      name: editMealName,
-      url: editMealUrl,
-      types: editTypes,
-      ingredientIds: editIngredientIds,
-    });
+    try {
+      await axios.put(`/meals/${editingMeal.id}`, {
+        name: editMealName,
+        url: editMealUrl,
+        types: editTypes,
+        ingredientIds: editIngredientIds,
+      });
 
-    setShowEditModal(false);
-    notify('Meal updated successfully ✏️');
-    fetchMeals(currentPage);
+      setShowEditModal(false);
+      success('Meal updated successfully ✏️');
+      fetchMeals(currentPage);
+    } catch (err) {
+      console.error(err);
+      error(err);
+    }
   };
 
   /* ===================================================== */
@@ -221,10 +227,15 @@ export default function Meals() {
   };
 
   const handleDeleteMeal = async () => {
-    await axios.delete(`/meals/${selectedMeal.id}`);
-    setShowDeleteModal(false);
-    notify('Meal deleted successfully 🗑️');
-    fetchMeals(currentPage);
+    try {
+      await axios.delete(`/meals/${selectedMeal.id}`);
+      setShowDeleteModal(false);
+      success('Meal deleted successfully 🗑️');
+      fetchMeals(currentPage);
+    } catch (err) {
+      console.error(err);
+      error(err);
+    }
   };
 
   /* ===================================================== */
@@ -512,9 +523,11 @@ export default function Meals() {
       />
 
       <AppToast
-        show={toastShow}
-        message={toastMsg}
-        onClose={() => setToastShow(false)}
+        show={toast.show}
+        title={toast.title}
+        message={toast.message}
+        variant={toast.variant}
+        onClose={toast.close}
       />
     </div>
   );

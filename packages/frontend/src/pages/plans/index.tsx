@@ -26,7 +26,7 @@ function groupPlans(plans: any[]) {
 }
 
 export default function Plans() {
-  const { toast, notify } = useToast();
+  const { toast, success, error } = useToast();
 
   // =========================
   // Form state
@@ -60,9 +60,9 @@ export default function Plans() {
       try {
         const res = await axios.get(`/meals/options?typeId=${typeId}`);
         setMeals(Array.isArray(res.data) ? res.data : []);
-      } catch {
+      } catch (err) {
         setMeals([]);
-        notify('Failed to load meal options ❌', 'danger');
+        error(err);
       }
 
       setLoadingMeals(false);
@@ -80,8 +80,8 @@ export default function Plans() {
     try {
       const res = await axios.get('/plans');
       setPlans(Array.isArray(res.data) ? res.data : []);
-    } catch {
-      notify('Failed to load plans ❌', 'danger');
+    } catch (err) {
+      error(err);
     }
 
     setLoadingPlans(false);
@@ -96,7 +96,7 @@ export default function Plans() {
   // =========================
   const handleSubmit = async () => {
     if (!mealId) {
-      notify('Please select a meal ❌', 'danger');
+      error('Please select a meal ❌');
       return;
     }
 
@@ -108,12 +108,21 @@ export default function Plans() {
         userId: 1,
       });
 
-      notify('Plan created successfully ✅', 'success');
+      success('Plan created successfully ✅');
       setShowModal(false);
 
       fetchPlans();
-    } catch {
-      notify('Failed to create plan ❌', 'danger');
+    } catch (err: any) {
+      const status = err?.response?.status;
+      const msg = err?.response?.data?.errorMessage;
+      if (status === 409) {
+        error(`Duplicate plan: ${msg}`);
+        alert(msg);
+      } else if (status === 400) {
+        error(`Invalid request: ${msg}`);
+      } else {
+        error('Unexpected server error ❌');
+      }
     }
   };
 
@@ -126,12 +135,13 @@ export default function Plans() {
     try {
       await axios.delete(`/plans/${selectedPlan.id}`);
 
-      notify('Plan deleted successfully 🗑️', 'success');
+      success('Plan deleted successfully 🗑️');
       setSelectedPlan(null);
 
       fetchPlans();
-    } catch {
-      notify('Failed to delete plan ❌', 'danger');
+    } catch (err) {
+      console.error(err);
+      error('Failed to delete plan ❌');
     }
   };
 
@@ -323,6 +333,7 @@ export default function Plans() {
       {/* ================= Toast Notification ================= */}
       <AppToast
         show={toast.show}
+        title={toast.title}
         message={toast.message}
         variant={toast.variant}
         onClose={toast.close}

@@ -1,11 +1,15 @@
-import { Injectable } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  ConflictException,
+} from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { PlanEntity } from './entities/plan.entity';
 import { MealEntity } from 'src/meal/entities/meal.entity';
 import { TypeEntity } from 'src/type/entities/type.entity';
 import { CreatePlanDTO } from './dto/create-plan.dto';
-import { NotFoundException, BadRequestException } from '@nestjs/common';
 import { UserEntity } from 'src/user/entities/user.entity';
 
 @Injectable()
@@ -52,6 +56,7 @@ export class PlanService {
   }
 
   async create(plan: CreatePlanDTO) {
+    // userId 将来一定要改成 current user
     const { date, mealId, typeId, userId = 1 } = plan;
 
     // 1. type must exist
@@ -89,6 +94,18 @@ export class PlanService {
         `Meal "${mealEntity.name}" 不属于 type "${typeEntity.name}"`,
       );
     }
+    const existing = await this.planRepo.findOne({
+      where: {
+        date,
+        type: typeEntity,
+        user: userEntity,
+      },
+    });
+    if (existing) {
+      throw new ConflictException(
+        `For User (${userEntity.username}), Plan already exists for ${date} (${typeEntity.name})`,
+      );
+    }
 
     // 5. create plan
     const newPlan = this.planRepo.create({
@@ -97,7 +114,6 @@ export class PlanService {
       meal: mealEntity,
       user: userEntity,
     });
-
     return this.planRepo.save(newPlan);
   }
 

@@ -5,15 +5,11 @@ import Button from 'react-bootstrap/Button';
 import PageHeader from '../../components/PageHeader';
 import AppToast from '../../components/AppToast';
 import IngredientModal from './IngredientModal';
+import { useToast } from '../../hooks/useToast';
 import ConfirmModal from '../../components/ConfirmModal';
 
 export default function Ingredients() {
-  const [toastShow, setToastShow] = useState(false);
-  const [toastMsg, setToastMsg] = useState('');
-  const notify = (msg: string) => {
-    setToastMsg(msg);
-    setToastShow(true);
-  };
+  const { toast, success, error } = useToast();
 
   const [ingredients, setIngredients] = useState<any[]>([]);
   const [showModal, setShowModal] = useState(false);
@@ -47,10 +43,10 @@ export default function Ingredients() {
   const save = async () => {
     if (editing) {
       await axios.put(`/ingredients/${editing.id}`, { name });
-      notify('Meal updated successfully ✏️');
+      success('Ingredient updated successfully ✏️');
     } else {
       await axios.post('/ingredients', { name });
-      notify('Ingredient created successfully ✅');
+      success('Ingredient created successfully ✅');
     }
 
     setShowModal(false);
@@ -58,10 +54,15 @@ export default function Ingredients() {
   };
 
   const confirmDelete = async () => {
-    await axios.delete(`/ingredients/${deleteTarget.id}`);
-    notify('Meal deleted successfully 🗑️');
-    setDeleteTarget(null);
-    fetchAll();
+    try {
+      await axios.delete(`/ingredients/${deleteTarget.id}`);
+      success('Ingredient deleted successfully 🗑️');
+      setDeleteTarget(null);
+      fetchAll();
+    } catch (err) {
+      console.error(error);
+      error(err);
+    }
   };
 
   return (
@@ -128,9 +129,11 @@ export default function Ingredients() {
       />
 
       <AppToast
-        show={toastShow}
-        message={toastMsg}
-        onClose={() => setToastShow(false)}
+        show={toast.show}
+        title={toast.title}
+        message={toast.message}
+        variant={toast.variant}
+        onClose={toast.close}
       />
     </div>
   );

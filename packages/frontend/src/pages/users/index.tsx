@@ -3,25 +3,20 @@ import '../../App.css';
 import './index.css';
 import axios from '../../utils/axios';
 import Table from 'react-bootstrap/Table';
+import { useToast } from '../../hooks/useToast';
 import Pagination from 'react-bootstrap/Pagination';
 import { Button } from 'react-bootstrap';
 import AppToast from '../../components/AppToast';
 import ConfirmModal from '../../components/ConfirmModal';
 import UserFormModal from '../../components/UserFormModal';
 import { GetUsersDTO } from '../../../../backend/src/user/dto/get-users.dto';
-import { isAxiosError } from 'axios';
 
 const DEFAULT_LIMIT = 10;
 const PLACEHOLDER_AVATAR =
   'https://i.pinimg.com/736x/c9/b6/f4/c9b6f424a544f3e1fa9a6d73b170b79e.jpg';
 
 export default function Users() {
-  const [toastShow, setToastShow] = useState(false);
-  const [toastMsg, setToastMsg] = useState('');
-  const notify = (msg: string) => {
-    setToastMsg(msg);
-    setToastShow(true);
-  };
+  const { toast, success, error } = useToast();
 
   // ================= Filters =================
   const [userNameInputVal, setUserNameInputVal] = useState('');
@@ -142,26 +137,37 @@ export default function Users() {
 
   const handleEditSave = async () => {
     if (!selectedUser) return;
-    await axios.put(`/users/${selectedUser.id}`, {
-      username: editUsername,
-      profile: {
-        address: editAddress,
-        gender: editGender,
-        photo: editPhoto,
-      },
-      roles: editRoles,
-    });
-    setShowEditModal(false);
-    notify('User updated successfully ✏️');
-    fetchUsers(currentPage);
+    try {
+      await axios.put(`/users/${selectedUser.id}`, {
+        username: editUsername,
+        profile: {
+          address: editAddress,
+          gender: editGender,
+          photo: editPhoto,
+        },
+        roles: editRoles,
+      });
+      setShowEditModal(false);
+      success('User updated successfully ✏️');
+      fetchUsers(currentPage);
+    } catch (err) {
+      console.error(err);
+      error('Failed to edit user ❌');
+    }
   };
 
   const handleDelete = async () => {
     if (!selectedUser) return;
-    await axios.delete(`/users/${selectedUser.id}`);
-    setShowDeleteModal(false);
-    notify('User deleted successfully 🗑️');
-    fetchUsers(currentPage);
+
+    try {
+      await axios.delete(`/users/${selectedUser.id}`);
+      setShowDeleteModal(false);
+      success('User deleted successfully 🗑️');
+      fetchUsers(currentPage);
+    } catch (err) {
+      console.error(err);
+      error('Failed to delete user ❌');
+    }
   };
 
   const handleCreateSave = async () => {
@@ -178,18 +184,12 @@ export default function Users() {
       });
 
       setShowCreateModal(false);
-      notify('User created successfully ✅');
+      success('User created successfully ✅');
       setCurrentPage(1);
       fetchUsers(1);
     } catch (err) {
-      if (isAxiosError(err)) {
-        alert(err.response?.data?.message || err?.message);
-      } else if (err instanceof Error) {
-        alert(err.message);
-      } else {
-        alert('Unknown error');
-      }
       console.error(err);
+      error('Failed to create user ❌');
     }
   };
 
@@ -411,9 +411,11 @@ export default function Users() {
       />
 
       <AppToast
-        show={toastShow}
-        message={toastMsg}
-        onClose={() => setToastShow(false)}
+        show={toast.show}
+        title={toast.title}
+        message={toast.message}
+        variant={toast.variant}
+        onClose={toast.close}
       />
     </div>
   );
