@@ -114,7 +114,8 @@ export default function Plans() {
       fetchPlans();
     } catch (err: any) {
       const status = err?.response?.status;
-      const msg = err?.response?.data?.errorMessage;
+      const msg =
+        err.response?.data?.mysqlErrMsg || err?.response?.data?.errorMessage;
       if (status === 409) {
         error(`Duplicate plan: ${msg}`);
         alert(msg);

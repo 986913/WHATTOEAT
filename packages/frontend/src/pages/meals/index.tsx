@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import '../../App.css';
 import './index.css';
+import { isAxiosError } from 'axios';
 import axios from '../../utils/axios';
 import TypeSelector from '../../components/TypeSelector';
 import { useToast } from '../../hooks/useToast';
@@ -178,9 +179,15 @@ export default function Meals() {
       setIngredientSearch('');
 
       fetchMeals(1);
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      error(err);
+      const msg =
+        err.response?.data?.mysqlErrMsg || err?.response?.data?.errorMessage;
+      if (isAxiosError(err)) {
+        error(`Meal created failed ❌, reason: ${msg}`);
+      } else {
+        error('❌ Unexpected error');
+      }
     }
   };
 

@@ -16,16 +16,26 @@ export class TypeormFilter implements ExceptionFilter {
 
     let mysqlErrorNo = 0;
     let mysqlErrMsg = exception.message || 'Internal TypeORM Query Error';
+    let statusCode = HttpStatus.INTERNAL_SERVER_ERROR;
+
     if (exception instanceof QueryFailedError) {
       if (hasErrno(exception.driverError)) {
         mysqlErrorNo = exception.driverError.errno;
-        if (mysqlErrorNo === 1062) {
-          mysqlErrMsg = '唯一index(username)冲突'; // 1062 for dupciate entry of database error
+        switch (mysqlErrorNo) {
+          case 1062:
+            statusCode = HttpStatus.CONFLICT;
+            mysqlErrMsg = 'This record already exists (duplicate entry).'; // '唯一index冲突';  1062 for dupciate entry of database error
+            break;
+          case 1406:
+            statusCode = HttpStatus.BAD_REQUEST;
+            mysqlErrMsg =
+              'One of the fields is too long (e.g. URL is too long).';
+            break;
         }
       }
     }
 
-    response.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
+    response.status(statusCode).json({
       mysqlErrorNo,
       mysqlErrMsg: `local typeorm filter message: ${mysqlErrMsg}`,
       timestamp: new Date().toISOString(),
