@@ -1,5 +1,5 @@
 import './index.css';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import axios from '../../utils/axios';
 
 import ConfirmModal from '../../components/ConfirmModal';
@@ -17,7 +17,7 @@ function groupPlansByDate(plans: any[]) {
 
   plans.forEach((p) => {
     const date = p.date;
-    const type = p.type?.name?.toLowerCase(); // breakfast/lunch/dinner
+    const type = p.type?.name?.toLowerCase();
 
     if (!grouped[date]) grouped[date] = {};
     grouped[date][type] = p;
@@ -38,8 +38,15 @@ export default function UserPlans() {
   const [loadingPlans, setLoadingPlans] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<any>(null);
 
+  /** ===== expanded state ===== */
+  const [expandedDates, setExpandedDates] = useState<Record<string, boolean>>(
+    {},
+  );
+
+  const grouped = useMemo(() => groupPlansByDate(plans), [plans]);
+
   /** =========================
-   * Fetch plans (current user)
+   * Fetch plans
    ========================= */
   const fetchPlans = async () => {
     setLoadingPlans(true);
@@ -57,6 +64,26 @@ export default function UserPlans() {
   }, []);
 
   /** =========================
+   * Default expand today
+   ========================= */
+  useEffect(() => {
+    const today = new Date().toISOString().slice(0, 10);
+    if (grouped[today]) {
+      setExpandedDates({ [today]: true });
+    }
+  }, [grouped]);
+
+  /** =========================
+   * Toggle day
+   ========================= */
+  const toggleDate = (date: string) => {
+    setExpandedDates((prev) => ({
+      ...prev,
+      [date]: !prev[date],
+    }));
+  };
+
+  /** =========================
    * Delete plan
    ========================= */
   const handleDeletePlan = async () => {
@@ -67,12 +94,10 @@ export default function UserPlans() {
       success('Plan deleted successfully 🗑️');
       setSelectedPlan(null);
       fetchPlans();
-    } catch (err) {
+    } catch {
       error('Failed to delete plan ❌');
     }
   };
-
-  const grouped = groupPlansByDate(plans);
 
   return (
     <div className='page'>
@@ -87,78 +112,94 @@ export default function UserPlans() {
           ) : Object.keys(grouped).length === 0 ? (
             <div className='table-empty'>No Plans Found</div>
           ) : (
-            Object.entries(grouped).map(([date, meals]) => (
-              <div key={date} className='day-card'>
-                <div className='day-header'>📅 {date}</div>
-                {['breakfast', 'lunch', 'dinner'].map((type) => {
-                  const plan = meals[type];
-                  const editable = plan && isEditable(plan.date);
-
-                  return (
-                    <div key={type} className='meal-row'>
-                      {/* ===== left: type ===== */}
-                      <div className='meal-type'>
-                        {type === 'breakfast' && '🍳'}
-                        {type === 'lunch' && '🥗'}
-                        {type === 'dinner' && '🍖'} {type}
-                      </div>
-
-                      {/* ===== center: meal info ===== */}
-                      <div className='meal-info'>
-                        {plan ? (
-                          <>
-                            <div className='meal-title'>
-                              <span className='meal-name'>
-                                {plan.meal?.name}
-                              </span>
-
-                              {plan.meal?.url && (
-                                <a
-                                  href={plan.meal.url}
-                                  target='_blank'
-                                  rel='noreferrer'
-                                  className='meal-link'
-                                  title='Open recipe'
-                                >
-                                  🔗
-                                </a>
-                              )}
-                            </div>
-
-                            {plan.meal?.ingredients?.length > 0 && (
-                              <div className='ingredient-list'>
-                                {plan.meal.ingredients.map((ing: any) => (
-                                  <span
-                                    key={ing.id}
-                                    className='ingredient-chip'
-                                  >
-                                    {ing.name}
-                                  </span>
-                                ))}
-                              </div>
-                            )}
-                          </>
-                        ) : (
-                          <span className='missing'>—</span>
-                        )}
-                      </div>
-
-                      {/* ===== right: action ===== */}
-                      <div className='meal-actions'>
-                        <Button size='sm' disabled={!editable}>
-                          Replace it
-                        </Button>
-                      </div>
+            Object.entries(grouped)
+              .reverse()
+              .map(([date, meals]) => {
+                const expanded = expandedDates[date];
+                return (
+                  <div key={date} className='day-card'>
+                    {/* ===== Header ===== */}
+                    <div
+                      className='day-header clickable'
+                      onClick={() => toggleDate(date)}
+                    >
+                      <span>📅 {date}</span>
+                      <span className='chevron'>{expanded ? '▲' : '▼'}</span>
                     </div>
-                  );
-                })}
-              </div>
-            ))
+
+                    {/* ===== Body ===== */}
+                    {expanded && (
+                      <div className='day-body'>
+                        {['breakfast', 'lunch', 'dinner'].map((type) => {
+                          const plan = meals[type];
+                          const editable = plan && isEditable(plan.date);
+
+                          return (
+                            <div key={type} className='meal-row'>
+                              <div className='meal-type'>
+                                {type === 'breakfast' && '🍳'}
+                                {type === 'lunch' && '🥗'}
+                                {type === 'dinner' && '🍖'} {type}
+                              </div>
+
+                              <div className='meal-info'>
+                                {plan ? (
+                                  <>
+                                    <div className='meal-title'>
+                                      <span className='meal-name'>
+                                        {plan.meal?.name}
+                                      </span>
+
+                                      {plan.meal?.url && (
+                                        <a
+                                          href={plan.meal.url}
+                                          target='_blank'
+                                          rel='noreferrer'
+                                          className='meal-link'
+                                        >
+                                          🔗
+                                        </a>
+                                      )}
+                                    </div>
+
+                                    {plan.meal?.ingredients?.length > 0 && (
+                                      <div className='ingredient-list'>
+                                        {plan.meal.ingredients.map(
+                                          (ing: any) => (
+                                            <span
+                                              key={ing.id}
+                                              className='ingredient-chip'
+                                            >
+                                              {ing.name}
+                                            </span>
+                                          ),
+                                        )}
+                                      </div>
+                                    )}
+                                  </>
+                                ) : (
+                                  <span className='missing'>—</span>
+                                )}
+                              </div>
+
+                              <div className='meal-actions'>
+                                <Button size='sm' disabled={!editable}>
+                                  Replace it
+                                </Button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                );
+              })
           )}
         </div>
       </div>
 
-      {/* ================= Delete Confirm ================= */}
+      {/* ===== Delete Confirm ===== */}
       <ConfirmModal
         show={!!selectedPlan}
         title='Delete Plan'
@@ -167,7 +208,7 @@ export default function UserPlans() {
         onConfirm={handleDeletePlan}
       />
 
-      {/* ================= Toast ================= */}
+      {/* ===== Toast ===== */}
       <AppToast
         show={toast.show}
         title={toast.title}

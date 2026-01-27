@@ -145,7 +145,7 @@ export default function WeekPlans() {
                 <Spinner animation='border' size='sm' /> Generating...
               </>
             ) : (
-              '🎲 Generate My First Weekly Plan'
+              '🎲 Generate My Weekly Plan'
             )}
           </Button>
         </div>

@@ -1,144 +1,108 @@
-/* ================= Layout ================= */
-.plans-layout {
-  display: flex;
-  gap: 20px;
-  height: 80vh;
+.page {
+  padding: 24px;
 }
 
-.plans-left {
-  flex: 1;
-  border: 1px solid #ddd;
+.page-title {
+  margin-bottom: 16px;
+}
+
+.loading-box,
+.table-empty {
   padding: 16px;
-  border-radius: 12px;
-  overflow-y: auto;
+  color: #777;
+}
+
+/* ===== Day Card ===== */
+.day-card {
+  border: 1px solid #eee;
+  border-radius: 8px;
+  margin-bottom: 12px;
   background: #fff;
 }
 
-/* ================= States ================= */
-.table-empty {
-  text-align: center;
-  padding: 24px;
-  color: #888;
-  font-style: italic;
+/* ===== Header ===== */
+.day-header {
+  padding: 12px 16px;
+  font-weight: 600;
 }
 
-.loading-box {
-  margin-top: 20px;
+.day-header.clickable {
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
-/* ================= Day Card ================= */
-.day-card {
-  border: 1px solid #eee;
-  border-radius: 12px;
-  padding: 12px 14px;
-  margin-bottom: 16px;
+.day-header:hover {
   background: #fafafa;
 }
 
-.day-header {
-  font-size: 16px;
-  font-weight: 600;
-  margin-bottom: 10px;
+.chevron {
+  font-size: 12px;
+  opacity: 0.6;
 }
 
-/* ================= Meal Row ================= */
+/* ===== Body ===== */
+.day-body {
+  padding: 8px 12px 12px;
+}
+
+/* ===== Meal Row ===== */
 .meal-row {
   display: grid;
   grid-template-columns: 120px 1fr auto;
+  gap: 12px;
   align-items: center;
-  padding: 6px 0;
-  border-top: 1px dashed #e3e3e3;
+  padding: 8px 4px;
 }
 
-.meal-row:first-of-type {
-  border-top: none;
+.meal-row:not(:last-child) {
+  border-bottom: 1px dashed #eee;
 }
 
 .meal-type {
   text-transform: capitalize;
-  color: #555;
+  font-weight: 500;
+}
+
+.meal-info {
+  min-width: 0;
+}
+
+.meal-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .meal-name {
   font-weight: 500;
 }
 
-.meal-actions {
+.meal-link {
+  font-size: 12px;
+  text-decoration: none;
+}
+
+.ingredient-list {
+  margin-top: 4px;
   display: flex;
-  gap: 6px;
-}
-
-/* ================= Missing ================= */
-.missing {
-  color: #bbb;
-  font-style: italic;
-}
-
-/* ===== Meal row layout upgrade ===== */
-.meal-row {
-  display: grid;
-  grid-template-columns: 120px 1fr auto;
-  gap: 12px;
-  padding: 10px 0;
-  border-top: 1px dashed #e3e3e3;
-}
-
-.meal-row:first-of-type {
-  border-top: none;
-}
-
-/* ===== Meal info ===== */
-.meal-info {
-  display: flex;
-  flex-direction: column;
+  flex-wrap: wrap;
   gap: 4px;
 }
 
-.meal-title {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.meal-name {
-  font-weight: 600;
-}
-
-.meal-link {
-  font-size: 14px;
-  text-decoration: none;
-  opacity: 0.7;
-}
-
-.meal-link:hover {
-  opacity: 1;
-}
-
-/* ===== Ingredients ===== */
-.ingredient-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 2px;
-}
-
 .ingredient-chip {
+  background: #f2f2f2;
+  padding: 2px 6px;
+  border-radius: 6px;
   font-size: 12px;
-  padding: 2px 8px;
-  border-radius: 12px;
-  background: #f0f0f0;
-  color: #555;
-  white-space: nowrap;
 }
 
-/* ===== Disabled state polish ===== */
-.meal-actions button:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
-}
-
-/* ===== Missing ===== */
 .missing {
   color: #bbb;
-  font-style: italic;
+}
+
+/* ===== Actions ===== */
+.meal-actions {
+  white-space: nowrap;
 }
