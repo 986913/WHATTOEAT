@@ -9,6 +9,10 @@ import {
   Delete,
   Param,
 } from '@nestjs/common';
+import {
+  WeeklyCommitDTO,
+  WeeklyPreviewDTO,
+} from './dto/create-weekly-plan.dto';
 import { ConfigService } from '@nestjs/config';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { TypeormFilter } from 'src/filters/typeorm.filter';
@@ -40,6 +44,18 @@ export class PlanController {
     this.logger.log('Adding a new plan');
     return this.planService.create(dto);
   }
+
+  // http://localhost:3001/api/v1/plans/weekly-preview   → (Draft Only) 返回 draft weekly plans
+  @Post('weekly-preview')
+  previewWeeklyPlan(@Body() dto: WeeklyPreviewDTO) {
+    return this.planService.generateWeeklyPreview(dto.userId ?? 1);
+  }
+
+  // http://localhost:3001/api/v1/plans/weekly-commit   → (Bulk Insert) 批量写入数据库
+  // @Post('weekly-commit')
+  // commitWeeklyPlan(@Body() dto: WeeklyCommitDTO) {
+  //   return this.planService.commitWeeklyPlans(dto.plans);
+  // }
 
   @Delete('/:id')
   // (通过 PathPara 删除一个plan) -- http://localhost:3001/api/v1/plans/[1]

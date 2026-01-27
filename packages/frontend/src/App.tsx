@@ -11,6 +11,7 @@ import Meals from './pages/meals';
 import Plans from './pages/plans';
 import Ingredients from './pages/ingredients';
 import './styles/base.css';
+import WeekPlans from './pages/weekPlans';
 
 function App() {
   return (
@@ -33,6 +34,7 @@ function App() {
           <Route path='meals' element={<Meals />} />
           <Route path='ingredients' element={<Ingredients />} />
           <Route path='plans' element={<Plans />} />
+          <Route path='wkplans' element={<WeekPlans />} />
           <Route path='apitest' element={<APITest />} />
 
           {/* 内部兜底，处理 /home/xxxx 这种不存在的路径 */}

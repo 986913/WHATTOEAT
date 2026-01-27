@@ -105,7 +105,7 @@ export default function Plans() {
         date,
         typeId,
         mealId,
-        userId: 1,
+        userId: 1, // 暂时写死
       });
 
       success('Plan created successfully ✅');

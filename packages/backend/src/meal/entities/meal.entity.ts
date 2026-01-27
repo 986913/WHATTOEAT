@@ -42,7 +42,7 @@ export class MealEntity {
   types: TypeEntity[];
 
   /*
-      @ManyToMany 一个meal可以有多个type:
+      @ManyToMany 一个meal可以有多个ingredients:
         第一个参数: 告诉 TypeORM 关联的是哪个实体（这里是 IngredientEntity)
         第二个参数: 告诉 TypeORM IngredientEntity实体中是通过哪个字段反向关联回来的 (这里是IngredientEntity里定义的meals字段）
      */

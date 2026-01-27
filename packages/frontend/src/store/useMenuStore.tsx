@@ -56,8 +56,14 @@ export const useMenuStore = create<MenuState>(() => ({
       path: '/home/plans',
       icon: <i className='fa-solid fa-record-vinyl'></i>,
     },
+    {
+      id: 8,
+      name: 'Weekly Plans',
+      path: '/home/wkplans',
+      icon: <i className='fa-solid fa-calendar-week'></i>,
+    },
     // {
-    //   id: 8,
+    //   id: 9,
     //   name: 'API Testing',
     //   path: '/home/apitest',
     //   icon: <i className='fa-solid fa-vial'></i>,
