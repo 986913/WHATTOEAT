@@ -10,8 +10,9 @@ import Menus from './pages/menus';
 import Meals from './pages/meals';
 import Plans from './pages/plans';
 import Ingredients from './pages/ingredients';
-import './styles/base.css';
 import WeekPlans from './pages/weekPlans';
+import UserPlans from './pages/userplans';
+import './styles/base.css';
 
 function App() {
   return (
@@ -24,7 +25,7 @@ function App() {
         {/* 布局路由 */}
         <Route path='/home' element={<DefaultLayout />}>
           {/* 默认跳转: /home -> /home/dashboard */}
-          <Route index element={<Navigate to='/home/dashboard' replace />} />
+          <Route index element={<Navigate to='/home/wkplans' replace />} />
 
           {/* 已存在的子路由们 */}
           <Route path='dashboard' element={<Dashboard />} />
@@ -34,11 +35,12 @@ function App() {
           <Route path='meals' element={<Meals />} />
           <Route path='ingredients' element={<Ingredients />} />
           <Route path='plans' element={<Plans />} />
+          <Route path='userplans' element={<UserPlans />} />
           <Route path='wkplans' element={<WeekPlans />} />
           <Route path='apitest' element={<APITest />} />
 
           {/* 内部兜底，处理 /home/xxxx 这种不存在的路径 */}
-          <Route path='*' element={<Navigate to='/home/dashboard' replace />} />
+          <Route path='*' element={<Navigate to='/home/wkplans' replace />} />
         </Route>
 
         {/* 兜底 */}

@@ -71,6 +71,18 @@ export class PlanService {
     });
   }
 
+  findByUser(userId: number) {
+    return this.planRepo
+      .createQueryBuilder('plan')
+      .leftJoinAndSelect('plan.type', 'type')
+      .leftJoinAndSelect('plan.meal', 'meal')
+      .leftJoinAndSelect('meal.ingredients', 'ingredients')
+      .where('plan.user_id = :userId', { userId })
+      .orderBy('plan.date', 'DESC')
+      .addOrderBy('type.id', 'ASC')
+      .getMany();
+  }
+
   async create(plan: CreatePlanDTO) {
     // userId 将来一定要改成 current user
     const { date, mealId, typeId, userId = 1 } = plan;

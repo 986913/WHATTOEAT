@@ -38,6 +38,18 @@ export class PlanController {
     return this.planService.findAll();
   }
 
+  @Get('me')
+  // http://localhost:3001/api/v1/plans/me
+  getMyPlans() {
+    const userId = 1; // 🚧 临时 mock current user 暂时写死
+    return this.planService.findByUser(userId);
+  }
+  // 将来你有 JWT 后，只需要：
+  // @Get('me')
+  // getMyPlans(@Req() req) {
+  //   return this.planService.findByUser(req.user.id);
+  // }
+
   @Post()
   // http://localhost:3001/api/v1/plans
   addPlan(@Body() dto: CreatePlanDTO): any {

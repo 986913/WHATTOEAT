@@ -1,0 +1,144 @@
+/* ================= Layout ================= */
+.plans-layout {
+  display: flex;
+  gap: 20px;
+  height: 80vh;
+}
+
+.plans-left {
+  flex: 1;
+  border: 1px solid #ddd;
+  padding: 16px;
+  border-radius: 12px;
+  overflow-y: auto;
+  background: #fff;
+}
+
+/* ================= States ================= */
+.table-empty {
+  text-align: center;
+  padding: 24px;
+  color: #888;
+  font-style: italic;
+}
+
+.loading-box {
+  margin-top: 20px;
+}
+
+/* ================= Day Card ================= */
+.day-card {
+  border: 1px solid #eee;
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-bottom: 16px;
+  background: #fafafa;
+}
+
+.day-header {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+
+/* ================= Meal Row ================= */
+.meal-row {
+  display: grid;
+  grid-template-columns: 120px 1fr auto;
+  align-items: center;
+  padding: 6px 0;
+  border-top: 1px dashed #e3e3e3;
+}
+
+.meal-row:first-of-type {
+  border-top: none;
+}
+
+.meal-type {
+  text-transform: capitalize;
+  color: #555;
+}
+
+.meal-name {
+  font-weight: 500;
+}
+
+.meal-actions {
+  display: flex;
+  gap: 6px;
+}
+
+/* ================= Missing ================= */
+.missing {
+  color: #bbb;
+  font-style: italic;
+}
+
+/* ===== Meal row layout upgrade ===== */
+.meal-row {
+  display: grid;
+  grid-template-columns: 120px 1fr auto;
+  gap: 12px;
+  padding: 10px 0;
+  border-top: 1px dashed #e3e3e3;
+}
+
+.meal-row:first-of-type {
+  border-top: none;
+}
+
+/* ===== Meal info ===== */
+.meal-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.meal-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.meal-name {
+  font-weight: 600;
+}
+
+.meal-link {
+  font-size: 14px;
+  text-decoration: none;
+  opacity: 0.7;
+}
+
+.meal-link:hover {
+  opacity: 1;
+}
+
+/* ===== Ingredients ===== */
+.ingredient-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.ingredient-chip {
+  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: 12px;
+  background: #f0f0f0;
+  color: #555;
+  white-space: nowrap;
+}
+
+/* ===== Disabled state polish ===== */
+.meal-actions button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* ===== Missing ===== */
+.missing {
+  color: #bbb;
+  font-style: italic;
+}
