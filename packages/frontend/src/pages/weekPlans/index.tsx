@@ -21,6 +21,8 @@ export default function WeekPlans() {
   const [loadingPreview, setLoadingPreview] = useState(false);
   const [loadingCommit, setLoadingCommit] = useState(false);
 
+  const isEmptyState = draftPlans.length === 0 && savedPlans.length === 0;
+
   function getMealType(typeId: number) {
     if (typeId === 1) return { label: 'Breakfast', icon: '🍳' };
     if (typeId === 2) return { label: 'Lunch', icon: '🥗' };
@@ -77,44 +79,79 @@ export default function WeekPlans() {
 
   return (
     <div className='page'>
-      {/* Header */}
+      {/* ================= Header ================= */}
       <div className='page-header'>
-        <h2 className='page-title'>Weekly Meal Planner</h2>
+        {!isEmptyState && (
+          <div className='page-actions'>
+            <Button
+              variant={draftPlans.length ? 'outline-success' : 'success'}
+              onClick={handleGenerateWeekly}
+              disabled={loadingPreview || loadingCommit}
+            >
+              {loadingPreview ? (
+                <>
+                  <Spinner animation='border' size='sm' /> Generating...
+                </>
+              ) : draftPlans.length ? (
+                '🔄 Regenerate'
+              ) : (
+                '🎲 Generate Weekly Plan'
+              )}
+            </Button>
 
-        <div className='page-actions'>
+            <Button
+              variant='primary'
+              onClick={handleSaveWeek}
+              disabled={!draftPlans.length || loadingCommit}
+            >
+              {loadingCommit ? (
+                <>
+                  <Spinner animation='border' size='sm' /> Saving...
+                </>
+              ) : (
+                '💾 Save Week Meals'
+              )}
+            </Button>
+          </div>
+        )}
+      </div>
+
+      {/* ================= Welcome / Empty ================= */}
+      {isEmptyState && (
+        <div className='welcome-card'>
+          <div className='welcome-emoji'>🍽️</div>
+
+          <h3 className='welcome-title'>Welcome to What To Eat</h3>
+
+          <p className='welcome-subtitle'>
+            Plan your meals for the week in seconds — no more “what should I eat
+            today?”
+          </p>
+
+          <ul className='welcome-list'>
+            <li>🎲 Generate a weekly meal plan</li>
+            <li>🧾 See ingredients at a glance</li>
+            <li>💾 Save and reuse plans anytime</li>
+          </ul>
+
           <Button
-            variant={draftPlans.length ? 'outline-success' : 'success'}
+            variant='success'
+            size='lg'
             onClick={handleGenerateWeekly}
-            disabled={loadingPreview || loadingCommit}
+            disabled={loadingPreview}
           >
             {loadingPreview ? (
               <>
                 <Spinner animation='border' size='sm' /> Generating...
               </>
-            ) : draftPlans.length ? (
-              '🔄 Regenerate'
             ) : (
-              '🎲 Generate Weekly Plan'
-            )}
-          </Button>
-
-          <Button
-            variant='primary'
-            onClick={handleSaveWeek}
-            disabled={!draftPlans.length || loadingCommit}
-          >
-            {loadingCommit ? (
-              <>
-                <Spinner animation='border' size='sm' /> Saving...
-              </>
-            ) : (
-              '💾 Save Week Meals'
+              '🎲 Generate My First Weekly Plan'
             )}
           </Button>
         </div>
-      </div>
+      )}
 
-      {/* Draft Preview */}
+      {/* ================= Draft Preview ================= */}
       {draftPlans.length > 0 && (
         <>
           <div className='week-scroll-wrapper'>
@@ -154,7 +191,7 @@ export default function WeekPlans() {
         </>
       )}
 
-      {/* Saved Result */}
+      {/* ================= Saved Result ================= */}
       {savedPlans.length > 0 && (
         <>
           <div className='history-hint'>
