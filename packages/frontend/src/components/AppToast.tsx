@@ -15,7 +15,7 @@ export default function AppToast({
   onClose: () => void;
 }) {
   return (
-    <ToastContainer position='top-end' className='p-3'>
+    <ToastContainer position='bottom-end' className='p-3'>
       <Toast show={show} onClose={onClose} delay={2500} autohide bg={variant}>
         <Toast.Header>
           <strong className='me-auto'>{title}</strong>
