@@ -1,27 +1,28 @@
 /* ===========================
-   Header actions
+   Header
 =========================== */
 
-.week-actions {
+.page-actions {
   display: flex;
   gap: 12px;
 }
 
 /* ===========================
-   Empty
+   Empty / Hint
 =========================== */
 
-.week-empty {
-  margin-top: 20px;
-  padding: 14px;
-  border-radius: 10px;
+.week-empty,
+.history-hint {
+  margin-top: 16px;
+  padding: 12px 14px;
+  border-radius: 8px;
   background: #f8f9fa;
-  color: #666;
-  font-size: 14px;
+  font-size: 13px;
+  color: #555;
 }
 
 /* ===========================
-   Weekly Grid — FIXED 7 DAYS
+   Weekly Grid (Horizontal)
 =========================== */
 
 .week-scroll-wrapper {
@@ -29,7 +30,6 @@
   padding-bottom: 12px;
 }
 
-/* scrollbar 优化 */
 .week-scroll-wrapper::-webkit-scrollbar {
   height: 8px;
 }
@@ -39,29 +39,11 @@
   border-radius: 4px;
 }
 
-.week-scroll-wrapper::-webkit-scrollbar-track {
-  background: transparent;
-}
-
 .week-grid {
   display: grid;
   grid-auto-flow: column;
-  grid-auto-columns: 260px; /* 每一天固定宽度 */
+  grid-auto-columns: 260px;
   gap: 20px;
-  padding: 4px 2px;
-}
-
-/* Responsive fallback */
-@media (max-width: 1400px) {
-  .week-grid {
-    grid-template-columns: repeat(4, 1fr);
-  }
-}
-
-@media (max-width: 900px) {
-  .week-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
 }
 
 /* ===========================
@@ -132,4 +114,122 @@
 .type-3 {
   background: #f8d7da;
   color: #721c24;
+}
+
+/* ===========================
+   Tables
+=========================== */
+
+.day-table-block {
+  margin-top: 28px;
+}
+
+.day-title {
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+/* ===========================
+   Tables (Fixed Layout)
+=========================== */
+
+.grouped-table {
+  width: 100%;
+  table-layout: fixed; /* 🔒 关键 */
+  border-collapse: collapse;
+  background: white;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+/* Column widths */
+.col-type {
+  width: 12%;
+}
+
+.col-meal {
+  width: 15%;
+}
+
+.col-url {
+  width: 5%;
+}
+
+.col-ingredients {
+  width: 70%;
+}
+
+/* Cell base */
+.grouped-table th,
+.grouped-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid #f0f0f0;
+  font-size: 14px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Alignment */
+.grouped-table th {
+  text-align: left;
+}
+
+.grouped-table td:nth-child(3),
+.grouped-table th:nth-child(3) {
+  text-align: center;
+}
+
+/* Ingredients */
+.ingredients-cell {
+  font-size: 13px;
+  color: #555;
+  line-height: 1.5;
+  white-space: normal; /* 允许换行 */
+}
+
+/* URL cell */
+.url-cell a {
+  text-decoration: none;
+}
+
+.url-cell a:hover {
+  opacity: 0.75;
+}
+
+/* Header */
+.grouped-table thead {
+  background: #fafafa;
+}
+
+.grouped-table tr:last-child td {
+  border-bottom: none;
+}
+
+/* ===========================
+   Scroll Container
+=========================== */
+
+.plans-scroll-container {
+  max-height: calc(100vh - 250px);
+  overflow-y: auto;
+  padding-right: 6px;
+
+  /* scroll affordance */
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0px,
+    black 16px,
+    black calc(100% - 200px),
+    transparent 100%
+  );
+}
+
+.plans-scroll-container::-webkit-scrollbar {
+  width: 8px;
+}
+
+.plans-scroll-container::-webkit-scrollbar-thumb {
+  background: #dcdcdc;
+  border-radius: 4px;
 }

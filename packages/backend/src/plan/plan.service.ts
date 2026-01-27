@@ -4,8 +4,7 @@ import {
   BadRequestException,
   ConflictException,
 } from '@nestjs/common';
-// import { WeeklyCommitDTO } from './dto/create-weekly-plan.dto';
-import { Repository } from 'typeorm';
+import { Repository, DataSource } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { PlanEntity } from './entities/plan.entity';
 import { MealEntity } from 'src/meal/entities/meal.entity';
@@ -13,6 +12,7 @@ import { TypeEntity } from 'src/type/entities/type.entity';
 import { UserEntity } from 'src/user/entities/user.entity';
 import { CreatePlanDTO } from './dto/create-plan.dto';
 import { DraftPlan } from './model/draft-plan.type';
+import { WeeklyCommitDTO } from './dto/create-weekly-plan.dto';
 
 @Injectable()
 export class PlanService {
@@ -25,6 +25,7 @@ export class PlanService {
     private typeRepo: Repository<TypeEntity>,
     @InjectRepository(UserEntity)
     private userRepo: Repository<UserEntity>,
+    private dataSource: DataSource,
   ) {}
 
   private async ensurePlanExists(planId: number): Promise<PlanEntity> {
@@ -184,5 +185,126 @@ export class PlanService {
       draftPlans,
       total: draftPlans.length,
     };
+  }
+
+  async commitWeeklyPlans(dto: WeeklyCommitDTO) {
+    const { plans } = dto;
+    if (!plans || plans.length === 0) {
+      throw new BadRequestException('No weekly plans provided');
+    }
+
+    return await this.dataSource.transaction(async (manager) => {
+      /** =========================
+     * 1. Resolve user
+     ========================= */
+      const userId = plans[0].userId ?? 1; //先写死
+      const user = await manager.findOne(UserEntity, {
+        where: { id: userId },
+      });
+      if (!user) {
+        throw new BadRequestException(`User ${userId} not found`);
+      }
+
+      /** =========================
+     * 2. Resolve date range
+     ========================= */
+      const dates = plans.map((p) => p.date).sort();
+      const startDate = dates[0];
+      const endDate = dates[dates.length - 1];
+
+      /** =========================
+     * 3. Replace-week (delete old)
+     ========================= */
+      await manager
+        .createQueryBuilder()
+        .delete()
+        .from(PlanEntity)
+        .where('user_id = :userId', { userId })
+        .andWhere('date BETWEEN :start AND :end', {
+          start: startDate,
+          end: endDate,
+        })
+        .execute();
+
+      /** =========================
+     * 4. Preload types & meals
+     ========================= */
+      const typeIds = [...new Set(plans.map((p) => p.typeId))];
+      const mealIds = [...new Set(plans.map((p) => p.mealId))];
+
+      const types = await manager.find(TypeEntity, {
+        where: typeIds.map((id) => ({ id })),
+      });
+
+      const meals = await manager.find(MealEntity, {
+        where: mealIds.map((id) => ({ id })),
+        relations: { types: true },
+      });
+
+      const typeMap = new Map(types.map((t) => [t.id, t]));
+      const mealMap = new Map(meals.map((m) => [m.id, m]));
+
+      /** =========================
+     * 5. Build Plan entities
+     ========================= */
+      const entities: PlanEntity[] = [];
+
+      for (const p of plans) {
+        const type = typeMap.get(p.typeId);
+        const meal = mealMap.get(p.mealId);
+
+        if (!type || !meal) {
+          throw new BadRequestException(
+            `Invalid typeId or mealId (${p.typeId}, ${p.mealId})`,
+          );
+        }
+
+        // restriction check
+        const allowed = meal.types.some((t) => t.id === type.id);
+        if (!allowed) {
+          throw new BadRequestException(
+            `Meal "${meal.name}" not allowed for type "${type.name}"`,
+          );
+        }
+
+        entities.push(
+          manager.create(PlanEntity, {
+            date: p.date,
+            user,
+            type,
+            meal,
+          }),
+        );
+      }
+
+      /** =========================
+     * 6. Bulk save
+     ========================= */
+      await manager.save(entities);
+
+      /** =========================
+     * 7. Fetch saved plans (for UI)
+     ========================= */
+      const savedPlans = await manager
+        .createQueryBuilder(PlanEntity, 'plan')
+        .leftJoinAndSelect('plan.type', 'type')
+        .leftJoinAndSelect('plan.meal', 'meal')
+        .leftJoinAndSelect('meal.ingredients', 'ingredients') //也就是plan.meal.ingredients
+        .where('plan.user_id = :userId', { userId })
+        .andWhere('plan.date BETWEEN :start AND :end', {
+          start: startDate,
+          end: endDate,
+        })
+        .orderBy('plan.date', 'ASC')
+        .addOrderBy('type.id', 'ASC')
+        .getMany();
+
+      return {
+        count: entities.length,
+        plans: savedPlans,
+        startDate,
+        endDate,
+      };
+    });
   }
 }

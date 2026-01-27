@@ -52,10 +52,10 @@ export class PlanController {
   }
 
   // http://localhost:3001/api/v1/plans/weekly-commit   → (Bulk Insert) 批量写入数据库
-  // @Post('weekly-commit')
-  // commitWeeklyPlan(@Body() dto: WeeklyCommitDTO) {
-  //   return this.planService.commitWeeklyPlans(dto.plans);
-  // }
+  @Post('weekly-commit')
+  commitWeeklyPlan(@Body() dto: WeeklyCommitDTO) {
+    return this.planService.commitWeeklyPlans(dto);
+  }
 
   @Delete('/:id')
   // (通过 PathPara 删除一个plan) -- http://localhost:3001/api/v1/plans/[1]
