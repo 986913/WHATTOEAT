@@ -1,9 +1,10 @@
 import '../App.css';
+import axios from '../utils/axios';
 import validator from 'validator';
+import { isAxiosError } from 'axios';
 import classNames from '../utils/classNames';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 
 export default function Signin() {
   const navigate = useNavigate();
@@ -12,13 +13,20 @@ export default function Signin() {
   const [userPassword, setUserPassword] = useState('');
   const [usernameMessage, setUsernameMessage] = useState('');
   const [userPasswordMessage, setUserPasswordMessage] = useState('');
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+
+  // =============================
+  // Handlers
+  // =============================
 
   const handleUsernameInputOnChange = (
     e: React.ChangeEvent<HTMLInputElement>,
   ) => {
-    const usernameValue = e.target.value;
-    setUsername(usernameValue);
-    if (!validator.isEmail(usernameValue)) {
+    const value = e.target.value;
+    setUsername(value);
+
+    if (!validator.isEmail(value)) {
       setUsernameMessage('Please enter correct email address');
     } else {
       setUsernameMessage('');
@@ -28,97 +36,160 @@ export default function Signin() {
   const handleUserPasswordInputOnChange = (
     e: React.ChangeEvent<HTMLInputElement>,
   ) => {
-    const userPasswordValue = e.target.value;
-    setUserPassword(userPasswordValue);
-    if (userPasswordValue !== '' && userPasswordValue.length < 3) {
+    const value = e.target.value;
+    setUserPassword(value);
+
+    if (value !== '' && value.length < 3) {
       setUserPasswordMessage('Password must be longer than 3 characters');
     } else {
       setUserPasswordMessage('');
     }
   };
 
-  const handleSigninClick = async (e: React.MouseEvent<HTMLButtonElement>) => {
+  const handleSigninSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    // navigate('/home/dashboard'); // 跳转到/home/dashboard
-    navigate('/home/apitest'); //  跳转到/home/apitest
-    // try {
-    //   const res = await axios.post('/auth/signin', {
-    //     username,
-    //     password: userPassword,
-    //   });
-    //   alert('User login succees! : ' + JSON.stringify(res.data));
-    // } catch (error) {
-    //   console.error('Error sign-in:', error);
-    // }
+
+    try {
+      await axios.post('/auth/signin', {
+        username,
+        password: userPassword,
+      });
+
+      // 成功跳转
+      navigate('/home/wkplans');
+    } catch (err: unknown) {
+      let msg = 'Unexpected error occurred';
+
+      if (isAxiosError(err)) {
+        msg =
+          err.response?.data?.mysqlErrMsg ||
+          err.response?.data?.errorMessage ||
+          err.message;
+      }
+
+      console.error(err);
+      setErrorMessage(msg);
+      setShowErrorModal(true);
+    }
   };
 
-  return (
-    <div className='container vh-100 d-flex justify-content-center align-items-center'>
-      <div className='col-11 col-sm-8 col-lg-6 col-xl-4'>
-        <form className='shadow-sm rounded p-4 border'>
-          <div className='mb-3'>
-            <label htmlFor='exampleInputEmail1' className='form-label'>
-              Username
-            </label>
-            <input
-              type='email'
-              className={classNames(
-                'form-control',
-                usernameMessage && 'is-invalid',
-              )}
-              id='exampleInputEmail1'
-              aria-describedby='emailHelp'
-              value={username}
-              onChange={handleUsernameInputOnChange}
-            />
-            <div className='invalid-feedback'>{usernameMessage}</div>
-          </div>
-          <div className='mb-3'>
-            <label htmlFor='exampleInputPassword1' className='form-label'>
-              Password
-            </label>
-            <input
-              type='password'
-              className={classNames(
-                'form-control',
-                userPasswordMessage && 'is-invalid',
-              )}
-              id='exampleInputPassword1'
-              value={userPassword}
-              onChange={handleUserPasswordInputOnChange}
-            />
-            <div className='invalid-feedback'>{userPasswordMessage}</div>
-          </div>
-          <div className='mb-3 form-check'>
-            <input
-              type='checkbox'
-              className='form-check-input'
-              id='exampleCheck1'
-            />
-            <label className='form-check-label' htmlFor='exampleCheck1'>
-              Remember me
-            </label>
-          </div>
+  const closeModal = () => setShowErrorModal(false);
 
-          <div className='d-flex flex-column align-items-center px-1'>
-            <button
-              type='submit'
-              className='btn btn-primary w-100 mb-2 text-light'
-              onClick={handleSigninClick}
-            >
-              Sign in
-            </button>
-            <Link
-              to='/signup'
-              className='w-100 border rounded text-decoration-none text-center'
-            >
-              <button type='submit' className='btn'>
-                Sign up
+  // =============================
+  // UI
+  // =============================
+
+  return (
+    <>
+      <div className='container vh-100 d-flex justify-content-center align-items-center'>
+        <div className='col-11 col-sm-8 col-lg-6 col-xl-4'>
+          <form
+            className='shadow-sm rounded p-4 border bg-white'
+            onSubmit={handleSigninSubmit}
+          >
+            {/* Username */}
+            <div className='mb-3'>
+              <label className='form-label'>Username</label>
+
+              <input
+                type='email'
+                className={classNames(
+                  'form-control',
+                  usernameMessage && 'is-invalid',
+                )}
+                value={username}
+                onChange={handleUsernameInputOnChange}
+              />
+
+              <div className='invalid-feedback'>{usernameMessage}</div>
+            </div>
+
+            {/* Password */}
+            <div className='mb-3'>
+              <label className='form-label'>Password</label>
+
+              <input
+                type='password'
+                className={classNames(
+                  'form-control',
+                  userPasswordMessage && 'is-invalid',
+                )}
+                value={userPassword}
+                onChange={handleUserPasswordInputOnChange}
+              />
+
+              <div className='invalid-feedback'>{userPasswordMessage}</div>
+            </div>
+
+            {/* Remember */}
+            <div className='mb-3 form-check'>
+              <input
+                type='checkbox'
+                className='form-check-input'
+                id='remember'
+              />
+              <label className='form-check-label' htmlFor='remember'>
+                Remember me
+              </label>
+            </div>
+
+            {/* Buttons */}
+            <div className='d-flex flex-column align-items-center px-1'>
+              <button
+                type='submit'
+                className='btn btn-primary w-100 mb-2 text-light'
+              >
+                Sign in
               </button>
-            </Link>
-          </div>
-        </form>
+
+              <Link
+                to='/signup'
+                className='w-100 border rounded text-decoration-none text-center'
+              >
+                <button type='button' className='btn w-100'>
+                  Sign up
+                </button>
+              </Link>
+            </div>
+          </form>
+        </div>
       </div>
-    </div>
+
+      {/* =============================
+           Error Modal
+      ============================= */}
+
+      {showErrorModal && (
+        <>
+          <div className='modal-backdrop fade show'></div>
+
+          <div
+            className='modal fade show'
+            tabIndex={-1}
+            style={{ display: 'block' }}
+          >
+            <div className='modal-dialog modal-dialog-centered'>
+              <div className='modal-content'>
+                <div className='modal-header'>
+                  <h5 className='modal-title text-danger'>Sign-in Failed</h5>
+
+                  <button className='btn-close' onClick={closeModal} />
+                </div>
+
+                <div className='modal-body'>
+                  <p className='mb-0'>{errorMessage}</p>
+                </div>
+
+                <div className='modal-footer'>
+                  <button className='btn btn-secondary' onClick={closeModal}>
+                    Close
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+    </>
   );
 }

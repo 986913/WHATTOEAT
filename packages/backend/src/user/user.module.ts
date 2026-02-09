@@ -12,6 +12,7 @@ import { UserRepository } from './user.repository';
   imports: [TypeOrmModule.forFeature([UserEntity, LogEntity]), LogModule],
   controllers: [UserController],
   providers: [UserService, UserRepository],
+  exports: [UserService], // <-- 导出 UserService 以便其他模块（如 AuthModule）注入使用
 })
 export class UserModule {}
 
