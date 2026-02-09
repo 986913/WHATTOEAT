@@ -23,15 +23,18 @@ export class UserRepository {
   findById(userId: number) {
     return this.userRepo.findOne({
       where: { id: userId },
-      // relations: {
-      //   roles: true,
-      //   profile: true,
-      // },
+      relations: {
+        roles: true,
+        profile: true,
+      },
     });
   }
 
   findByUserName(username: string) {
-    return this.userRepo.findOne({ where: { username } });
+    return this.userRepo.findOne({
+      where: { username },
+      relations: { roles: true, profile: true },
+    });
   }
 
   findUserProfile(userId: number) {

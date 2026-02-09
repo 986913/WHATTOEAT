@@ -1,13 +1,15 @@
 import '../App.css';
 import axios from '../utils/axios';
-import validator from 'validator';
+// import validator from 'validator';
 import { isAxiosError } from 'axios';
 import classNames from '../utils/classNames';
 import { Link, useNavigate } from 'react-router-dom';
 import React, { useState } from 'react';
+import { useCurrentUserStore } from '../store/useCurrentUserStore';
 
 export default function Signin() {
   const navigate = useNavigate();
+  const setCurrentUser = useCurrentUserStore((state) => state.setCurrentUser); // 订阅 setCurrentUser 方法
 
   const [username, setUsername] = useState('');
   const [userPassword, setUserPassword] = useState('');
@@ -26,11 +28,11 @@ export default function Signin() {
     const value = e.target.value;
     setUsername(value);
 
-    if (!validator.isEmail(value)) {
-      setUsernameMessage('Please enter correct email address');
-    } else {
-      setUsernameMessage('');
-    }
+    // if (!validator.isEmail(value)) {
+    //   setUsernameMessage('Please enter correct email address');
+    // } else {
+    //   setUsernameMessage('');
+    // }
   };
 
   const handleUserPasswordInputOnChange = (
@@ -50,12 +52,15 @@ export default function Signin() {
     e.preventDefault();
 
     try {
-      await axios.post('/auth/signin', {
+      const user = await axios.post('/auth/signin', {
         username,
         password: userPassword,
       });
-
-      // 成功跳转
+      setCurrentUser({
+        username: user.data.username,
+        avatarUrl: user.data.profile?.photo,
+      });
+      //跳转到主页
       navigate('/home/wkplans');
     } catch (err: unknown) {
       let msg = 'Unexpected error occurred';
@@ -92,7 +97,7 @@ export default function Signin() {
               <label className='form-label'>Username</label>
 
               <input
-                type='email'
+                // type='email'
                 className={classNames(
                   'form-control',
                   usernameMessage && 'is-invalid',
