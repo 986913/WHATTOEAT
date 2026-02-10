@@ -2,6 +2,7 @@ import axios from '../utils/axios';
 import { isAxiosError } from 'axios';
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useCurrentUserStore } from '../store/useCurrentUserStore';
 import {
   Container,
   Row,
@@ -14,6 +15,7 @@ import {
 
 export default function Signup() {
   const navigate = useNavigate();
+  const setCurrentUser = useCurrentUserStore((s) => s.setCurrentUser);
 
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -67,13 +69,18 @@ export default function Signup() {
     if (!validate()) return;
 
     try {
-      await axios.post('/auth/signup', {
+      const user = await axios.post('/auth/signup', {
         username,
         password,
       });
 
-      // 成功 → 去登录页
-      navigate('/signin');
+      setCurrentUser({
+        username: user.data.username,
+        avatarUrl: user.data.profile?.photo,
+      });
+
+      // 成功 → 去首页
+      navigate('/home/wkplans');
     } catch (err: unknown) {
       let msg = 'Signup failed';
 

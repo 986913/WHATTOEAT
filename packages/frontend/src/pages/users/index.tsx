@@ -13,7 +13,7 @@ import { GetUsersDTO } from '../../../../backend/src/user/dto/get-users.dto';
 
 const DEFAULT_LIMIT = 10;
 const PLACEHOLDER_AVATAR =
-  'https://i.pinimg.com/736x/c9/b6/f4/c9b6f424a544f3e1fa9a6d73b170b79e.jpg';
+  'https://i.pinimg.com/736x/3c/67/75/3c67757cef723535a7484a6c7bfbfc43.jpg';
 
 export default function Users() {
   const { toast, success, error } = useToast();

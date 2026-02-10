@@ -105,6 +105,12 @@ export class UserRepository {
     if (roles && roles.length > 0) {
       const roleIds = roles.map((id) => Number(id));
       roleEntities = await this.roleRepo.findByIds(roleIds);
+    } else {
+      // 如果没有传 roles，默认给read-only角色（id=3）
+      const defaultRole = await this.roleRepo.findOne({ where: { id: 3 } });
+      if (defaultRole) {
+        roleEntities = [defaultRole];
+      }
     }
 
     // 2️⃣ create user（注意：这里只是 create，不落库）

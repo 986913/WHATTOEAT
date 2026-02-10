@@ -18,7 +18,10 @@ export class AuthService {
   }
 
   async signup(username: string, password: string) {
-    const newUser = await this.userService.create({ username, password });
+    const newUser = await this.userService.create({
+      username,
+      password,
+    });
     return newUser;
   }
 }
