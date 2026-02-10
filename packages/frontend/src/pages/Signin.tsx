@@ -1,66 +1,78 @@
-import '../App.css';
 import axios from '../utils/axios';
-// import validator from 'validator';
 import { isAxiosError } from 'axios';
-import classNames from '../utils/classNames';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import React, { useState } from 'react';
 import { useCurrentUserStore } from '../store/useCurrentUserStore';
+import {
+  Container,
+  Row,
+  Col,
+  Form,
+  Button,
+  Modal,
+  Card,
+} from 'react-bootstrap';
 
 export default function Signin() {
   const navigate = useNavigate();
-  const setCurrentUser = useCurrentUserStore((state) => state.setCurrentUser); // 订阅 setCurrentUser 方法
+  const setCurrentUser = useCurrentUserStore((s) => s.setCurrentUser);
 
   const [username, setUsername] = useState('');
   const [userPassword, setUserPassword] = useState('');
+
   const [usernameMessage, setUsernameMessage] = useState('');
   const [userPasswordMessage, setUserPasswordMessage] = useState('');
+
   const [showErrorModal, setShowErrorModal] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
-  // =============================
-  // Handlers
-  // =============================
+  // -------------------------------------------------
+  // Validation
+  // -------------------------------------------------
 
-  const handleUsernameInputOnChange = (
-    e: React.ChangeEvent<HTMLInputElement>,
-  ) => {
-    const value = e.target.value;
-    setUsername(value);
+  const validate = () => {
+    let ok = true;
 
-    // if (!validator.isEmail(value)) {
-    //   setUsernameMessage('Please enter correct email address');
-    // } else {
-    //   setUsernameMessage('');
-    // }
-  };
+    if (!username.trim()) {
+      setUsernameMessage('Username is required');
+      ok = false;
+    } else {
+      setUsernameMessage('');
+    }
 
-  const handleUserPasswordInputOnChange = (
-    e: React.ChangeEvent<HTMLInputElement>,
-  ) => {
-    const value = e.target.value;
-    setUserPassword(value);
-
-    if (value !== '' && value.length < 3) {
+    if (!userPassword.trim()) {
+      setUserPasswordMessage('Password is required');
+      ok = false;
+    } else if (userPassword.length < 3) {
       setUserPasswordMessage('Password must be longer than 3 characters');
+      ok = false;
     } else {
       setUserPasswordMessage('');
     }
+
+    return ok;
   };
 
-  const handleSigninSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  // -------------------------------------------------
+  // Submit
+  // -------------------------------------------------
+
+  const handleSigninSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!validate()) return;
 
     try {
       const user = await axios.post('/auth/signin', {
         username,
         password: userPassword,
       });
+
       setCurrentUser({
         username: user.data.username,
         avatarUrl: user.data.profile?.photo,
       });
-      //跳转到主页
+
       navigate('/home/wkplans');
     } catch (err: unknown) {
       let msg = 'Unexpected error occurred';
@@ -72,129 +84,116 @@ export default function Signin() {
           err.message;
       }
 
-      console.error(err);
       setErrorMessage(msg);
       setShowErrorModal(true);
     }
   };
 
-  const closeModal = () => setShowErrorModal(false);
-
-  // =============================
+  // -------------------------------------------------
   // UI
-  // =============================
+  // -------------------------------------------------
 
   return (
     <>
-      <div className='container vh-100 d-flex justify-content-center align-items-center'>
-        <div className='col-11 col-sm-8 col-lg-6 col-xl-4'>
-          <form
-            className='shadow-sm rounded p-4 border bg-white'
-            onSubmit={handleSigninSubmit}
-          >
-            {/* Username */}
-            <div className='mb-3'>
-              <label className='form-label'>Username</label>
+      <Container className='vh-100 d-flex align-items-center justify-content-center'>
+        <Row className='w-100 justify-content-center'>
+          <Col xs={11} sm={8} lg={6} xl={4}>
+            <Card className='shadow-sm'>
+              <Card.Body>
+                <Form onSubmit={handleSigninSubmit}>
+                  {/* Username */}
+                  <Form.Group className='mb-3'>
+                    <Form.Label>Username</Form.Label>
 
-              <input
-                // type='email'
-                className={classNames(
-                  'form-control',
-                  usernameMessage && 'is-invalid',
-                )}
-                value={username}
-                onChange={handleUsernameInputOnChange}
-              />
+                    <Form.Control
+                      value={username}
+                      onChange={(e) => {
+                        setUsername(e.target.value);
+                        if (usernameMessage) {
+                          setUsernameMessage('');
+                        }
+                      }}
+                      isInvalid={!!usernameMessage}
+                    />
 
-              <div className='invalid-feedback'>{usernameMessage}</div>
-            </div>
+                    <Form.Control.Feedback type='invalid'>
+                      {usernameMessage}
+                    </Form.Control.Feedback>
+                  </Form.Group>
 
-            {/* Password */}
-            <div className='mb-3'>
-              <label className='form-label'>Password</label>
+                  {/* Password */}
+                  <Form.Group className='mb-3'>
+                    <Form.Label>Password</Form.Label>
 
-              <input
-                type='password'
-                className={classNames(
-                  'form-control',
-                  userPasswordMessage && 'is-invalid',
-                )}
-                value={userPassword}
-                onChange={handleUserPasswordInputOnChange}
-              />
+                    <Form.Control
+                      type='password'
+                      value={userPassword}
+                      onChange={(e) => {
+                        const v = e.target.value;
+                        setUserPassword(v);
 
-              <div className='invalid-feedback'>{userPasswordMessage}</div>
-            </div>
+                        if (!v.trim()) {
+                          setUserPasswordMessage('Password is required');
+                        } else if (v.length < 3) {
+                          setUserPasswordMessage(
+                            'Password must be longer than 3 characters',
+                          );
+                        } else {
+                          setUserPasswordMessage('');
+                        }
+                      }}
+                      isInvalid={!!userPasswordMessage}
+                    />
 
-            {/* Remember */}
-            <div className='mb-3 form-check'>
-              <input
-                type='checkbox'
-                className='form-check-input'
-                id='remember'
-              />
-              <label className='form-check-label' htmlFor='remember'>
-                Remember me
-              </label>
-            </div>
+                    <Form.Control.Feedback type='invalid'>
+                      {userPasswordMessage}
+                    </Form.Control.Feedback>
+                  </Form.Group>
 
-            {/* Buttons */}
-            <div className='d-flex flex-column align-items-center px-1'>
-              <button
-                type='submit'
-                className='btn btn-primary w-100 mb-2 text-light'
-              >
-                Sign in
-              </button>
+                  {/* Remember */}
+                  <Form.Check
+                    type='checkbox'
+                    label='Remember me'
+                    className='mb-3'
+                  />
 
-              <Link
-                to='/signup'
-                className='w-100 border rounded text-decoration-none text-center'
-              >
-                <button type='button' className='btn w-100'>
-                  Sign up
-                </button>
-              </Link>
-            </div>
-          </form>
-        </div>
-      </div>
+                  {/* Buttons */}
+                  <Button type='submit' className='w-100 mb-2'>
+                    Sign in
+                  </Button>
 
-      {/* =============================
-           Error Modal
-      ============================= */}
+                  <Button
+                    variant='outline-secondary'
+                    className='w-100'
+                    onClick={() => navigate('/signup')}
+                  >
+                    Sign up
+                  </Button>
+                </Form>
+              </Card.Body>
+            </Card>
+          </Col>
+        </Row>
+      </Container>
 
-      {showErrorModal && (
-        <>
-          <div className='modal-backdrop fade show'></div>
+      {/* Error Modal */}
+      <Modal
+        show={showErrorModal}
+        onHide={() => setShowErrorModal(false)}
+        centered
+      >
+        <Modal.Header closeButton>
+          <Modal.Title className='text-danger'>Sign-in Failed</Modal.Title>
+        </Modal.Header>
 
-          <div
-            className='modal fade show'
-            tabIndex={-1}
-            style={{ display: 'block' }}
-          >
-            <div className='modal-dialog modal-dialog-centered'>
-              <div className='modal-content'>
-                <div className='modal-header'>
-                  <h5 className='modal-title text-danger'>Sign-in Failed</h5>
+        <Modal.Body>{errorMessage}</Modal.Body>
 
-                  <button className='btn-close' onClick={closeModal} />
-                </div>
-
-                <div className='modal-body'>
-                  <p className='mb-0'>{errorMessage}</p>
-                </div>
-
-                <div className='modal-footer'>
-                  <button className='btn btn-secondary' onClick={closeModal}>
-                    Close
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </>
-      )}
+        <Modal.Footer>
+          <Button variant='secondary' onClick={() => setShowErrorModal(false)}>
+            Close
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </>
   );
 }
