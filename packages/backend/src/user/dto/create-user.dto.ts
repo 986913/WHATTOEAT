@@ -6,6 +6,7 @@ import {
   IsIn,
   IsArray,
   IsNotEmpty,
+  Length,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { CreateProfileDTO } from './create-profile.dto';
@@ -13,10 +14,12 @@ import { CreateProfileDTO } from './create-profile.dto';
 export class CreateUserDTO {
   @IsString()
   @IsNotEmpty()
+  @Length(3, 10)
   username: string;
 
   @IsString()
   @IsNotEmpty()
+  @Length(3, 10)
   password: string;
 
   @IsOptional()

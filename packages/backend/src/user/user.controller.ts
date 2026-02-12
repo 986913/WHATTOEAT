@@ -18,6 +18,7 @@ import { ConfigService } from '@nestjs/config';
 import { GetUsersDTO } from './dto/get-users.dto';
 import { CreateUserDTO } from './dto/create-user.dto';
 import { UpdateUserDTO } from './dto/update-user.dto';
+import { CreateUserPipe } from './pipes/create-user.pipe';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { TypeormFilter } from 'src/filters/typeorm.filter';
 
@@ -69,7 +70,7 @@ export class UserController {
 
   @Post()
   // http://localhost:3001/api/v1/users
-  addUser(@Body() dto: CreateUserDTO): any {
+  addUser(@Body(CreateUserPipe) dto: CreateUserDTO): any {
     this.logger.log('Adding a new user');
     return this.userService.create(dto);
   }

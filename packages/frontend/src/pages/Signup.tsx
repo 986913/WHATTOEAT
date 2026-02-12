@@ -42,8 +42,8 @@ export default function Signup() {
       setUsernameMsg('');
     }
 
-    if (password.length < 6) {
-      setPasswordMsg('Password must be at least 6 chars');
+    if (password.length < 3) {
+      setPasswordMsg('Password must be at least 3 chars');
       ok = false;
     } else {
       setPasswordMsg('');

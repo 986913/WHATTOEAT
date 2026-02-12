@@ -4,6 +4,7 @@ import { NestFactory, HttpAdapterHost } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { WINSTON_MODULE_NEST_PROVIDER, WinstonLogger } from 'nest-winston';
 import { AllExceptionFilter } from './filters/all-exception.filter';
+import { ValidationPipe } from '@nestjs/common';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -12,11 +13,20 @@ async function bootstrap() {
   const logger = app.get<WinstonLogger>(WINSTON_MODULE_NEST_PROVIDER);
   // Global 使用同一 winston logger 实例, 替换掉 Nest默认的Logger
   app.useLogger(logger);
+
   // 设置Global的 API prefix
   app.setGlobalPrefix('api/v1');
+
   // Global 使用自定义的AllExceptionFilter进行Error handling捕获所有异常 (若只想捕获HTTP异常就用HttpExceptionFilter）
   const httpAdapter = app.get(HttpAdapterHost);
   app.useGlobalFilters(new AllExceptionFilter(logger, httpAdapter));
+
+  // Global 使用 ValidationPipe 进行DTO验证, 体现在 CreateUserPipe 中
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true, // 自动去除 DTO 中不存在的属性
+    }),
+  );
 
   await app.listen(process.env.PORT ?? 3001);
   console.log(`🚀 Backend running at ${process.env.PORT ?? 3001}`);
