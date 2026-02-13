@@ -12,3 +12,5 @@ db:
 log:
   level: info
   on: true
+secrets:
+  jwtsecret: what-to-eat-secret-key-build-in-2026-be-better-developer-development-config-secret-888

@@ -1,5 +1,6 @@
 import { IsNotEmpty, IsString, Length } from 'class-validator';
 
+// DTO 只是数据结构描述，真正抛 400 的是 ValidationPipe，最终由 Nest 的默认 Exception Filter 统一处理。
 export class SigninUserDTO {
   @IsString()
   @IsNotEmpty()

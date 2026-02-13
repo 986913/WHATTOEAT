@@ -21,7 +21,9 @@ async function bootstrap() {
   const httpAdapter = app.get(HttpAdapterHost);
   app.useGlobalFilters(new AllExceptionFilter(logger, httpAdapter));
 
-  // Global 使用 ValidationPipe 进行DTO验证, 体现在 CreateUserPipe 中
+  /* Global 使用 ValidationPipe 进行DTO验证, 体现在CreateUserPipe中： 
+      请求 → ValidationPipe → class-validator 校验 DTO → 如果失败 → 抛异常
+  */
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true, // 自动去除 DTO 中不存在的属性

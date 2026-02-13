@@ -9,7 +9,7 @@ export enum ConfigEnum {
   DB_PASSWORD = 'db.mysql.password',
 
   // JWT 密钥
-  // SECRETS_JWT = 'secrets.jwtSecret',
+  JWT_SECRET = 'secrets.jwtsecret',
 }
 
 export enum LogEnum {
