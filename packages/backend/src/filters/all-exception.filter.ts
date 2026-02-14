@@ -52,6 +52,12 @@ export class AllExceptionFilter implements ExceptionFilter {
       exceptioin:
         exception instanceof HttpException ? exception.name : 'UnknownError...',
       errorMessage: msg,
+      errorType:
+        exception instanceof Error ? exception.constructor.name : 'Error class',
+      errorStack:
+        exception instanceof Error
+          ? exception.stack
+          : 'Error class, No stack trace',
     };
 
     this.logger.error('[Ming Global Filter]', responseBody);
