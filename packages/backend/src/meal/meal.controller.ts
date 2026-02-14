@@ -55,20 +55,23 @@ export class MealController {
 
   @Get('/:id')
   // (通过 PathPara 获取一个meal) --  http://localhost:3001/api/v1/meals/[1]
-  getMeal(@Param('id') mealId: number): any {
+  getMeal(@Param('id', ParseIntPipe) mealId: number): any {
     this.logger.log(`Fetching single meal, id is ${mealId}`);
     return this.mealService.findById(mealId);
   }
 
   @Put('/:id')
   // (通过 PathPara 更新一个meal) -- http://localhost:3001/api/v1/meals/[1]
-  updateMeal(@Param('id') id: number, @Body() dto: UpdateMealDTO) {
+  updateMeal(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateMealDTO,
+  ) {
     return this.mealService.update(id, dto);
   }
 
   @Delete('/:id')
   // (通过 PathPara 删除一个meal) -- http://localhost:3001/api/v1/meals/[1]
-  deleteUser(@Param('id') mealId: number): any {
+  deleteUser(@Param('id', ParseIntPipe) mealId: number): any {
     this.logger.log(`Deleting meal with ID: ${mealId}`);
     return this.mealService.remove(mealId);
   }

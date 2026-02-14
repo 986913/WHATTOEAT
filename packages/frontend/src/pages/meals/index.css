@@ -15,7 +15,8 @@
   gap: 10px;
 }
 
-.btn-clear.disabled {
+.btn-clear.disabled,
+.btn-search.disabled {
   background: #ddd;
   color: #666;
   cursor: not-allowed;

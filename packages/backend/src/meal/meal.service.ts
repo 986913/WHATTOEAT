@@ -49,7 +49,7 @@ export class MealService {
       .leftJoinAndSelect('mealsTable.ingredients', 'ingredients');
     // 后面的.where会替换前面的.where, 所以要用.andWhere
     if (type) {
-      queryBuilder.where('types.name = :typeName', { typeName: type });
+      queryBuilder.andWhere('types.name = :typeName', { typeName: type });
     }
 
     const [data, total] = await queryBuilder

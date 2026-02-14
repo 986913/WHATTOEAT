@@ -287,7 +287,8 @@ export default function Meals() {
           </select>
 
           <button
-            className='btn-search'
+            className={`btn-search ${isFilterDirty ? 'active' : 'disabled'}`}
+            disabled={!isFilterDirty}
             onClick={() => fetchMeals(1, typeInputVal)}
           >
             Search
