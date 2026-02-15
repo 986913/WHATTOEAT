@@ -8,6 +8,7 @@ import {
   Get,
   Delete,
   Param,
+  ParseIntPipe,
 } from '@nestjs/common';
 import {
   WeeklyCommitDTO,
@@ -71,7 +72,7 @@ export class PlanController {
 
   @Delete('/:id')
   // (通过 PathPara 删除一个plan) -- http://localhost:3001/api/v1/plans/[1]
-  deleteUser(@Param('id') planId: number): any {
+  deleteUser(@Param('id', ParseIntPipe) planId: number): any {
     this.logger.log(`Deleting plan with ID: ${planId}`);
     return this.planService.remove(planId);
   }

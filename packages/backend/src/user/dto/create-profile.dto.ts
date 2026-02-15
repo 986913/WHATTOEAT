@@ -11,6 +11,6 @@ export class CreateProfileDTO {
   gender?: '1' | '2';
 
   @IsOptional()
-  @IsUrl()
+  @IsUrl({}, { message: 'photo must be a valid URL' })
   photo?: string;
 }

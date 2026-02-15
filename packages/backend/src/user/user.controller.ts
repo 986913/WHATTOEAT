@@ -19,6 +19,7 @@ import { GetUsersDTO } from './dto/get-users.dto';
 import { CreateUserDTO } from './dto/create-user.dto';
 import { UpdateUserDTO } from './dto/update-user.dto';
 import { CreateUserPipe } from './pipes/create-user.pipe';
+import { UpdateUserPipe } from './pipes/update-user.pipe';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { TypeormFilter } from 'src/filters/typeorm.filter';
 
@@ -77,7 +78,7 @@ export class UserController {
 
   @Get('/:id')
   // (通过 PathPara 获取一个user) --  http://localhost:3001/api/v1/users/[1]
-  getUser(@Param('id') userId: number): any {
+  getUser(@Param('id', ParseIntPipe) userId: number): any {
     this.logger.log(`Fetching single user who id is ${userId}`);
     return this.userService.findById(userId);
   }
@@ -85,9 +86,9 @@ export class UserController {
   @Put('/:id')
   // (通过 PathPara 更新一个user) -- http://localhost:3001/api/v1/users/[1]
   updateUser(
-    @Param('id') userId: number,
-    @Body() dto: UpdateUserDTO,
-    @Headers('Authorization') headers: any,
+    @Param('id', ParseIntPipe) userId: number,
+    @Body(UpdateUserPipe) dto: UpdateUserDTO,
+    // @Headers('Authorization') headers: any,
   ): any {
     this.logger.log(`Updating user with ID: ${userId}`);
     // 权限1: 判断用户是否是自己 - 说明当前user在尝试update自己的信息
@@ -104,7 +105,7 @@ export class UserController {
 
   @Delete('/:id')
   // (通过 PathPara 删除一个user) -- http://localhost:3001/api/v1/users/[1]
-  deleteUser(@Param('id') userId: number): any {
+  deleteUser(@Param('id', ParseIntPipe) userId: number): any {
     this.logger.log(`Deleting user with ID: ${userId}`);
     return this.userService.remove(userId);
   }

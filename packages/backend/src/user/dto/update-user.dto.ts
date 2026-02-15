@@ -1,10 +1,11 @@
-/* eslint-disable @typescript-eslint/no-unsafe-call */
 import {
   IsOptional,
   IsString,
   ValidateNested,
   IsIn,
   IsArray,
+  ArrayUnique,
+  IsInt,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { UpdateProfileDTO } from './update-profile.dto';
@@ -21,8 +22,12 @@ export class UpdateUserDTO {
   @Type(() => UpdateProfileDTO)
   profile?: UpdateProfileDTO;
 
+  // roles: 可选数组，支持前端传 '2'/'3' 或 2/3，会被转换为 number 并验证为正整数
   @IsOptional()
   @IsArray()
-  @IsIn(['2', '3'], { each: true }) // 数组中每一项都必须是 '2' 或 '3'
-  roles?: ('2' | '3')[];
+  @ArrayUnique()
+  @Type(() => Number) // 把 '2'/'3' 字符串转换为数字 2/3
+  @IsInt({ each: true })
+  @IsIn([2, 3], { each: true }) //数组中每一项都必须是 2 或 3
+  roles?: number[];
 }

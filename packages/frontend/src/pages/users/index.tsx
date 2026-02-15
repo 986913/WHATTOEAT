@@ -9,19 +9,20 @@ import { Button } from 'react-bootstrap';
 import AppToast from '../../components/AppToast';
 import ConfirmModal from '../../components/ConfirmModal';
 import UserFormModal from '../../components/UserFormModal';
-import { GetUsersDTO } from '../../../../backend/src/user/dto/get-users.dto';
 
 const DEFAULT_LIMIT = 10;
 const PLACEHOLDER_AVATAR =
   'https://i.pinimg.com/736x/3c/67/75/3c67757cef723535a7484a6c7bfbfc43.jpg';
+export type RoleType = '' | '1' | '2' | '3';
+export type GenderType = '' | '1' | '2';
 
 export default function Users() {
   const { toast, success, error } = useToast();
 
   // ================= Filters =================
   const [userNameInputVal, setUserNameInputVal] = useState('');
-  const [roleInputVal, setRoleInputVal] = useState('');
-  const [genderInputVal, setGenderInputVal] = useState('');
+  const [roleInputVal, setRoleInputVal] = useState<RoleType>('');
+  const [genderInputVal, setGenderInputVal] = useState<GenderType>('');
 
   // ================= Data =================
   const [users, setUsers] = useState<any[]>([]);
@@ -62,9 +63,9 @@ export default function Users() {
   // ================= Fetch Users =================
   const fetchUsers = async (
     page: number,
-    filters?: { username?: string; role?: string; gender?: string },
+    filters?: { username?: string; role?: '1' | '2' | '3'; gender?: '1' | '2' },
   ) => {
-    const params: GetUsersDTO = { page, limit, ...filters };
+    const params = { page, limit, ...filters };
     try {
       const res = await axios.get('/users', { params });
       setUsers(res.data.users);
@@ -80,11 +81,10 @@ export default function Users() {
     const filters = isFilterDirty
       ? {
           username: userNameInputVal,
-          role: roleInputVal,
-          gender: genderInputVal,
+          role: roleInputVal || undefined,
+          gender: genderInputVal || undefined,
         }
       : undefined;
-
     fetchUsers(currentPage, filters);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage]);
@@ -94,7 +94,7 @@ export default function Users() {
     setRoleInputVal('');
     setGenderInputVal('');
     setCurrentPage(1);
-    await fetchUsers(1, { username: '', role: '', gender: '' });
+    await fetchUsers(1);
   };
 
   // ================= Modal Open Helpers =================
@@ -217,7 +217,7 @@ export default function Users() {
           <select
             className='filter-select'
             value={roleInputVal}
-            onChange={(e) => setRoleInputVal(e.target.value)}
+            onChange={(e) => setRoleInputVal(e.target.value as RoleType)}
           >
             <option value=''>All Roles</option>
             <option value='1'>Admin</option>
@@ -232,7 +232,9 @@ export default function Users() {
                 name='gender'
                 value='1'
                 checked={genderInputVal === '1'}
-                onChange={(e) => setGenderInputVal(e.target.value)}
+                onChange={(e) =>
+                  setGenderInputVal(e.target.value as GenderType)
+                }
               />
               Female
             </label>
@@ -242,7 +244,9 @@ export default function Users() {
                 name='gender'
                 value='2'
                 checked={genderInputVal === '2'}
-                onChange={(e) => setGenderInputVal(e.target.value)}
+                onChange={(e) =>
+                  setGenderInputVal(e.target.value as GenderType)
+                }
               />
               Male
             </label>
@@ -252,9 +256,9 @@ export default function Users() {
             className='btn-search'
             onClick={() =>
               fetchUsers(1, {
-                username: userNameInputVal,
-                role: roleInputVal,
-                gender: genderInputVal,
+                username: userNameInputVal || undefined,
+                role: roleInputVal || undefined,
+                gender: genderInputVal || undefined,
               })
             }
           >

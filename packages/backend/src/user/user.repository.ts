@@ -100,11 +100,10 @@ export class UserRepository {
   async createAndSave(user: CreateUserDTO) {
     const { username, password, profile, roles = [] } = user;
 
-    // 1️⃣ 处理 roles（'2' | '3' -> RoleEntity[]
+    // 1️⃣ 处理 roles（2 | 3 -> RoleEntity[]
     let roleEntities: RoleEntity[] = [];
     if (roles && roles.length > 0) {
-      const roleIds = roles.map((id) => Number(id));
-      roleEntities = await this.roleRepo.findByIds(roleIds);
+      roleEntities = await this.roleRepo.findByIds(roles);
     } else {
       // 如果没有传 roles，默认给read-only角色（id=3）
       const defaultRole = await this.roleRepo.findOne({ where: { id: 3 } });
@@ -180,9 +179,7 @@ export class UserRepository {
       Array.isArray(updateUser.roles) &&
       updateUser.roles.length > 0
     ) {
-      const roleIds = updateUser.roles
-        .map((r) => Number(r))
-        .filter((id) => !isNaN(id));
+      const roleIds = updateUser.roles.filter((id) => !isNaN(id));
 
       if (roleIds.length > 0) {
         const roles = await this.roleRepo.findByIds(roleIds);
