@@ -2,7 +2,6 @@ import axios from '../utils/axios';
 import { isAxiosError } from 'axios';
 import { useNavigate } from 'react-router-dom';
 import React, { useState } from 'react';
-import { useCurrentUserStore } from '../store/useCurrentUserStore';
 import {
   Container,
   Row,
@@ -15,7 +14,6 @@ import {
 
 export default function Signin() {
   const navigate = useNavigate();
-  const setCurrentUser = useCurrentUserStore((s) => s.setCurrentUser);
 
   const [username, setUsername] = useState('');
   const [userPassword, setUserPassword] = useState('');
@@ -63,16 +61,11 @@ export default function Signin() {
     if (!validate()) return;
 
     try {
-      const user = await axios.post('/auth/signin', {
+      const res = await axios.post('/auth/signin', {
         username,
         password: userPassword,
       });
-
-      setCurrentUser({
-        username: user.data.username,
-        avatarUrl: user.data.profile?.photo,
-      });
-
+      localStorage.setItem('access_token', res.data?.access_token);
       navigate('/home/wkplans');
     } catch (err: unknown) {
       let msg = 'Unexpected error occurred';

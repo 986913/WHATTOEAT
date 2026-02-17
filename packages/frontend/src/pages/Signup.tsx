@@ -2,7 +2,6 @@ import axios from '../utils/axios';
 import { isAxiosError } from 'axios';
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useCurrentUserStore } from '../store/useCurrentUserStore';
 import {
   Container,
   Row,
@@ -15,7 +14,6 @@ import {
 
 export default function Signup() {
   const navigate = useNavigate();
-  const setCurrentUser = useCurrentUserStore((s) => s.setCurrentUser);
 
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -72,11 +70,6 @@ export default function Signup() {
       const user = await axios.post('/auth/signup', {
         username,
         password,
-      });
-
-      setCurrentUser({
-        username: user.data.username,
-        avatarUrl: user.data.profile?.photo,
       });
 
       // 成功 → 去首页

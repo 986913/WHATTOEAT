@@ -19,7 +19,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
       useFactory: (cfgService: ConfigService) => {
         // console.log('🔐 JWT Secret Loaded:',  cfgService.get<string>(ConfigEnum.JWT_SECRET));
         return {
-          secret: cfgService.get<string>(ConfigEnum.JWT_SECRET),
+          secret: cfgService.get<string>(ConfigEnum.JWT_SECRET), // 从环境变量中获取 JWT secret, 告诉 jwtService 用这个 secret 来sign JWT token
           signOptions: { expiresIn: '3d' },
         };
       },

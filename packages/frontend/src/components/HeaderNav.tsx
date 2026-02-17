@@ -4,7 +4,7 @@ import Container from 'react-bootstrap/Container';
 import { useCurrentUserStore } from '../store/useCurrentUserStore';
 
 export default function HeaderNav() {
-  const currentUser = useCurrentUserStore((state) => state.currentUser);
+  const currentUser = useCurrentUserStore((s) => s.currentUser);
 
   return (
     <Navbar expand='lg' className='bg-body-tertiary pt-2 pb-2 border'>
@@ -13,7 +13,7 @@ export default function HeaderNav() {
         <Navbar.Brand> What To Eat </Navbar.Brand>
         <Image
           src={
-            currentUser?.avatarUrl ||
+            currentUser?.profile?.photo ||
             'https://i.pinimg.com/736x/3c/67/75/3c67757cef723535a7484a6c7bfbfc43.jpg'
           }
           roundedCircle

@@ -1,9 +1,30 @@
 import '../App.css';
 import { Outlet } from 'react-router-dom';
+import { useEffect } from 'react';
+import axios from '../utils/axios';
 import SidebarNav from '../components/SidebarNav';
 import HeaderNav from '../components/HeaderNav';
+import { useCurrentUserStore } from '../store/useCurrentUserStore';
 
 export default function DefaultLayout() {
+  const setCurrentUser = useCurrentUserStore((s) => s.setCurrentUser);
+  const clearCurrentUser = useCurrentUserStore((s) => s.clearCurrentUser);
+
+  useEffect(() => {
+    const token = localStorage.getItem('access_token');
+    if (!token) return;
+
+    axios
+      .get('/auth/me')
+      .then((res) => {
+        setCurrentUser(res.data);
+      })
+      .catch(() => {
+        localStorage.removeItem('access_token');
+        clearCurrentUser();
+      });
+  }, [setCurrentUser, clearCurrentUser]);
+
   return (
     <div className='container-fluid'>
       <div className='row'>

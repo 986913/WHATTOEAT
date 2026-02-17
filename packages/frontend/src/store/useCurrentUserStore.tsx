@@ -1,8 +1,15 @@
 import { create } from 'zustand';
 
 type CurrentUser = {
-  username?: string;
-  avatarUrl?: string;
+  username: string;
+  id: number;
+  profile?: {
+    address?: string;
+    gender?: string;
+    id?: string;
+    photo?: string;
+  };
+  roles: { id: number; roleName: string }[];
 };
 
 type CurrentUserState = {

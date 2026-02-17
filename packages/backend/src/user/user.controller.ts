@@ -12,6 +12,7 @@ import {
   LoggerService,
   UseFilters,
   Headers,
+  UseGuards,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { ConfigService } from '@nestjs/config';
@@ -22,6 +23,7 @@ import { CreateUserPipe } from './pipes/create-user.pipe';
 import { UpdateUserPipe } from './pipes/update-user.pipe';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { TypeormFilter } from 'src/filters/typeorm.filter';
+import { AuthGuard } from '@nestjs/passport';
 
 @Controller('users')
 @UseFilters(new TypeormFilter())
@@ -44,6 +46,7 @@ export class UserController {
   */
   @Get()
   // (通过 QueryPara 获取符合条件的users) -- http://localhost:3001/api/v1/users?username=[ming]&role=[1]&gender=[1]
+  @UseGuards(AuthGuard('jwt'))
   getUsers(@Query() query: GetUsersDTO): any {
     return this.userService.findAll(query);
   }
@@ -85,6 +88,15 @@ export class UserController {
 
   @Put('/:id')
   // (通过 PathPara 更新一个user) -- http://localhost:3001/api/v1/users/[1]
+  @UseGuards(AuthGuard('jwt'))
+  /**
+    保护这个路由，只有通过 JWT 验证的用户才能访问
+      读取 Authorization header
+      拿出 token
+      用 JWT_SECRET 验证签名
+      如果合法 → 放行
+      如果非法 → 401 Unauthorized
+  **/
   updateUser(
     @Param('id', ParseIntPipe) userId: number,
     @Body(UpdateUserPipe) dto: UpdateUserDTO,
