@@ -15,12 +15,12 @@ import { CreateProfileDTO } from './create-profile.dto';
 export class CreateUserDTO {
   @IsString()
   @IsNotEmpty()
-  @Length(3, 10)
+  @Length(3, 20)
   username: string;
 
   @IsString()
   @IsNotEmpty()
-  @Length(3, 10)
+  @Length(3, 20)
   password: string;
 
   @IsOptional()

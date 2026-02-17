@@ -32,6 +32,7 @@ instance.interceptors.response.use(
     // token 失效，或者没有 token，访问了需要认证的接口，后端会返回 401 Unauthorized
     if (error.response?.status === 401) {
       localStorage.removeItem('access_token');
+      // 直接跳转到登录页，触发 DefaultLayout 中的 useEffect，清除用户信息
       window.location.href = '/signin';
     }
 
