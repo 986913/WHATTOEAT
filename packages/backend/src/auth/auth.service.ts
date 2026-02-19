@@ -1,6 +1,7 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { UserService } from 'src/user/user.service';
+import { AuthUser } from './auth.strategy';
 
 @Injectable()
 export class AuthService {
@@ -21,10 +22,16 @@ export class AuthService {
       /* 通过 JWT Service, 生成 JWT token:
         将 payload 编码为 JWT Token，并使用配置好的 jwtsecret 进行加密签名，最终生成一个可让前端验证的 token 字符串。
       */
-      const access_token = await this.jwtService.signAsync({
-        username: foundUser.username,
-        sub: foundUser.id, // JWT token 的 payload 里至少要有一个 sub 字段，表示这个 token 是给谁的，通常是用户的 id
-      });
+      const access_token = await this.jwtService.signAsync(
+        {
+          username: foundUser.username,
+          sub: foundUser.id, // JWT token 的 payload 里至少要有一个 sub 字段，表示这个 token 是给谁的，通常是用户的 id
+        },
+        // 局部设置 -> refreshToken
+        // {
+        //   expiresIn: '3d', // 设置 token 的过期时间
+        // },
+      );
       return {
         access_token,
       };
@@ -33,7 +40,7 @@ export class AuthService {
     throw new UnauthorizedException('Invalid credentials');
   }
 
-  async getMeProfile(user: { userID: number; userNAME: string }) {
+  async getMeProfile(user: AuthUser) {
     // user 来自 JwtStrategy validate()
     return await this.userService.findById(user.userID);
   }

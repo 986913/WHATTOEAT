@@ -13,6 +13,8 @@ import {
   UseFilters,
   Headers,
   UseGuards,
+  Req,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { ConfigService } from '@nestjs/config';
@@ -24,6 +26,7 @@ import { UpdateUserPipe } from './pipes/update-user.pipe';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { TypeormFilter } from 'src/filters/typeorm.filter';
 import { AuthGuard } from '@nestjs/passport';
+import { AuthUser } from 'src/auth/auth.strategy';
 
 @Controller('users')
 @UseFilters(new TypeormFilter())
@@ -47,7 +50,11 @@ export class UserController {
   @Get()
   // (通过 QueryPara 获取符合条件的users) -- http://localhost:3001/api/v1/users?username=[ming]&role=[1]&gender=[1]
   @UseGuards(AuthGuard('jwt'))
-  getUsers(@Query() query: GetUsersDTO): any {
+  getUsers(
+    @Query() query: GetUsersDTO,
+    // @Req() req: Request & { user: AuthUser },
+  ): any {
+    // 通过 AuthGuard('jwt') 验证 JWT token 后，PassportModule 会自动将用户信息添加到 request 的 user 字段中
     return this.userService.findAll(query);
   }
 

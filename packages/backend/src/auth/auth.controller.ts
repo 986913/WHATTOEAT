@@ -6,12 +6,14 @@ import {
   Get,
   UseGuards,
   Req,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { TypeormFilter } from 'src/filters/typeorm.filter';
 import { SigninUserDTO } from './dto/signin-user.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { Request } from 'express';
+import { AuthUser } from './auth.strategy';
 
 @UseFilters(new TypeormFilter())
 @Controller('auth')
@@ -29,7 +31,7 @@ export class AuthController {
 
   @Get('me')
   @UseGuards(AuthGuard('jwt'))
-  getMe(@Req() req: Request) {
+  getMe(@Req() req: Request & { user: AuthUser }) {
     // 通过 AuthGuard('jwt') 验证 JWT token 后，PassportModule 会自动将用户信息添加到 request 的 user 字段中
     return this.authService.getMeProfile(req.user);
   }
