@@ -26,6 +26,11 @@ export class AuthService {
         {
           username: foundUser.username,
           sub: foundUser.id, // JWT token 的 payload 里至少要有一个 sub 字段，表示这个 token 是给谁的，通常是用户的 id
+          // 其他自定义字段
+          roles: foundUser.roles,
+          isAdmin: foundUser.roles.some(
+            (r) => r.roleName.toLowerCase() === 'admin' || r.id === 1,
+          ),
         },
         // 局部设置 -> refreshToken
         // {

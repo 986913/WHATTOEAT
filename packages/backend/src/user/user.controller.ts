@@ -14,7 +14,6 @@ import {
   Headers,
   UseGuards,
   Req,
-  UnauthorizedException,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { ConfigService } from '@nestjs/config';
@@ -26,7 +25,8 @@ import { UpdateUserPipe } from './pipes/update-user.pipe';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { TypeormFilter } from 'src/filters/typeorm.filter';
 import { AuthGuard } from '@nestjs/passport';
-import { AuthUser } from 'src/auth/auth.strategy';
+import { AdminGuard } from 'src/guards/admin.guard';
+import { AuthRequest } from 'src/guards/admin.guard';
 
 @Controller('users')
 @UseFilters(new TypeormFilter())
@@ -50,10 +50,7 @@ export class UserController {
   @Get()
   // (通过 QueryPara 获取符合条件的users) -- http://localhost:3001/api/v1/users?username=[ming]&role=[1]&gender=[1]
   @UseGuards(AuthGuard('jwt'))
-  getUsers(
-    @Query() query: GetUsersDTO,
-    // @Req() req: Request & { user: AuthUser },
-  ): any {
+  getUsers(@Query() query: GetUsersDTO, @Req() req: AuthRequest): any {
     // 通过 AuthGuard('jwt') 验证 JWT token 后，PassportModule 会自动将用户信息添加到 request 的 user 字段中
     return this.userService.findAll(query);
   }
@@ -124,7 +121,20 @@ export class UserController {
 
   @Delete('/:id')
   // (通过 PathPara 删除一个user) -- http://localhost:3001/api/v1/users/[1]
-  deleteUser(@Param('id', ParseIntPipe) userId: number): any {
+  /** 🚀🚀🚀
+   * Authentication vs. Authorization
+   *   - AuthGuard('jwt') ->  verifies the request has a valid JWT and attaches the user to the request (authentication).
+   *   - AdminGuard       ->  enforces role checks for the authenticated user (authorization).
+   *
+   * Authorization requires a verified identity, so AuthGuard('jwt') must run before AdminGuard.
+   * 一旦通过验证，用户的角色和权限将被检查。如果用户没有足够的权限，将返回403 Forbidden错误。不会进入到deleteUser方法中。
+   */
+  @UseGuards(AuthGuard('jwt'), AdminGuard)
+  deleteUser(
+    @Param('id', ParseIntPipe) userId: number,
+    @Req() req: AuthRequest,
+  ): any {
+    console.log(req.user);
     this.logger.log(`Deleting user with ID: ${userId}`);
     return this.userService.remove(userId);
   }

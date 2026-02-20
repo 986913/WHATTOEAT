@@ -11,6 +11,8 @@ import { ConfigEnum } from 'src/enum/config.enum';
 export interface JwtPayload {
   sub: number;
   username: string;
+  roles?: Array<{ id: number; roleName: string }>;
+  isAdmin?: boolean;
   iat?: number;
   exp?: number;
 }
@@ -18,6 +20,8 @@ export interface JwtPayload {
 export interface AuthUser {
   userID: number;
   userNAME: string;
+  roles: Array<{ id: number; roleName: string }>;
+  isAdmin: boolean;
 }
 
 @Injectable()
@@ -49,6 +53,8 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     return {
       userID: payload.sub,
       userNAME: payload.username,
+      roles: payload.roles || [],
+      isAdmin: payload.isAdmin || false,
     };
   }
 }
