@@ -10,6 +10,7 @@ import {
   LoggerService,
   UseFilters,
   ParseIntPipe,
+  UseGuards,
 } from '@nestjs/common';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { TypeormFilter } from 'src/filters/typeorm.filter';
@@ -17,9 +18,11 @@ import { IngredientService } from './ingredient.service';
 import { CreateIngredientPipe } from './pipes/create-ingredient.pipe';
 import { CreateIngredientDTO } from './dto/create-ingredient.dto';
 import { UpdateIngredientDTO } from './dto/update-ingredient.dto';
+import { JwtAuthenticationGuard } from 'src/guards/jwt.guard';
 
 @Controller('ingredients')
 @UseFilters(new TypeormFilter())
+@UseGuards(JwtAuthenticationGuard)
 export class IngredientController {
   constructor(
     private ingredientService: IngredientService,

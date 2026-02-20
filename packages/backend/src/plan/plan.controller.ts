@@ -9,6 +9,7 @@ import {
   Delete,
   Param,
   ParseIntPipe,
+  UseGuards,
 } from '@nestjs/common';
 import {
   WeeklyCommitDTO,
@@ -19,9 +20,11 @@ import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { TypeormFilter } from 'src/filters/typeorm.filter';
 import { PlanService } from './plan.service';
 import { CreatePlanDTO } from './dto/create-plan.dto';
+import { JwtAuthenticationGuard } from 'src/guards/jwt.guard';
 
 @Controller('plans')
 @UseFilters(new TypeormFilter())
+@UseGuards(JwtAuthenticationGuard)
 export class PlanController {
   constructor(
     private planService: PlanService,

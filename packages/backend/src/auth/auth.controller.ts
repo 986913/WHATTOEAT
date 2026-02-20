@@ -10,7 +10,7 @@ import {
 import { AuthService } from './auth.service';
 import { TypeormFilter } from 'src/filters/typeorm.filter';
 import { SigninUserDTO } from './dto/signin-user.dto';
-import { AuthGuard } from '@nestjs/passport';
+import { JwtAuthenticationGuard } from 'src/guards/jwt.guard';
 import { AuthRequest } from 'src/guards/admin.guard';
 
 @UseFilters(new TypeormFilter())
@@ -28,9 +28,9 @@ export class AuthController {
   }
 
   @Get('me')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(JwtAuthenticationGuard)
   getMe(@Req() req: AuthRequest) {
-    // 通过 AuthGuard('jwt') 验证 JWT token 后，PassportModule 会自动将用户信息添加到 request 的 user 字段中
+    // 通过 JwtAuthenticationGuard 也就是 AuthGuard('jwt') 验证 JWT token 后，PassportModule 会自动将用户信息添加到 request 的 user 字段中
     return this.authService.getMeProfile(req.user);
   }
 

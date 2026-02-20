@@ -11,6 +11,7 @@ import {
   Delete,
   Put,
   ParseIntPipe,
+  UseGuards,
 } from '@nestjs/common';
 import { MealService } from './meal.service';
 import { ConfigService } from '@nestjs/config';
@@ -19,9 +20,11 @@ import { TypeormFilter } from 'src/filters/typeorm.filter';
 import { GetMealsDTO } from './dto/get-meals.dto';
 import { CreateMealDTO } from './dto/create-meal.dto';
 import { UpdateMealDTO } from './dto/update-meal.dto';
+import { JwtAuthenticationGuard } from 'src/guards/jwt.guard';
 
 @Controller('meals')
 @UseFilters(new TypeormFilter())
+@UseGuards(JwtAuthenticationGuard)
 export class MealController {
   constructor(
     private mealService: MealService,
