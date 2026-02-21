@@ -6,7 +6,7 @@ export default function SidebarNav() {
   const menus = useMenuStore((state) => state.menus);
   return (
     <Nav className='flex-column bg-dark vh-100 p-3' variant='underline'>
-      <h3 className='text-center text-white'>Ming通用业务框架</h3>
+      <h3 className='text-center text-white'>What To Eat</h3>
       {menus.map((menu) => (
         <Nav.Link
           as={NavLink}

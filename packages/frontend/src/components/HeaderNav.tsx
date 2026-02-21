@@ -17,7 +17,7 @@ export default function HeaderNav({ onLogout }: HeaderNavProps) {
         {/* 左侧 */}
         <div className='d-flex align-items-center gap-3'>
           <i className='fa-solid fa-bars'></i>
-          <Navbar.Brand className='mb-0'>What To Eat</Navbar.Brand>
+          <Navbar.Brand className='mb-0'>Eat With Plan</Navbar.Brand>
         </div>
 
         {/* 右侧用户区域 */}

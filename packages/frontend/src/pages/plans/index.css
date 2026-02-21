@@ -36,24 +36,10 @@
   margin-top: 15px;
 }
 
-/* Debug */
 .debug-box {
-  margin-top: 25px;
+  margin-top: 15px;
 }
 
-.debug-day {
-  border-bottom: 1px solid #eee;
-  padding: 10px 0;
-}
-
-.missing {
-  color: red;
-}
-
-.duplicate {
-  color: orange;
-}
-
-.ok {
-  color: green;
+.accordion-button {
+  font-weight: 500;
 }

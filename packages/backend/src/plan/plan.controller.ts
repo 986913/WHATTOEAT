@@ -46,6 +46,13 @@ export class PlanController {
     return this.planService.findAll();
   }
 
+  // http://localhost:3001/api/v1/plans
+  @Get('byUser')
+  @UseGuards(AdminGuard)
+  getPlansGroupedByUser() {
+    return this.planService.findAllGroupedByUser();
+  }
+
   // http://localhost:3001/api/v1/plans/me
   @Get('me')
   getMyPlans(@Req() req: AuthRequest) {

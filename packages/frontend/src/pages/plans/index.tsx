@@ -4,133 +4,57 @@ import axios from '../../utils/axios';
 import ConfirmModal from '../../components/ConfirmModal';
 import AppToast from '../../components/AppToast';
 import { useToast } from '../../hooks/useToast';
-import { useCurrentUserStore } from '../../store/useCurrentUserStore';
-import { Form, Button, Spinner, Table, Modal } from 'react-bootstrap';
-
-/** Helper: group plans by date + type */
-function groupPlans(plans: any[]) {
-  const grouped: any = {};
-
-  plans.forEach((p) => {
-    const date = p.date;
-    const type = p.type?.name;
-
-    if (!grouped[date]) grouped[date] = {};
-    if (!grouped[date][type]) grouped[date][type] = [];
-
-    grouped[date][type].push(p);
-  });
-
-  return grouped;
-}
+import { Table, Spinner, Button, Accordion } from 'react-bootstrap';
 
 export default function Plans() {
-  const { toast, success, error } = useToast();
-  const currentUser = useCurrentUserStore((s) => s.currentUser);
+  const { toast, error, success } = useToast();
 
   // =========================
-  // Form state
+  // Flat plans (Left side)
   // =========================
-  const [date, setDate] = useState('');
-  const [typeId, setTypeId] = useState('1');
-  const [mealId, setMealId] = useState('');
-
-  // Modal state
-  const [showModal, setShowModal] = useState(false);
-
-  // dropdown meals
-  const [meals, setMeals] = useState<any[]>([]);
-  const [loadingMeals, setLoadingMeals] = useState(false);
-
-  // plans list
   const [plans, setPlans] = useState<any[]>([]);
   const [loadingPlans, setLoadingPlans] = useState(false);
 
-  // Delete state
+  // =========================
+  // Grouped plans (Right side)
+  // =========================
+  const [groupedPlans, setGroupedPlans] = useState<any[]>([]);
+  const [loadingGrouped, setLoadingGrouped] = useState(false);
+
   const [selectedPlan, setSelectedPlan] = useState<any>(null);
-
-  // =========================
-  // Fetch meal options by type
-  // =========================
-  useEffect(() => {
-    async function fetchMeals() {
-      setLoadingMeals(true);
-      setMealId('');
-
-      try {
-        const res = await axios.get(`/meals/options?typeId=${typeId}`);
-        setMeals(Array.isArray(res.data) ? res.data : []);
-      } catch (err) {
-        setMeals([]);
-        error(err);
-      }
-
-      setLoadingMeals(false);
-    }
-
-    fetchMeals();
-  }, [typeId]);
 
   // =========================
   // Fetch all plans
   // =========================
   const fetchPlans = async () => {
     setLoadingPlans(true);
-
     try {
       const res = await axios.get('/plans');
       setPlans(Array.isArray(res.data) ? res.data : []);
     } catch (err) {
       error(err);
     }
-
     setLoadingPlans(false);
+  };
+
+  // =========================
+  // Fetch grouped by user
+  // =========================
+  const fetchGroupedPlans = async () => {
+    setLoadingGrouped(true);
+    try {
+      const res = await axios.get('/plans/byUser');
+      setGroupedPlans(Array.isArray(res.data) ? res.data : []);
+    } catch (err) {
+      error(err);
+    }
+    setLoadingGrouped(false);
   };
 
   useEffect(() => {
     fetchPlans();
+    fetchGroupedPlans();
   }, []);
-
-  // =========================
-  // Create Plan
-  // =========================
-  const handleSubmit = async () => {
-    if (!mealId) {
-      error('Please select a meal ❌');
-      return;
-    }
-
-    if (!currentUser?.id) {
-      error('Please sign in first ❌');
-      return;
-    }
-
-    try {
-      await axios.post('/plans', {
-        date,
-        typeId,
-        mealId,
-        userId: currentUser.id,
-      });
-
-      success('Plan created successfully ✅');
-      setShowModal(false);
-
-      fetchPlans();
-    } catch (err: any) {
-      const status = err?.response?.status;
-      const msg =
-        err.response?.data?.mysqlErrMsg || err?.response?.data?.errorMessage;
-      if (status === 409) {
-        error(`Duplicate plan: ${msg}`);
-        alert(msg);
-      } else if (status === 400) {
-        error(`Invalid request: ${msg}`);
-      } else {
-        error('Unexpected server error ❌');
-      }
-    }
-  };
 
   // =========================
   // Delete Plan
@@ -140,28 +64,21 @@ export default function Plans() {
 
     try {
       await axios.delete(`/plans/${selectedPlan.id}`);
-
       success('Plan deleted successfully 🗑️');
       setSelectedPlan(null);
-
       fetchPlans();
+      fetchGroupedPlans();
     } catch (err) {
-      console.error(err);
       error('Failed to delete plan ❌');
     }
   };
 
-  // =========================
-  // Debug grouped view
-  // =========================
-  const grouped = groupPlans(plans);
-
   return (
     <div className='page'>
-      <h2 className='page-title'>Plans</h2>
+      <h2 className='page-title'>Admin Plans Dashboard</h2>
 
       <div className='plans-layout'>
-        {/* ================= LEFT: Plans Table ================= */}
+        {/* ================= LEFT: All Plans ================= */}
         <div className='plans-left'>
           <h3>📋 All Plans</h3>
 
@@ -174,6 +91,7 @@ export default function Plans() {
               <thead>
                 <tr>
                   <th>Date</th>
+                  <th>User</th>
                   <th>Type</th>
                   <th>Meal</th>
                   <th>Action</th>
@@ -183,7 +101,7 @@ export default function Plans() {
               <tbody>
                 {plans.length === 0 ? (
                   <tr>
-                    <td colSpan={4} className='table-empty'>
+                    <td colSpan={5} className='table-empty'>
                       No Plans Found
                     </td>
                   </tr>
@@ -191,13 +109,10 @@ export default function Plans() {
                   plans.map((plan) => (
                     <tr key={plan.id}>
                       <td>{plan.date}</td>
+                      <td>{plan.user?.username ?? '-'}</td>
                       <td>{plan.type?.name ?? '-'}</td>
                       <td>{plan.meal?.name ?? '-'}</td>
-
                       <td>
-                        <Button size='sm' disabled>
-                          Edit
-                        </Button>{' '}
                         <Button
                           size='sm'
                           variant='danger'
@@ -214,116 +129,57 @@ export default function Plans() {
           )}
         </div>
 
-        {/* ================= RIGHT: Tools ================= */}
+        {/* ================= RIGHT: Plans By User ================= */}
         <div className='plans-right'>
-          <h3>⚙️ Plan Tools</h3>
+          <h3>👥 Plans By User</h3>
 
-          <Button variant='success' onClick={() => setShowModal(true)}>
-            + Create Plan
-          </Button>
-
-          {/* ================= Create Modal ================= */}
-          <Modal show={showModal} onHide={() => setShowModal(false)}>
-            <Modal.Header closeButton>
-              <Modal.Title>Create Plan</Modal.Title>
-            </Modal.Header>
-
-            <Modal.Body>
-              <Form>
-                {/* Date */}
-                <Form.Group className='mb-3'>
-                  <Form.Label>Date</Form.Label>
-                  <Form.Control
-                    type='date'
-                    value={date}
-                    onChange={(e) => setDate(e.target.value)}
-                  />
-                </Form.Group>
-
-                {/* Type */}
-                <Form.Group className='mb-3'>
-                  <Form.Label>Meal Type</Form.Label>
-                  <Form.Select
-                    value={typeId}
-                    onChange={(e) => setTypeId(e.target.value)}
-                  >
-                    <option value='1'>Breakfast</option>
-                    <option value='2'>Lunch</option>
-                    <option value='3'>Dinner</option>
-                  </Form.Select>
-                </Form.Group>
-
-                {/* Meal */}
-                <Form.Group className='mb-3'>
-                  <Form.Label>Meal</Form.Label>
-
-                  {loadingMeals ? (
-                    <div>
-                      <Spinner animation='border' size='sm' /> Loading meals...
-                    </div>
-                  ) : (
-                    <Form.Select
-                      value={mealId}
-                      onChange={(e) => setMealId(e.target.value)}
+          {loadingGrouped ? (
+            <div className='loading-box'>
+              <Spinner animation='border' size='sm' /> Loading grouped plans...
+            </div>
+          ) : groupedPlans.length === 0 ? (
+            <div className='table-empty'>No User Plans Found</div>
+          ) : (
+            <Accordion alwaysOpen={false}>
+              {groupedPlans.map((group: any, index: number) => (
+                <Accordion.Item
+                  eventKey={String(index)}
+                  key={group.user.id}
+                  className='debug-box'
+                >
+                  <Accordion.Header>
+                    👤 {group.user.username} (ID: {group.user.id})
+                    <span
+                      style={{ marginLeft: 10, fontSize: 13, color: '#666' }}
                     >
-                      <option value=''>-- Select Meal --</option>
-                      {meals.map((m) => (
-                        <option key={m.id} value={m.id}>
-                          {m.name}
-                        </option>
-                      ))}
-                    </Form.Select>
-                  )}
-                </Form.Group>
-              </Form>
-            </Modal.Body>
+                      — {group.plans.length} plans
+                    </span>
+                  </Accordion.Header>
 
-            <Modal.Footer>
-              <Button variant='secondary' onClick={() => setShowModal(false)}>
-                Cancel
-              </Button>
-              <Button variant='success' onClick={handleSubmit}>
-                Create
-              </Button>
-            </Modal.Footer>
-          </Modal>
-
-          {/* ================= Restriction Debug ================= */}
-          <div className='debug-box'>
-            <h4>Restriction Debug</h4>
-
-            {Object.entries(grouped).map(([date, types]: any) => (
-              <div key={date} className='debug-day'>
-                <strong>{date}</strong>
-
-                {['breakfast', 'lunch', 'dinner'].map((mealType) => {
-                  const items = types[mealType] || [];
-
-                  if (items.length === 0) {
-                    return (
-                      <p key={mealType} className='missing'>
-                        ❌ {mealType.toUpperCase()} Missing
-                      </p>
-                    );
-                  }
-
-                  if (items.length > 1) {
-                    return (
-                      <p key={mealType} className='duplicate'>
-                        ⚠️ {mealType.toUpperCase()} Duplicate
-                      </p>
-                    );
-                  }
-
-                  return (
-                    <p key={mealType} className='ok'>
-                      ✅ {mealType.toUpperCase()}: {items[0].meal?.name}
-                    </p>
-                  );
-                })}
-              </div>
-            ))}
-          </div>
+                  <Accordion.Body>
+                    <Table striped bordered hover size='sm'>
+                      <thead>
+                        <tr>
+                          <th>Date</th>
+                          <th>Type</th>
+                          <th>Meal</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {group.plans.map((plan: any) => (
+                          <tr key={plan.id}>
+                            <td>{plan.date}</td>
+                            <td>{plan.type?.name ?? '-'}</td>
+                            <td>{plan.meal?.name ?? '-'}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </Table>
+                  </Accordion.Body>
+                </Accordion.Item>
+              ))}
+            </Accordion>
+          )}
         </div>
       </div>
 
@@ -336,7 +192,7 @@ export default function Plans() {
         onConfirm={handleDeletePlan}
       />
 
-      {/* ================= Toast Notification ================= */}
+      {/* ================= Toast ================= */}
       <AppToast
         show={toast.show}
         title={toast.title}

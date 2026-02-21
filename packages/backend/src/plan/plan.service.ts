@@ -71,6 +71,37 @@ export class PlanService {
     });
   }
 
+  async findAllGroupedByUser() {
+    const plans = await this.planRepo
+      .createQueryBuilder('plan')
+      .leftJoinAndSelect('plan.user', 'user')
+      .leftJoinAndSelect('plan.type', 'type')
+      .leftJoinAndSelect('plan.meal', 'meal')
+      .orderBy('user.id', 'ASC')
+      .addOrderBy('plan.date', 'DESC')
+      .getMany();
+
+    const grouped = new Map<
+      number,
+      { user: UserEntity; plans: PlanEntity[] }
+    >();
+
+    for (const plan of plans) {
+      const userId = plan.user.id;
+      let group = grouped.get(userId);
+      if (!group) {
+        group = {
+          user: plan.user,
+          plans: [],
+        };
+        grouped.set(userId, group);
+      }
+      group.plans.push(plan);
+    }
+
+    return Array.from(grouped.values());
+  }
+
   findByUser(userId: number) {
     return this.planRepo
       .createQueryBuilder('plan')

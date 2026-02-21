@@ -16,9 +16,9 @@ export const useMenuStore = create<MenuState>(() => ({
   menus: [
     {
       id: 1,
-      name: 'Weekly Plans',
+      name: 'Generate Weekly Plans',
       path: '/home/wkplans',
-      icon: <i className='fa-solid fa-calendar-week'></i>,
+      icon: <i className='fa-solid fa-bowl-food'></i>,
     },
     {
       id: 2,
