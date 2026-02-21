@@ -85,8 +85,15 @@ export default function Meals() {
       setMeals(res.data.meals || []);
       setTotalCount(res.data.mealsTotalCount || 0);
       setCurrentPage(res.data.currPage || page);
-    } catch (err) {
-      console.error('Error fetching meals:', err);
+    } catch (err: any) {
+      const msg =
+        err.response?.data?.mysqlErrMsg || err?.response?.data?.errorMessage;
+      if (isAxiosError(err)) {
+        error(`Fetch Meal failed ❌, reason: ${msg}`);
+      } else {
+        error('❌ Unexpected error');
+      }
+      console.error('Error fetching meals:', msg);
       setMeals([]);
       setTotalCount(0);
     }
@@ -99,8 +106,15 @@ export default function Meals() {
     try {
       const res = await axios.get('/ingredients');
       setIngredientOptions(res.data || []);
-    } catch (err) {
-      console.error('Error fetching ingredients:', err);
+    } catch (err: any) {
+      const msg =
+        err.response?.data?.mysqlErrMsg || err?.response?.data?.errorMessage;
+      if (isAxiosError(err)) {
+        error(`Fetch Ingredients failed ❌, reason: ${msg}`);
+      } else {
+        error('❌ Unexpected error');
+      }
+      console.error('Error fetching ingredients:', msg);
       setIngredientOptions([]);
     }
   };
@@ -219,9 +233,15 @@ export default function Meals() {
       setShowEditModal(false);
       success('Meal updated successfully ✏️');
       fetchMeals(currentPage);
-    } catch (err) {
-      console.error(err);
-      error(err);
+    } catch (err: any) {
+      const msg =
+        err.response?.data?.mysqlErrMsg || err?.response?.data?.errorMessage;
+      if (isAxiosError(err)) {
+        error(`Update Meal failed ❌, reason: ${msg}`);
+      } else {
+        error('❌ Unexpected error');
+      }
+      console.error('Error Updating Meal:', msg);
     }
   };
 
@@ -239,9 +259,15 @@ export default function Meals() {
       setShowDeleteModal(false);
       success('Meal deleted successfully 🗑️');
       fetchMeals(currentPage);
-    } catch (err) {
-      console.error(err);
-      error(err);
+    } catch (err: any) {
+      const msg =
+        err.response?.data?.mysqlErrMsg || err?.response?.data?.errorMessage;
+      if (isAxiosError(err)) {
+        error(`Delete Meal failed ❌, reason: ${msg}`);
+      } else {
+        error('❌ Unexpected error');
+      }
+      console.error('Error Deleting Meal:', msg);
     }
   };
 

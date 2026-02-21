@@ -7,6 +7,7 @@ import AppToast from '../../components/AppToast';
 import IngredientModal from './IngredientModal';
 import { useToast } from '../../hooks/useToast';
 import ConfirmModal from '../../components/ConfirmModal';
+import { isAxiosError } from 'axios';
 
 export default function Ingredients() {
   const { toast, success, error } = useToast();
@@ -20,8 +21,20 @@ export default function Ingredients() {
   const [deleteTarget, setDeleteTarget] = useState<any>(null);
 
   const fetchAll = async () => {
-    const res = await axios.get('/ingredients');
-    setIngredients(res.data);
+    try {
+      const res = await axios.get('/ingredients');
+      setIngredients(res.data || []);
+    } catch (err: any) {
+      const msg =
+        err.response?.data?.mysqlErrMsg || err?.response?.data?.errorMessage;
+      if (isAxiosError(err)) {
+        error(`Fetch Ingredients failed ❌, reason: ${msg}`);
+      } else {
+        error('❌ Unexpected error');
+      }
+      console.error('Error fetching ingredients:', msg);
+      setIngredients([]);
+    }
   };
 
   useEffect(() => {
@@ -42,11 +55,33 @@ export default function Ingredients() {
 
   const save = async () => {
     if (editing) {
-      await axios.put(`/ingredients/${editing.id}`, { name });
-      success('Ingredient updated successfully ✏️');
+      try {
+        await axios.put(`/ingredients/${editing.id}`, { name });
+        success('Ingredient updated successfully ✏️');
+      } catch (err: any) {
+        const msg =
+          err.response?.data?.mysqlErrMsg || err?.response?.data?.errorMessage;
+        if (isAxiosError(err)) {
+          error(`Updating Ingredients failed ❌, reason: ${msg}`);
+        } else {
+          error('❌ Unexpected error');
+        }
+        console.error('Error Updating ingredient:', msg);
+      }
     } else {
-      await axios.post('/ingredients', { name });
-      success('Ingredient created successfully ✅');
+      try {
+        await axios.post('/ingredients', { name });
+        success('Ingredient created successfully ✅');
+      } catch (err: any) {
+        const msg =
+          err.response?.data?.mysqlErrMsg || err?.response?.data?.errorMessage;
+        if (isAxiosError(err)) {
+          error(`Creating Ingredients failed ❌, reason: ${msg}`);
+        } else {
+          error('❌ Unexpected error');
+        }
+        console.error('Error Creating ingredient:', msg);
+      }
     }
 
     setShowModal(false);
@@ -59,9 +94,15 @@ export default function Ingredients() {
       success('Ingredient deleted successfully 🗑️');
       setDeleteTarget(null);
       fetchAll();
-    } catch (err) {
-      console.error(error);
-      error(err);
+    } catch (err: any) {
+      const msg =
+        err.response?.data?.mysqlErrMsg || err?.response?.data?.errorMessage;
+      if (isAxiosError(err)) {
+        error(`Delete Ingredients failed ❌, reason: ${msg}`);
+      } else {
+        error('❌ Unexpected error');
+      }
+      console.error('Error deleting ingredient:', msg);
     }
   };
 

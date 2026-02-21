@@ -10,6 +10,7 @@ import {
   Param,
   ParseIntPipe,
   UseGuards,
+  Req,
 } from '@nestjs/common';
 import {
   WeeklyCommitDTO,
@@ -19,8 +20,10 @@ import { ConfigService } from '@nestjs/config';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { TypeormFilter } from 'src/filters/typeorm.filter';
 import { PlanService } from './plan.service';
+import { AuthRequest } from 'src/guards/admin.guard';
 import { CreatePlanDTO } from './dto/create-plan.dto';
 import { JwtAuthenticationGuard } from 'src/guards/jwt.guard';
+import { AdminGuard } from 'src/guards/admin.guard';
 
 @Controller('plans')
 @UseFilters(new TypeormFilter())
@@ -35,27 +38,23 @@ export class PlanController {
     this.logger.log('PlanController initialized');
   }
 
-  @Get()
   // http://localhost:3001/api/v1/plans
+  @Get()
+  @UseGuards(AdminGuard)
   getPlans(): any {
     this.logger.log('get all plans');
     return this.planService.findAll();
   }
 
-  @Get('me')
   // http://localhost:3001/api/v1/plans/me
-  getMyPlans() {
-    const userId = 1; // 🚧 临时 mock current user 暂时写死
+  @Get('me')
+  getMyPlans(@Req() req: AuthRequest) {
+    const userId = req.user.userID; // JwtAuthenticationGuard 负责认证并将用户信息附加到 req.user
     return this.planService.findByUser(userId);
   }
-  // 将来你有 JWT 后，只需要：
-  // @Get('me')
-  // getMyPlans(@Req() req) {
-  //   return this.planService.findByUser(req.user.id);
-  // }
 
-  @Post()
   // http://localhost:3001/api/v1/plans
+  @Post()
   addPlan(@Body() dto: CreatePlanDTO): any {
     this.logger.log('Adding a new plan');
     return this.planService.create(dto);
@@ -73,8 +72,8 @@ export class PlanController {
     return this.planService.commitWeeklyPlans(dto);
   }
 
-  @Delete('/:id')
   // (通过 PathPara 删除一个plan) -- http://localhost:3001/api/v1/plans/[1]
+  @Delete('/:id')
   deleteUser(@Param('id', ParseIntPipe) planId: number): any {
     this.logger.log(`Deleting plan with ID: ${planId}`);
     return this.planService.remove(planId);

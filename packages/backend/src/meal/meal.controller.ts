@@ -21,10 +21,11 @@ import { GetMealsDTO } from './dto/get-meals.dto';
 import { CreateMealDTO } from './dto/create-meal.dto';
 import { UpdateMealDTO } from './dto/update-meal.dto';
 import { JwtAuthenticationGuard } from 'src/guards/jwt.guard';
+import { AdminGuard } from 'src/guards/admin.guard';
 
 @Controller('meals')
 @UseFilters(new TypeormFilter())
-@UseGuards(JwtAuthenticationGuard)
+@UseGuards(JwtAuthenticationGuard, AdminGuard)
 export class MealController {
   constructor(
     private mealService: MealService,

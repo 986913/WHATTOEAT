@@ -19,10 +19,11 @@ import { CreateIngredientPipe } from './pipes/create-ingredient.pipe';
 import { CreateIngredientDTO } from './dto/create-ingredient.dto';
 import { UpdateIngredientDTO } from './dto/update-ingredient.dto';
 import { JwtAuthenticationGuard } from 'src/guards/jwt.guard';
+import { AdminGuard } from 'src/guards/admin.guard';
 
 @Controller('ingredients')
 @UseFilters(new TypeormFilter())
-@UseGuards(JwtAuthenticationGuard)
+@UseGuards(JwtAuthenticationGuard, AdminGuard)
 export class IngredientController {
   constructor(
     private ingredientService: IngredientService,
