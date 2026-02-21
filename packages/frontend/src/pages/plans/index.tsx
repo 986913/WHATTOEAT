@@ -1,11 +1,10 @@
 import './index.css';
 import { useEffect, useState } from 'react';
 import axios from '../../utils/axios';
-
 import ConfirmModal from '../../components/ConfirmModal';
 import AppToast from '../../components/AppToast';
 import { useToast } from '../../hooks/useToast';
-
+import { useCurrentUserStore } from '../../store/useCurrentUserStore';
 import { Form, Button, Spinner, Table, Modal } from 'react-bootstrap';
 
 /** Helper: group plans by date + type */
@@ -27,6 +26,7 @@ function groupPlans(plans: any[]) {
 
 export default function Plans() {
   const { toast, success, error } = useToast();
+  const currentUser = useCurrentUserStore((s) => s.currentUser);
 
   // =========================
   // Form state
@@ -100,12 +100,17 @@ export default function Plans() {
       return;
     }
 
+    if (!currentUser?.id) {
+      error('Please sign in first ❌');
+      return;
+    }
+
     try {
       await axios.post('/plans', {
         date,
         typeId,
         mealId,
-        userId: 1, // 暂时写死
+        userId: currentUser.id,
       });
 
       success('Plan created successfully ✅');

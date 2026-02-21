@@ -62,19 +62,21 @@ export class PlanController {
 
   // http://localhost:3001/api/v1/plans/weekly-preview   → (Draft Only) 返回 draft weekly plans
   @Post('weekly-preview')
-  previewWeeklyPlan(@Body() dto: WeeklyPreviewDTO) {
-    return this.planService.generateWeeklyPreview(dto.userId ?? 1);
+  previewWeeklyPlan(@Body() dto: WeeklyPreviewDTO, @Req() req: AuthRequest) {
+    return this.planService.generateWeeklyPreview(
+      req.user.userID ?? dto.userId,
+    );
   }
 
   // http://localhost:3001/api/v1/plans/weekly-commit   → (Bulk Insert) 批量写入数据库
   @Post('weekly-commit')
-  commitWeeklyPlan(@Body() dto: WeeklyCommitDTO) {
-    return this.planService.commitWeeklyPlans(dto);
+  commitWeeklyPlan(@Body() dto: WeeklyCommitDTO, @Req() req: AuthRequest) {
+    return this.planService.commitWeeklyPlans(req.user.userID, dto);
   }
 
   // (通过 PathPara 删除一个plan) -- http://localhost:3001/api/v1/plans/[1]
   @Delete('/:id')
-  deleteUser(@Param('id', ParseIntPipe) planId: number): any {
+  deletePlan(@Param('id', ParseIntPipe) planId: number): any {
     this.logger.log(`Deleting plan with ID: ${planId}`);
     return this.planService.remove(planId);
   }

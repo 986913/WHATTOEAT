@@ -199,7 +199,7 @@ export class PlanService {
     };
   }
 
-  async commitWeeklyPlans(dto: WeeklyCommitDTO) {
+  async commitWeeklyPlans(userId: number, dto: WeeklyCommitDTO) {
     const { plans } = dto;
     if (!plans || plans.length === 0) {
       throw new BadRequestException('No weekly plans provided');
@@ -209,9 +209,9 @@ export class PlanService {
       /** =========================
      * 1. Resolve user
      ========================= */
-      const userId = plans[0].userId ?? 1; //先写死
+      const currUserId = userId ?? plans[0].userId;
       const user = await manager.findOne(UserEntity, {
-        where: { id: userId },
+        where: { id: currUserId },
       });
       if (!user) {
         throw new BadRequestException(`User ${userId} not found`);

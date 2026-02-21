@@ -1,10 +1,10 @@
 import './index.css';
 import { useState } from 'react';
 import axios from '../../utils/axios';
-
 import AppToast from '../../components/AppToast';
 import { useToast } from '../../hooks/useToast';
 import { Button, Spinner } from 'react-bootstrap';
+import { useCurrentUserStore } from '../../store/useCurrentUserStore';
 
 type DraftPlan = {
   date: string;
@@ -15,6 +15,7 @@ type DraftPlan = {
 
 export default function WeekPlans() {
   const { toast, success, error } = useToast();
+  const currentUser = useCurrentUserStore((s) => s.currentUser);
 
   const [draftPlans, setDraftPlans] = useState<DraftPlan[]>([]);
   const [savedPlans, setSavedPlans] = useState<any[]>([]);
@@ -40,9 +41,16 @@ export default function WeekPlans() {
   }
 
   const handleGenerateWeekly = async () => {
+    if (!currentUser?.id) {
+      error('Please sign in first');
+      return;
+    }
+
     try {
       setLoadingPreview(true);
-      const res = await axios.post('/plans/weekly-preview', { userId: 1 });
+      const res = await axios.post('/plans/weekly-preview', {
+        userId: currentUser.id,
+      });
       setDraftPlans(res.data.draftPlans || []);
       setSavedPlans([]);
       success('Weekly plan generated 🎲');
@@ -54,6 +62,10 @@ export default function WeekPlans() {
   };
 
   const handleSaveWeek = async () => {
+    if (!currentUser?.id) {
+      error('Please sign in first');
+      return;
+    }
     if (!draftPlans.length) return;
 
     try {
@@ -63,7 +75,7 @@ export default function WeekPlans() {
           date: p.date,
           typeId: p.typeId,
           mealId: p.mealId,
-          userId: 1,
+          userId: currentUser.id,
         })),
       });
 
