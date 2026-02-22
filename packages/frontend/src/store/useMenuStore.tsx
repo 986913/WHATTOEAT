@@ -1,11 +1,17 @@
 import { create } from 'zustand';
 import React from 'react';
 
+export enum RoleForUI {
+  USER = 'USER',
+  ADMIN = 'ADMIN',
+}
+
 export interface MenuItem {
   id: number;
   name: string;
   path: string;
   icon: React.ReactNode;
+  roles: RoleForUI[];
 }
 
 interface MenuState {
@@ -18,55 +24,56 @@ export const useMenuStore = create<MenuState>(() => ({
       id: 1,
       name: 'Generate Weekly Plans',
       path: '/home/wkplans',
-      icon: <i className='fa-solid fa-bowl-food'></i>,
+      icon: <i className='fa-solid fa-burger'></i>,
+      roles: [RoleForUI.USER, RoleForUI.ADMIN],
     },
     {
       id: 2,
-      name: '当前User的Plans Management',
+      name: 'Browse Plans History',
       path: '/home/userplans',
-      icon: <i className='fa-solid fa-edit'></i>,
+      icon: <i className='fa-solid fa-eye'></i>,
+      roles: [RoleForUI.USER, RoleForUI.ADMIN],
     },
     {
       id: 3,
-      name: '(Ming🉑见) 所有人Plans Management',
+      name: '(Admin) All Plans',
       path: '/home/plans',
       icon: <i className='fa-solid fa-record-vinyl'></i>,
+      roles: [RoleForUI.ADMIN],
     },
     {
       id: 4,
-      name: '(Ming🉑见) Users Management',
+      name: '(Admin) All Users',
       path: '/home/users',
       icon: <i className='fa-solid fa-user'></i>,
+      roles: [RoleForUI.ADMIN],
     },
     {
       id: 5,
-      name: '(Ming🉑见) Meals Management',
+      name: '(Admin) All Meals',
       path: '/home/meals',
       icon: <i className='fa-solid fa-bowl-food'></i>,
+      roles: [RoleForUI.ADMIN],
     },
     {
       id: 6,
-      name: '(Ming🉑见) Ingredients Management',
+      name: '(Admin) All Ingredients',
       path: '/home/ingredients',
-      icon: <i className='fa-solid fa-bottle-droplet'></i>,
+      icon: <i className='fa-solid fa-leaf'></i>,
+      roles: [RoleForUI.ADMIN],
     },
+    // {
+    //   id: 7,
+    //   name: '(Admin) Roles Management',
+    //   path: '/home/roles',
+    //   icon: <i className='fa-solid fa-screwdriver-wrench'></i>,
+    //   roles: [RoleForUI.ADMIN],
+    // },
     // {
     //   id: 1,
     //   name: 'Dashboard',
     //   path: '/home/dashboard',
     //   icon: <i className='fa-solid fa-house'></i>,
-    // },
-    // {
-    //   id: 3,
-    //   name: 'Roles Management',
-    //   path: '/home/roles',
-    //   icon: <i className='fa-solid fa-screwdriver-wrench'></i>,
-    // },
-    // {
-    //   id: 4,
-    //   name: 'Menus Management',
-    //   path: '/home/menus',
-    //   icon: <i className='fa-solid fa-bars'></i>,
     // },
     // {
     //   id: 9,
