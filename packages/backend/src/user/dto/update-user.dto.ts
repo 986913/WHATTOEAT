@@ -28,6 +28,6 @@ export class UpdateUserDTO {
   @ArrayUnique()
   @Type(() => Number) // 把 '2'/'3' 字符串转换为数字 2/3
   @IsInt({ each: true })
-  @IsIn([2, 3], { each: true }) //数组中每一项都必须是 2 或 3
+  @IsIn([1, 2, 3], { each: true }) //数组中每一项都必须是 1 或 2 或 3
   roles?: number[];
 }

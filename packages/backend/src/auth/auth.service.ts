@@ -1,4 +1,4 @@
-// import * as argon2 from 'argon2';
+import * as argon2 from 'argon2';
 import {
   ForbiddenException,
   Injectable,
@@ -20,57 +20,26 @@ export class AuthService {
     if (!foundUser) {
       throw new UnauthorizedException('No such user found');
     }
-    if (foundUser.password !== password) {
-      throw new UnauthorizedException('Invalid password');
-    }
-    if (foundUser && foundUser.password === password) {
-      /* 通过 JWT Service, 生成 JWT token:
-        将 payload 编码为 JWT Token，并使用配置好的 jwtsecret 进行加密签名，最终生成一个可让前端验证的 token 字符串。
-      */
-      const access_token = await this.jwtService.signAsync(
-        {
-          username: foundUser.username,
-          sub: foundUser.id, // JWT token 的 payload 里至少要有一个 sub 字段，表示这个 token 是给谁的，通常是用户的 id
-          // 其他自定义字段
-          roles: foundUser.roles,
-          isAdmin: foundUser.roles.some(
-            (r) => r.roleName.toLowerCase() === 'admin' || r.id === 1,
-          ),
-        },
-        // 局部设置 -> refreshToken
-        // {
-        //   expiresIn: '3d', // 设置 token 的过期时间
-        // },
-      );
-      return {
-        access_token,
-      };
-    }
-
-    throw new UnauthorizedException('Invalid credentials');
-
     // 使用argon2进行 密码比对:
-    // const isPasswordCorrect = await argon2.verify(foundUser.password, password);
-    // if (isPasswordCorrect === false) {
-    //   throw new UnauthorizedException('Invalid credentials');
-    // }
+    const isPasswordCorrect = await argon2.verify(foundUser.password, password);
+    if (isPasswordCorrect === false) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
     /* 通过 JWT Service, 生成 JWT token:
         将 payload 编码为 JWT Token，并使用配置好的 jwtsecret 进行加密签名，最终生成一个可让前端验证的 token 字符串。
       */
-    // const access_token = await this.jwtService.signAsync(
-    //   {
-    //     username: foundUser.username,
-    //     sub: foundUser.id, // JWT token 的 payload 里至少要有一个 sub 字段，表示这个 token 是给谁的，通常是用户的 id
-    //     // 其他自定义字段
-    //     roles: foundUser.roles,
-    //     isAdmin: foundUser.roles.some(
-    //       (r) => r.roleName.toLowerCase() === 'admin' || r.id === 1,
-    //     ),
-    //   },
-    // );
-    // return {
-    //   access_token,
-    // };
+    const access_token = await this.jwtService.signAsync({
+      username: foundUser.username,
+      sub: foundUser.id, // JWT token 的 payload 里至少要有一个 sub 字段，表示这个 token 是给谁的，通常是用户的 id
+      // 其他自定义字段
+      roles: foundUser.roles,
+      isAdmin: foundUser.roles.some(
+        (r) => r.roleName.toLowerCase() === 'admin' || r.id === 1,
+      ),
+    });
+    return {
+      access_token,
+    };
   }
 
   async getMeProfile(user: AuthUser) {
