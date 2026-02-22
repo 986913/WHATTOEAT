@@ -42,15 +42,20 @@ export default function DefaultLayout() {
         <div className='col-2 p-0'>
           <SidebarNav />
         </div>
-        <div className='col-10 p-0'>
-          <div className='row'>
-            <div className='container-fluid'>
-              <HeaderNav onLogout={handleLogout} />
-              <main>
-                <Outlet /> {/* 这里会渲染 Dashboard 或其他APItest等子路由 */}
-              </main>
+        <div className='col-10 p-0 d-flex flex-column vh-100'>
+          <HeaderNav onLogout={handleLogout} />
+
+          <main className='flex-grow-1 p-4 bg-light overflow-auto'>
+            <Outlet />
+          </main>
+
+          <footer className='app-footer'>
+            <div className='footer-content'>
+              <span>🍽 What To Eat</span>
+              <span className='footer-divider'>·</span>
+              <span>Plan smarter. Eat better.</span>
             </div>
-          </div>
+          </footer>
         </div>
       </div>
     </div>
