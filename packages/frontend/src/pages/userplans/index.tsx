@@ -183,9 +183,7 @@ export default function UserPlans() {
                               </div>
 
                               <div className='meal-actions'>
-                                {editable && (
-                                  <Button size='sm'>Replace it</Button>
-                                )}
+                                {editable && <Button size='sm'>Replace</Button>}
                               </div>
                             </div>
                           );

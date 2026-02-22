@@ -105,7 +105,7 @@ export default function WeekPlans() {
                   <Spinner animation='border' size='sm' /> Generating...
                 </>
               ) : draftPlans.length ? (
-                '🔄 Regenerate'
+                '🔄 Generate Again'
               ) : (
                 '🎲 Generate Weekly Plan'
               )}
@@ -121,7 +121,7 @@ export default function WeekPlans() {
                   <Spinner animation='border' size='sm' /> Saving...
                 </>
               ) : (
-                '💾 Save Week Meals'
+                '💾 Save Weekly Plan'
               )}
             </Button>
           </div>
@@ -198,7 +198,8 @@ export default function WeekPlans() {
           </div>
 
           <div className='week-empty'>
-            Preview ready. Click <strong>Save Week Meals</strong> to commit.
+            Preview generated successfully. Click{' '}
+            <strong>Save Weekly Meals</strong> to confirm your weekly plan.
           </div>
         </>
       )}
@@ -207,7 +208,7 @@ export default function WeekPlans() {
       {savedPlans.length > 0 && (
         <>
           <div className='history-hint'>
-            ℹ️ View historical plans in <strong>Plans Management</strong>.
+            ℹ️ View historical plans in <strong>My Plans</strong>.
           </div>
 
           <div className='plans-scroll-container'>

@@ -29,7 +29,7 @@ export const useMenuStore = create<MenuState>(() => ({
     },
     {
       id: 2,
-      name: 'Browse Plans History',
+      name: 'My Plans',
       path: '/home/userplans',
       icon: <i className='fa-solid fa-eye'></i>,
       roles: [RoleForUI.USER, RoleForUI.ADMIN],
