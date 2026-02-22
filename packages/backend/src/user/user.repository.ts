@@ -1,3 +1,4 @@
+// import * as argon2 from 'argon2';
 import { Injectable } from '@nestjs/common';
 import { DataSource, Repository } from 'typeorm';
 import { UserEntity } from './entities/user.entity';
@@ -119,6 +120,8 @@ export class UserRepository {
       roles: roleEntities,
       profile: profile ? this.profileRepo.create(profile) : undefined,
     });
+    // 使用argon2进行 密码加密:
+    // newUser.password = await argon2.hash(newUser.password);
 
     /**
      * 3️⃣ save user

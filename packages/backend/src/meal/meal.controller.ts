@@ -75,7 +75,7 @@ export class MealController {
 
   @Delete('/:id')
   // (通过 PathPara 删除一个meal) -- http://localhost:3001/api/v1/meals/[1]
-  deleteUser(@Param('id', ParseIntPipe) mealId: number): any {
+  deleteMeal(@Param('id', ParseIntPipe) mealId: number): any {
     this.logger.log(`Deleting meal with ID: ${mealId}`);
     return this.mealService.remove(mealId);
   }

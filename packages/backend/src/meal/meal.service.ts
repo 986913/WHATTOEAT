@@ -44,7 +44,6 @@ export class MealService {
 
     const queryBuilder = this.mealRepo
       .createQueryBuilder('mealsTable')
-      .leftJoinAndSelect('mealsTable.user', 'users')
       .leftJoinAndSelect('mealsTable.types', 'types')
       .leftJoinAndSelect('mealsTable.ingredients', 'ingredients');
     // 后面的.where会替换前面的.where, 所以要用.andWhere

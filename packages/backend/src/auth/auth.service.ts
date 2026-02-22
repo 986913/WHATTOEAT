@@ -1,4 +1,9 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+// import * as argon2 from 'argon2';
+import {
+  ForbiddenException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { UserService } from 'src/user/user.service';
 import { AuthUser } from './auth.strategy';
@@ -43,6 +48,29 @@ export class AuthService {
     }
 
     throw new UnauthorizedException('Invalid credentials');
+
+    // 使用argon2进行 密码比对:
+    // const isPasswordCorrect = await argon2.verify(foundUser.password, password);
+    // if (isPasswordCorrect === false) {
+    //   throw new UnauthorizedException('Invalid credentials');
+    // }
+    /* 通过 JWT Service, 生成 JWT token:
+        将 payload 编码为 JWT Token，并使用配置好的 jwtsecret 进行加密签名，最终生成一个可让前端验证的 token 字符串。
+      */
+    // const access_token = await this.jwtService.signAsync(
+    //   {
+    //     username: foundUser.username,
+    //     sub: foundUser.id, // JWT token 的 payload 里至少要有一个 sub 字段，表示这个 token 是给谁的，通常是用户的 id
+    //     // 其他自定义字段
+    //     roles: foundUser.roles,
+    //     isAdmin: foundUser.roles.some(
+    //       (r) => r.roleName.toLowerCase() === 'admin' || r.id === 1,
+    //     ),
+    //   },
+    // );
+    // return {
+    //   access_token,
+    // };
   }
 
   async getMeProfile(user: AuthUser) {
@@ -51,6 +79,11 @@ export class AuthService {
   }
 
   async signup(username: string, password: string) {
+    const foundUser = await this.userService.findByUserName(username);
+    if (foundUser) {
+      return new ForbiddenException('User already exist');
+    }
+
     const newUser = await this.userService.create({
       username,
       password,
