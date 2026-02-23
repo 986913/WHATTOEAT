@@ -3,4 +3,6 @@ export type DraftPlan = {
   typeId: number;
   mealId: number;
   mealName?: string;
+  mealVideoUrl?: string;
+  mealImageUrl?: string;
 };

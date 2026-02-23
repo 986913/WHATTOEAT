@@ -19,7 +19,11 @@ export class CreateMealDTO {
 
   @IsUrl()
   @IsOptional()
-  url?: string;
+  videoUrl?: string;
+
+  @IsOptional()
+  @IsUrl()
+  imageUrl?: string;
 
   // types 必须是非空数组，且数组每个元素必须是 MealType 枚举中的值
   @IsNotEmpty()

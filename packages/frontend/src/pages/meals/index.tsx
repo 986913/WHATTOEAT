@@ -57,7 +57,8 @@ export default function Meals() {
   const [editingMeal, setEditingMeal] = useState<any>(null);
 
   const [editMealName, setEditMealName] = useState('');
-  const [editMealUrl, setEditMealUrl] = useState('');
+  const [editMealVideoUrl, setEditMealVideoUrl] = useState('');
+  const [editMealImageUrl, setEditMealImageUrl] = useState('');
   const [editTypes, setEditTypes] = useState<string[]>([]);
   const [editIngredientIds, setEditIngredientIds] = useState<number[]>([]);
 
@@ -212,7 +213,8 @@ export default function Meals() {
     setEditingMeal(meal);
 
     setEditMealName(meal.name);
-    setEditMealUrl(meal.url || '');
+    setEditMealVideoUrl(meal.videoUrl || '');
+    setEditMealImageUrl(meal.imageUrl || '');
 
     setEditTypes(meal.types?.map((t: any) => t.name) || []);
     setEditIngredientIds(meal.ingredients?.map((i: any) => i.id) || []);
@@ -225,7 +227,8 @@ export default function Meals() {
     try {
       await axios.put(`/meals/${editingMeal.id}`, {
         name: editMealName,
-        url: editMealUrl,
+        videoUrl: editMealVideoUrl,
+        imageUrl: editMealImageUrl,
         types: editTypes,
         ingredientIds: editIngredientIds,
       });
@@ -354,8 +357,8 @@ export default function Meals() {
               <td>{meal.name}</td>
 
               <td>
-                {meal.url ? (
-                  <a href={meal.url} target='_blank' rel='noreferrer'>
+                {meal.videoUrl ? (
+                  <a href={meal.videoUrl} target='_blank' rel='noreferrer'>
                     Link
                   </a>
                 ) : (
@@ -500,8 +503,16 @@ export default function Meals() {
 
             <Form.Control
               className='mb-3'
-              value={editMealUrl}
-              onChange={(e) => setEditMealUrl(e.target.value)}
+              value={editMealVideoUrl}
+              placeholder='Enter Cooking Video URL'
+              onChange={(e) => setEditMealVideoUrl(e.target.value)}
+            />
+
+            <Form.Control
+              className='mb-3'
+              value={editMealImageUrl}
+              placeholder='Enter Preview Image URL'
+              onChange={(e) => setEditMealImageUrl(e.target.value)}
             />
 
             <Form.Label>Meal Types</Form.Label>

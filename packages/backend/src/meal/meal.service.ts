@@ -78,7 +78,7 @@ export class MealService {
   }
 
   async create(dto: CreateMealDTO) {
-    const { name, url, types, ingredientIds } = dto;
+    const { name, videoUrl, imageUrl, types, ingredientIds } = dto;
 
     // 1. Types enum → entity
     const typeEntities = await this.typeRepo.find({
@@ -93,7 +93,8 @@ export class MealService {
     // 3. Create Meal
     const meal = this.mealRepo.create({
       name,
-      url,
+      videoUrl,
+      imageUrl,
       types: typeEntities,
       ingredients: ingredientEntities,
     });
@@ -104,11 +105,12 @@ export class MealService {
   async update(mealId: number, dto: UpdateMealDTO) {
     const meal = await this.ensureMealExists(mealId);
 
-    const { name, url, types, ingredientIds } = dto;
+    const { name, videoUrl, imageUrl, types, ingredientIds } = dto;
 
     // ===== update basic fields =====
     if (name !== undefined) meal.name = name;
-    if (url !== undefined) meal.url = url;
+    if (videoUrl !== undefined) meal.videoUrl = videoUrl;
+    if (imageUrl !== undefined) meal.imageUrl = imageUrl;
 
     // ===== update types =====
     if (types) {

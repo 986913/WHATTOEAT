@@ -19,7 +19,11 @@ export class UpdateMealDTO {
 
   @IsOptional()
   @IsUrl()
-  url?: string;
+  videoUrl?: string;
+
+  @IsOptional()
+  @IsUrl()
+  imageUrl?: string;
 
   @IsOptional()
   @IsArray()

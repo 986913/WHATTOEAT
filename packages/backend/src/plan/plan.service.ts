@@ -204,7 +204,7 @@ export class PlanService {
           .createQueryBuilder('meal')
           .leftJoin('meal.types', 'type')
           .where('type.id = :typeId', { typeId })
-          .select(['meal.id', 'meal.name'])
+          .select(['meal.id', 'meal.name', 'meal.videoUrl', 'meal.imageUrl'])
           .getMany();
         if (meals.length === 0) {
           throw new BadRequestException(
@@ -218,7 +218,9 @@ export class PlanService {
           date,
           typeId,
           mealId: randomMeal.id,
-          mealName: randomMeal.name, // optional for UI preview
+          mealName: randomMeal.name,
+          mealVideoUrl: randomMeal.videoUrl,
+          mealImageUrl: randomMeal.imageUrl,
         });
       }
     }

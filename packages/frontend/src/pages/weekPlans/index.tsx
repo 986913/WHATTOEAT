@@ -3,14 +3,17 @@ import { useState } from 'react';
 import axios from '../../utils/axios';
 import AppToast from '../../components/AppToast';
 import { useToast } from '../../hooks/useToast';
-import { Button, Spinner } from 'react-bootstrap';
+import { Button, Spinner, Modal, Image } from 'react-bootstrap';
 import { useCurrentUserStore } from '../../store/useCurrentUserStore';
+import VideoPreviewModal from '../../components/VideoPreviewModal';
 
 type DraftPlan = {
   date: string;
   typeId: number;
   mealId: number;
   mealName?: string;
+  mealVideoUrl?: string;
+  mealImageUrl?: string;
 };
 
 export default function WeekPlans() {
@@ -18,11 +21,11 @@ export default function WeekPlans() {
   const currentUser = useCurrentUserStore((s) => s.currentUser);
 
   const [draftPlans, setDraftPlans] = useState<DraftPlan[]>([]);
-  const [savedPlans, setSavedPlans] = useState<any[]>([]);
   const [loadingPreview, setLoadingPreview] = useState(false);
   const [loadingCommit, setLoadingCommit] = useState(false);
+  const [videoUrl, setVideoUrl] = useState<string | null>(null);
 
-  const isEmptyState = draftPlans.length === 0 && savedPlans.length === 0;
+  const isEmptyState = draftPlans.length === 0;
 
   function getMealType(typeId: number) {
     if (typeId === 1) return { label: 'Breakfast', icon: '🍳' };
@@ -31,8 +34,8 @@ export default function WeekPlans() {
     return { label: 'Unknown', icon: '❓' };
   }
 
-  function groupPlansByDate(plans: any[]) {
-    const grouped: Record<string, any[]> = {};
+  function groupPlansByDate(plans: DraftPlan[]) {
+    const grouped: Record<string, DraftPlan[]> = {};
     plans.forEach((p) => {
       if (!grouped[p.date]) grouped[p.date] = [];
       grouped[p.date].push(p);
@@ -52,8 +55,7 @@ export default function WeekPlans() {
         userId: currentUser.id,
       });
       setDraftPlans(res.data.draftPlans || []);
-      setSavedPlans([]);
-      success('Weekly plan generated 🎲');
+      success('Your week is ready 🎲');
     } catch {
       error('Failed to generate weekly plan ❌');
     } finally {
@@ -62,15 +64,11 @@ export default function WeekPlans() {
   };
 
   const handleSaveWeek = async () => {
-    if (!currentUser?.id) {
-      error('Please sign in first');
-      return;
-    }
-    if (!draftPlans.length) return;
+    if (!currentUser?.id || !draftPlans.length) return;
 
     try {
       setLoadingCommit(true);
-      const res = await axios.post('/plans/weekly-commit', {
+      await axios.post('/plans/weekly-commit', {
         plans: draftPlans.map((p) => ({
           date: p.date,
           typeId: p.typeId,
@@ -78,10 +76,7 @@ export default function WeekPlans() {
           userId: currentUser.id,
         })),
       });
-
-      setSavedPlans(res.data.plans || []);
-      setDraftPlans([]);
-      success('Weekly plans saved successfully ✅');
+      success('Week saved successfully ✅');
     } catch {
       error('Failed to save weekly plans ❌');
     } finally {
@@ -89,14 +84,21 @@ export default function WeekPlans() {
     }
   };
 
+  const grouped = groupPlansByDate(draftPlans);
+
   return (
     <div className='page'>
-      {/* ================= Header ================= */}
-      <div className='page-header'>
-        {!isEmptyState && (
-          <div className='page-actions'>
+      {/* HEADER */}
+      {!isEmptyState && (
+        <div className='week-header'>
+          <div>
+            <h4 className='week-title'>📅 This Week’s Plan</h4>
+            <p className='week-sub'>Review and adjust before saving</p>
+          </div>
+
+          <div className='week-actions'>
             <Button
-              variant={draftPlans.length ? 'outline-success' : 'success'}
+              variant='outline-secondary'
               onClick={handleGenerateWeekly}
               disabled={loadingPreview || loadingCommit}
             >
@@ -104,15 +106,13 @@ export default function WeekPlans() {
                 <>
                   <Spinner animation='border' size='sm' /> Generating...
                 </>
-              ) : draftPlans.length ? (
-                '🔄 Generate Again'
               ) : (
-                '🎲 Generate Weekly Plan'
+                '🔄 Regenerate'
               )}
             </Button>
 
             <Button
-              variant='primary'
+              variant='success'
               onClick={handleSaveWeek}
               disabled={!draftPlans.length || loadingCommit}
             >
@@ -121,31 +121,27 @@ export default function WeekPlans() {
                   <Spinner animation='border' size='sm' /> Saving...
                 </>
               ) : (
-                '💾 Save Weekly Plan'
+                '💾 Save Week'
               )}
             </Button>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
-      {/* ================= Welcome / Empty ================= */}
+      {/* WELCOME */}
       {isEmptyState && (
         <div className='welcome-card'>
           <div className='welcome-emoji'>🍽️</div>
-
           <h3 className='welcome-title'>Welcome to What To Eat</h3>
-
           <p className='welcome-subtitle'>
             Plan your meals for the week in seconds — no more “what should I eat
             today?”
           </p>
-
           <ul className='welcome-list'>
             <li>🎲 Generate a weekly meal plan</li>
             <li>🧾 See ingredients at a glance</li>
             <li>💾 Save and reuse plans anytime</li>
           </ul>
-
           <Button
             variant='success'
             size='lg'
@@ -163,114 +159,64 @@ export default function WeekPlans() {
         </div>
       )}
 
-      {/* ================= Draft Preview ================= */}
+      {/* SUMMARY */}
       {draftPlans.length > 0 && (
-        <>
-          <div className='week-scroll-wrapper'>
-            <div className='week-grid'>
-              {Object.entries(groupPlansByDate(draftPlans)).map(
-                ([date, plans]) => (
-                  <div key={date} className='day-card'>
-                    <div className='day-header'>{date}</div>
+        <div className='week-summary'>
+          {Object.keys(grouped).length} Days • {draftPlans.length} Meals •
+          {new Set(draftPlans.map((p) => p.mealName).filter(Boolean)).size}{' '}
+          Unique Dishes Dishes
+        </div>
+      )}
 
-                    <div className='meal-list'>
-                      {plans
-                        .sort((a, b) => a.typeId - b.typeId)
-                        .map((p) => {
-                          const t = getMealType(p.typeId);
-                          return (
-                            <div
-                              key={`${p.date}-${p.typeId}`}
-                              className='meal-row'
-                            >
-                              <span className={`meal-badge type-${p.typeId}`}>
-                                {t.icon} {t.label}
-                              </span>
-                              <span className='meal-name'>{p.mealName}</span>
-                            </div>
-                          );
-                        })}
-                    </div>
-                  </div>
-                ),
-              )}
+      {/* VERTICAL LIST */}
+      {draftPlans.length > 0 && (
+        <div className='week-vertical'>
+          {Object.entries(grouped).map(([date, plans]) => (
+            <div key={date} className='day-section'>
+              <div className='day-section-header'>📅 {date}</div>
+              <div className='meal-items'>
+                {plans
+                  .sort((a, b) => a.typeId - b.typeId)
+                  .map((p) => {
+                    const t = getMealType(p.typeId);
+                    return (
+                      <div
+                        key={`${p.date}-${p.typeId}`}
+                        className='meal-item'
+                        onClick={() => {
+                          if (p.mealVideoUrl) setVideoUrl(p.mealVideoUrl);
+                        }}
+                      >
+                        <Image
+                          className='meal-image'
+                          src={
+                            p.mealImageUrl ||
+                            'https://thetac.tech/wp-content/uploads/2024/09/placeholder-288.png'
+                          }
+                          alt={p.mealName}
+                        />
+
+                        <div className='meal-content'>
+                          <div className='meal-type-line'>
+                            <span className={`meal-badge type-${p.typeId}`}>
+                              {t.icon}
+                            </span>
+                            <span className='meal-type-label'>{t.label}</span>
+                          </div>
+
+                          <div className='meal-title'>{p.mealName}</div>
+                        </div>
+                      </div>
+                    );
+                  })}
+              </div>
             </div>
-          </div>
-
-          <div className='week-empty'>
-            Preview generated successfully. Click{' '}
-            <strong>Save Weekly Meals</strong> to confirm your weekly plan.
-          </div>
-        </>
+          ))}
+        </div>
       )}
 
-      {/* ================= Saved Result ================= */}
-      {savedPlans.length > 0 && (
-        <>
-          <div className='history-hint'>
-            ℹ️ View historical plans in <strong>My Plans</strong>.
-          </div>
-
-          <div className='plans-scroll-container'>
-            {Object.entries(groupPlansByDate(savedPlans)).map(
-              ([date, plans]) => (
-                <div key={date} className='day-table-block'>
-                  <h5 className='day-title'>📅 {date}</h5>
-
-                  <table className='grouped-table'>
-                    <colgroup>
-                      <col className='col-type' />
-                      <col className='col-meal' />
-                      <col className='col-url' />
-                      <col className='col-ingredients' />
-                    </colgroup>
-
-                    <thead>
-                      <tr>
-                        <th>Meal Type</th>
-                        <th>Meal</th>
-                        <th>URL</th>
-                        <th>Ingredients</th>
-                      </tr>
-                    </thead>
-
-                    <tbody>
-                      {plans
-                        .sort((a, b) => a.type.id - b.type.id)
-                        .map((p) => (
-                          <tr key={p.id}>
-                            <td>{p.type?.name}</td>
-                            <td>{p.meal?.name}</td>
-                            <td className='url-cell'>
-                              {p.meal?.url ? (
-                                <a
-                                  href={p.meal.url}
-                                  target='_blank'
-                                  rel='noreferrer'
-                                >
-                                  🔗
-                                </a>
-                              ) : (
-                                '-'
-                              )}
-                            </td>
-                            <td className='ingredients-cell'>
-                              {p.meal?.ingredients?.length
-                                ? p.meal.ingredients
-                                    .map((i: any) => i.name)
-                                    .join(', ')
-                                : '-'}
-                            </td>
-                          </tr>
-                        ))}
-                    </tbody>
-                  </table>
-                </div>
-              ),
-            )}
-          </div>
-        </>
-      )}
+      {/* PREVIEW VIDEO MODAL */}
+      <VideoPreviewModal url={videoUrl} onClose={() => setVideoUrl(null)} />
 
       <AppToast {...toast} onClose={toast.close} />
     </div>

@@ -19,7 +19,10 @@ export class MealEntity {
   name: string;
 
   @Column()
-  url: string;
+  videoUrl: string; // for cooking instruction
+
+  @Column()
+  imageUrl: string; // for preview
 
   /*
       @ManyToMany 一个meal可以有多个types:

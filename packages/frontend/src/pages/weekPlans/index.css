@@ -1,13 +1,4 @@
 /* ===========================
-   Header
-=========================== */
-
-.page-actions {
-  display: flex;
-  gap: 12px;
-}
-
-/* ===========================
    Empty / Hint
 =========================== */
 
@@ -244,14 +235,12 @@
 
 .welcome-card {
   margin: auto;
-  /* margin-top: 48px; */
   padding: 48px 32px;
   max-width: 640px;
   background: white;
   border-radius: 16px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
   text-align: center;
-
   display: flex;
   flex-direction: column;
 }
@@ -285,4 +274,141 @@
   font-size: 14px;
   color: #444;
   margin-bottom: 8px;
+}
+
+/* Header */
+.week-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.week-title {
+  font-size: 20px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.week-sub {
+  font-size: 13px;
+  color: #777;
+  margin-top: 4px;
+}
+
+.week-actions {
+  display: flex;
+  gap: 12px;
+}
+
+/* Summary */
+
+.week-summary {
+  margin-bottom: 24px;
+  padding: 14px 18px;
+  background: white;
+  border-radius: 12px;
+  border: 1px solid #e9ecef;
+  font-size: 13px;
+  color: #555;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.03);
+}
+
+/* Vertical layout */
+
+.week-vertical {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+/* Day section */
+
+.day-section {
+  background: white;
+  border-radius: 16px;
+  padding: 22px;
+  border: 1px solid #e6e6e6;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.03);
+}
+
+.day-section-header {
+  font-weight: 600;
+  margin-bottom: 16px;
+  font-size: 15px;
+  border-bottom: 1px solid #f0f0f0;
+  padding-bottom: 8px;
+}
+
+/* Meal card */
+.meal-items {
+  display: flex;
+  justify-content: space-around;
+}
+.meal-item {
+  flex-basis: 22%;
+  display: flex;
+  flex-direction: column;
+  border-radius: 14px;
+  overflow: hidden;
+  cursor: pointer;
+  margin-bottom: 18px;
+  background: #fafafa;
+  transition: all 0.2s ease;
+}
+
+.meal-item:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+}
+
+.meal-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Content */
+
+.meal-content {
+  padding: 12px 14px;
+}
+
+.meal-type-line {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #666;
+  margin-bottom: 4px;
+}
+
+.meal-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #222;
+}
+
+/* Badges */
+
+.meal-badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 999px;
+}
+
+.type-1 {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.type-2 {
+  background: #d1ecf1;
+  color: #0c5460;
+}
+
+.type-3 {
+  background: #f8d7da;
+  color: #721c24;
 }

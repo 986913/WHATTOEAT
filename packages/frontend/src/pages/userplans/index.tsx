@@ -1,12 +1,11 @@
 import './index.css';
 import { useEffect, useMemo, useState } from 'react';
 import axios from '../../utils/axios';
-
+import VideoPreviewModal from '../../components/VideoPreviewModal';
 import ConfirmModal from '../../components/ConfirmModal';
 import AppToast from '../../components/AppToast';
 import { useToast } from '../../hooks/useToast';
-
-import { Button, Spinner } from 'react-bootstrap';
+import { Spinner } from 'react-bootstrap';
 
 /** =========================
  * Helper: group plans by date
@@ -37,6 +36,7 @@ export default function UserPlans() {
   const [plans, setPlans] = useState<any[]>([]);
   const [loadingPlans, setLoadingPlans] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<any>(null);
+  const [videoUrl, setVideoUrl] = useState<string | null>(null);
 
   /** ===== expanded state ===== */
   const [expandedDates, setExpandedDates] = useState<Record<string, boolean>>(
@@ -102,7 +102,6 @@ export default function UserPlans() {
   return (
     <div className='page'>
       <h2 className='page-title'>My Plans</h2>
-
       <div className='plans-layout'>
         <div className='plans-left'>
           {loadingPlans ? (
@@ -132,10 +131,16 @@ export default function UserPlans() {
                       <div className='day-body'>
                         {['breakfast', 'lunch', 'dinner'].map((type) => {
                           const plan = meals[type];
-                          const editable = plan && isEditable(plan.date);
-
                           return (
-                            <div key={type} className='meal-row'>
+                            <div
+                              key={type}
+                              className={`meal-row ${plan?.meal?.videoUrl ? 'clickable' : ''}`}
+                              onClick={() => {
+                                if (plan?.meal?.videoUrl) {
+                                  setVideoUrl(plan.meal.videoUrl);
+                                }
+                              }}
+                            >
                               <div className='meal-type'>
                                 {type === 'breakfast' && '🍳'}
                                 {type === 'lunch' && '🥗'}
@@ -149,17 +154,6 @@ export default function UserPlans() {
                                       <span className='meal-name'>
                                         {plan.meal?.name}
                                       </span>
-
-                                      {plan.meal?.url && (
-                                        <a
-                                          href={plan.meal.url}
-                                          target='_blank'
-                                          rel='noreferrer'
-                                          className='meal-link'
-                                        >
-                                          🔗
-                                        </a>
-                                      )}
                                     </div>
 
                                     {plan.meal?.ingredients?.length > 0 && (
@@ -181,10 +175,6 @@ export default function UserPlans() {
                                   <span className='missing'>—</span>
                                 )}
                               </div>
-
-                              <div className='meal-actions'>
-                                {editable && <Button size='sm'>Replace</Button>}
-                              </div>
                             </div>
                           );
                         })}
@@ -196,7 +186,6 @@ export default function UserPlans() {
           )}
         </div>
       </div>
-
       {/* ===== Delete Confirm ===== */}
       <ConfirmModal
         show={!!selectedPlan}
@@ -205,6 +194,8 @@ export default function UserPlans() {
         onCancel={() => setSelectedPlan(null)}
         onConfirm={handleDeletePlan}
       />
+
+      <VideoPreviewModal url={videoUrl} onClose={() => setVideoUrl(null)} />
 
       {/* ===== Toast ===== */}
       <AppToast
