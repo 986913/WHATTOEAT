@@ -14,6 +14,8 @@ import {
   Headers,
   UseGuards,
   Req,
+  UseInterceptors,
+  ClassSerializerInterceptor,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { ConfigService } from '@nestjs/config';
@@ -31,6 +33,7 @@ import { JwtAuthenticationGuard } from 'src/guards/jwt.guard';
 @Controller('users')
 @UseFilters(new TypeormFilter())
 @UseGuards(JwtAuthenticationGuard) // 保护所有路由：要求request携带有效的 JWT（否则返回 401）; JwtAuthenticationGuard 也就是 AuthGuard('jwt') 负责认证并将用户信息附加到 req.user
+@UseInterceptors(ClassSerializerInterceptor)
 export class UserController {
   constructor(
     private userService: UserService,

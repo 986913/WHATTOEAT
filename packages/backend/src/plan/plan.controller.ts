@@ -11,6 +11,8 @@ import {
   ParseIntPipe,
   UseGuards,
   Req,
+  UseInterceptors,
+  ClassSerializerInterceptor,
 } from '@nestjs/common';
 import {
   WeeklyCommitDTO,
@@ -28,6 +30,7 @@ import { AdminGuard } from 'src/guards/admin.guard';
 @Controller('plans')
 @UseFilters(new TypeormFilter())
 @UseGuards(JwtAuthenticationGuard)
+@UseInterceptors(ClassSerializerInterceptor)
 export class PlanController {
   constructor(
     private planService: PlanService,

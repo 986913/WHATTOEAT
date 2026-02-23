@@ -6,6 +6,8 @@ import {
   Get,
   UseGuards,
   Req,
+  UseInterceptors,
+  ClassSerializerInterceptor,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { TypeormFilter } from 'src/filters/typeorm.filter';
@@ -15,11 +17,12 @@ import { AuthRequest } from 'src/guards/admin.guard';
 
 @UseFilters(new TypeormFilter())
 @Controller('auth')
+@UseInterceptors(ClassSerializerInterceptor)
 export class AuthController {
   constructor(private authService: AuthService) {}
 
-  @Post('signin')
   // http://localhost:3001/api/v1/auth/signin
+  @Post('signin')
   async login(@Body() dto: SigninUserDTO): Promise<any> {
     const { username, password } = dto;
     const { access_token } = await this.authService.signin(username, password);
@@ -27,6 +30,7 @@ export class AuthController {
     return { access_token };
   }
 
+  // http://localhost:3001/api/v1/auth/me
   @Get('me')
   @UseGuards(JwtAuthenticationGuard)
   getMe(@Req() req: AuthRequest) {
@@ -34,8 +38,8 @@ export class AuthController {
     return this.authService.getMeProfile(req.user);
   }
 
-  @Post('signup')
   // http://localhost:3001/api/v1/auth/signup
+  @Post('signup')
   register(@Body() dto: SigninUserDTO): Promise<any> {
     const { username, password } = dto;
     return this.authService.signup(username, password);

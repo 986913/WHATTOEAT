@@ -10,6 +10,7 @@ import { ProfileEntity } from './profile.entity';
 import { LogEntity } from 'src/log/entities/log.entity';
 import { RoleEntity } from 'src/role/entities/role.entity';
 import { PlanEntity } from 'src/plan/entities/plan.entity';
+import { Exclude } from 'class-transformer';
 
 //@Entity(users)装饰器告诉 TypeORM：这是一个数据库的表, 表名为users
 @Entity('users') // 表名为复数
@@ -22,6 +23,7 @@ export class UserEntity {
   username: string;
 
   @Column()
+  @Exclude()
   password: string;
 
   /*
