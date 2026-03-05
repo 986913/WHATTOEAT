@@ -1,4 +1,3 @@
-import '../App.css';
 import { Outlet, useNavigate } from 'react-router-dom';
 import { useEffect, useCallback } from 'react';
 import axios from '../utils/axios';

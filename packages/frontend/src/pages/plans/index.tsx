@@ -193,13 +193,7 @@ export default function Plans() {
       />
 
       {/* ================= Toast ================= */}
-      <AppToast
-        show={toast.show}
-        title={toast.title}
-        message={toast.message}
-        variant={toast.variant}
-        onClose={toast.close}
-      />
+      <AppToast {...toast} />
     </div>
   );
 }

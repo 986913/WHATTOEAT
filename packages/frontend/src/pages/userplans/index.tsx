@@ -25,10 +25,6 @@ function groupPlansByDate(plans: any[]) {
   return grouped;
 }
 
-function isEditable(dateStr: string) {
-  const todayStr = new Date().toISOString().slice(0, 10);
-  return dateStr >= todayStr;
-}
 
 export default function UserPlans() {
   const { toast, success, error } = useToast();
@@ -198,13 +194,7 @@ export default function UserPlans() {
       <VideoPreviewModal url={videoUrl} onClose={() => setVideoUrl(null)} />
 
       {/* ===== Toast ===== */}
-      <AppToast
-        show={toast.show}
-        title={toast.title}
-        message={toast.message}
-        variant={toast.variant}
-        onClose={toast.close}
-      />
+      <AppToast {...toast} />
     </div>
   );
 }

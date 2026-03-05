@@ -229,10 +229,6 @@
    Welcome / Empty State
 =========================== */
 
-/* ===========================
-   Welcome / Empty State
-=========================== */
-
 .welcome-card {
   margin: auto;
   padding: 48px 32px;
@@ -389,26 +385,3 @@
   color: #222;
 }
 
-/* Badges */
-
-.meal-badge {
-  font-size: 11px;
-  font-weight: 600;
-  padding: 4px 8px;
-  border-radius: 999px;
-}
-
-.type-1 {
-  background: #fff3cd;
-  color: #856404;
-}
-
-.type-2 {
-  background: #d1ecf1;
-  color: #0c5460;
-}
-
-.type-3 {
-  background: #f8d7da;
-  color: #721c24;
-}

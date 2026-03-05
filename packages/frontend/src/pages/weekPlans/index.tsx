@@ -218,7 +218,7 @@ export default function WeekPlans() {
       {/* PREVIEW VIDEO MODAL */}
       <VideoPreviewModal url={videoUrl} onClose={() => setVideoUrl(null)} />
 
-      <AppToast {...toast} onClose={toast.close} />
+      <AppToast {...toast} />
     </div>
   );
 }

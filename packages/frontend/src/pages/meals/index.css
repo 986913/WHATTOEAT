@@ -27,15 +27,3 @@
   color: white;
   cursor: pointer;
 }
-
-.type-pill-group {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-  margin-bottom: 15px;
-}
-
-.type-pill-btn {
-  border-radius: 20px !important;
-  padding: 4px 14px !important;
-}

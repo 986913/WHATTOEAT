@@ -1,19 +1,17 @@
 import { useEffect, useState } from 'react';
-import '../../App.css';
 import './index.css';
 import { isAxiosError } from 'axios';
 import axios from '../../utils/axios';
-import TypeSelector from '../../components/TypeSelector';
 import { useToast } from '../../hooks/useToast';
 import AppToast from '../../components/AppToast';
-import IngredientSelector from '../../components/IngredientSelector';
 import ConfirmModal from '../../components/ConfirmModal';
+import PageHeader from '../../components/PageHeader';
+import AppPagination from '../../components/AppPagination';
+import MealFormModal, { ALL_MEAL_TYPES } from '../../components/MealFormModal';
 import Table from 'react-bootstrap/Table';
-import Pagination from 'react-bootstrap/Pagination';
-import { Modal, Button, Form } from 'react-bootstrap';
+import { Button } from 'react-bootstrap';
 
 const DEFAULT_LIMIT = 10;
-const ALL_TYPES = ['breakfast', 'lunch', 'dinner', 'snack'];
 
 export default function Meals() {
   const { toast, success, error } = useToast();
@@ -39,14 +37,15 @@ export default function Meals() {
   const [showModal, setShowModal] = useState(false);
 
   const [mealName, setMealName] = useState('');
-  const [mealUrl, setMealUrl] = useState('');
+  const [mealVideoUrl, setMealVideoUrl] = useState('');
+  const [mealImageUrl, setMealImageUrl] = useState('');
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
   const [selectedIngredientIds, setSelectedIngredientIds] = useState<number[]>(
     [],
   );
-
   const [ingredientSearch, setIngredientSearch] = useState('');
   const [creatingIngredient, setCreatingIngredient] = useState(false);
+
   const isCreateFormValid =
     mealName.trim() !== '' &&
     selectedTypes.length > 0 &&
@@ -61,9 +60,9 @@ export default function Meals() {
   const [editMealImageUrl, setEditMealImageUrl] = useState('');
   const [editTypes, setEditTypes] = useState<string[]>([]);
   const [editIngredientIds, setEditIngredientIds] = useState<number[]>([]);
-
   const [editIngredientSearch, setEditIngredientSearch] = useState('');
   const [creatingEditIngredient, setCreatingEditIngredient] = useState(false);
+
   const isEditFormValid =
     editMealName.trim() !== '' &&
     editTypes.length > 0 &&
@@ -82,7 +81,6 @@ export default function Meals() {
 
     try {
       const res = await axios.get('/meals', { params });
-
       setMeals(res.data.meals || []);
       setTotalCount(res.data.mealsTotalCount || 0);
       setCurrentPage(res.data.currPage || page);
@@ -134,19 +132,14 @@ export default function Meals() {
   /* ===================================================== */
   const handleCreateIngredient = async () => {
     if (!ingredientSearch.trim()) return;
-
     try {
       setCreatingIngredient(true);
-
       const res = await axios.post('/ingredients', {
         name: ingredientSearch.trim(),
       });
-
       const newIngredient = res.data;
-
       setIngredientOptions((prev) => [...prev, newIngredient]);
       setSelectedIngredientIds((prev) => [...prev, newIngredient.id]);
-
       setIngredientSearch('');
     } finally {
       setCreatingIngredient(false);
@@ -155,19 +148,14 @@ export default function Meals() {
 
   const handleCreateIngredientInEdit = async () => {
     if (!editIngredientSearch.trim()) return;
-
     try {
       setCreatingEditIngredient(true);
-
       const res = await axios.post('/ingredients', {
         name: editIngredientSearch.trim(),
       });
-
       const newIngredient = res.data;
-
       setIngredientOptions((prev) => [...prev, newIngredient]);
       setEditIngredientIds((prev) => [...prev, newIngredient.id]);
-
       setEditIngredientSearch('');
     } finally {
       setCreatingEditIngredient(false);
@@ -181,18 +169,19 @@ export default function Meals() {
     try {
       await axios.post('/meals', {
         name: mealName,
-        url: mealUrl,
+        videoUrl: mealVideoUrl,
+        imageUrl: mealImageUrl,
         types: selectedTypes,
         ingredientIds: selectedIngredientIds,
       });
       setShowModal(false);
       success('Meal created successfully ✅');
       setMealName('');
-      setMealUrl('');
+      setMealVideoUrl('');
+      setMealImageUrl('');
       setSelectedTypes([]);
       setSelectedIngredientIds([]);
       setIngredientSearch('');
-
       fetchMeals(1);
     } catch (err: any) {
       console.error(err);
@@ -211,14 +200,11 @@ export default function Meals() {
   /* ===================================================== */
   const openEditModal = (meal: any) => {
     setEditingMeal(meal);
-
     setEditMealName(meal.name);
     setEditMealVideoUrl(meal.videoUrl || '');
     setEditMealImageUrl(meal.imageUrl || '');
-
     setEditTypes(meal.types?.map((t: any) => t.name) || []);
     setEditIngredientIds(meal.ingredients?.map((i: any) => i.id) || []);
-
     setEditIngredientSearch('');
     setShowEditModal(true);
   };
@@ -232,7 +218,6 @@ export default function Meals() {
         types: editTypes,
         ingredientIds: editIngredientIds,
       });
-
       setShowEditModal(false);
       success('Meal updated successfully ✏️');
       fetchMeals(currentPage);
@@ -279,21 +264,14 @@ export default function Meals() {
   /* ===================================================== */
   return (
     <div className='page'>
-      {/* ================= Header ================= */}
-      <div
-        className='page-header'
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-        }}
-      >
-        <h3 className='page-title'>Meals</h3>
-
-        <Button variant='success' onClick={() => setShowModal(true)}>
-          + Create Meal
-        </Button>
-      </div>
+      <PageHeader
+        title='Meals'
+        action={
+          <Button variant='success' onClick={() => setShowModal(true)}>
+            + Create Meal
+          </Button>
+        }
+      />
 
       {/* ================= Filters ================= */}
       <div className='filters-bar'>
@@ -308,7 +286,7 @@ export default function Meals() {
             }}
           >
             <option value=''>All Types</option>
-            {ALL_TYPES.map((t) => (
+            {ALL_MEAL_TYPES.map((t) => (
               <option key={t} value={t}>
                 {t.charAt(0).toUpperCase() + t.slice(1)}
               </option>
@@ -386,177 +364,63 @@ export default function Meals() {
         </tbody>
       </Table>
 
-      {/* ================= Pagination ================= */}
-      {totalPages > 1 && (
-        <Pagination className='pagination-bar'>
-          <Pagination.Prev
-            disabled={currentPage === 1}
-            onClick={() => setCurrentPage((p) => p - 1)}
-          />
-          {Array.from({ length: totalPages }).map((_, i) => {
-            const page = i + 1;
-            return (
-              <Pagination.Item
-                key={page}
-                active={page === currentPage}
-                onClick={() => setCurrentPage(page)}
-              >
-                {page}
-              </Pagination.Item>
-            );
-          })}
-          <Pagination.Next
-            disabled={currentPage === totalPages}
-            onClick={() => setCurrentPage((p) => p + 1)}
-          />
-        </Pagination>
-      )}
+      <AppPagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
+      />
 
-      {/* ===================================================== */}
-      {/* ================= Create Modal ====================== */}
-      {/* ===================================================== */}
-      <Modal show={showModal} onHide={() => setShowModal(false)}>
-        <Modal.Header closeButton>
-          <Modal.Title>Create Meal</Modal.Title>
-        </Modal.Header>
+      {/* ================= Create Modal ================= */}
+      <MealFormModal
+        show={showModal}
+        title='Create Meal'
+        submitText='Create'
+        isSubmitDisabled={!isCreateFormValid}
+        onHide={() => setShowModal(false)}
+        onSubmit={handleCreateMeal}
+        name={mealName}
+        setName={setMealName}
+        videoUrl={mealVideoUrl}
+        setVideoUrl={setMealVideoUrl}
+        imageUrl={mealImageUrl}
+        setImageUrl={setMealImageUrl}
+        selectedTypes={selectedTypes}
+        setSelectedTypes={setSelectedTypes}
+        ingredientOptions={ingredientOptions}
+        selectedIngredientIds={selectedIngredientIds}
+        setSelectedIngredientIds={setSelectedIngredientIds}
+        ingredientSearch={ingredientSearch}
+        setIngredientSearch={setIngredientSearch}
+        creating={creatingIngredient}
+        onCreateIngredient={handleCreateIngredient}
+      />
 
-        <Modal.Body>
-          <Form>
-            {mealName.trim() === '' && (
-              <div className='text-warning small'>Meal name is required</div>
-            )}
+      {/* ================= Edit Modal ================= */}
+      <MealFormModal
+        show={showEditModal}
+        title='Edit Meal'
+        submitText='Save Changes'
+        isSubmitDisabled={!isEditFormValid}
+        onHide={() => setShowEditModal(false)}
+        onSubmit={handleUpdateMeal}
+        name={editMealName}
+        setName={setEditMealName}
+        videoUrl={editMealVideoUrl}
+        setVideoUrl={setEditMealVideoUrl}
+        imageUrl={editMealImageUrl}
+        setImageUrl={setEditMealImageUrl}
+        selectedTypes={editTypes}
+        setSelectedTypes={setEditTypes}
+        ingredientOptions={ingredientOptions}
+        selectedIngredientIds={editIngredientIds}
+        setSelectedIngredientIds={setEditIngredientIds}
+        ingredientSearch={editIngredientSearch}
+        setIngredientSearch={setEditIngredientSearch}
+        creating={creatingEditIngredient}
+        onCreateIngredient={handleCreateIngredientInEdit}
+      />
 
-            <Form.Control
-              placeholder='Meal Name'
-              className='mb-2'
-              value={mealName}
-              onChange={(e) => setMealName(e.target.value)}
-            />
-
-            <Form.Control
-              placeholder='Meal URL'
-              className='mb-3'
-              value={mealUrl}
-              onChange={(e) => setMealUrl(e.target.value)}
-            />
-
-            <Form.Label>Meal Types</Form.Label>
-
-            {selectedTypes.length === 0 && (
-              <div className='text-warning small'>Select at least one type</div>
-            )}
-            <TypeSelector
-              allTypes={ALL_TYPES}
-              selected={selectedTypes}
-              setSelected={setSelectedTypes}
-            />
-
-            {/* Ingredients */}
-            <Form.Label>Ingredients</Form.Label>
-            {selectedIngredientIds.length === 0 && (
-              <div className='text-warning small'>
-                Select at least one ingredient
-              </div>
-            )}
-            <IngredientSelector
-              options={ingredientOptions}
-              selectedIds={selectedIngredientIds}
-              setSelectedIds={setSelectedIngredientIds}
-              search={ingredientSearch}
-              setSearch={setIngredientSearch}
-              creating={creatingIngredient}
-              onCreateIngredient={handleCreateIngredient}
-            />
-          </Form>
-        </Modal.Body>
-
-        <Modal.Footer>
-          <Button
-            variant='success'
-            onClick={handleCreateMeal}
-            disabled={!isCreateFormValid}
-          >
-            Create
-          </Button>
-        </Modal.Footer>
-      </Modal>
-
-      {/* ===================================================== */}
-      {/* ================= Edit Modal ======================== */}
-      {/* ===================================================== */}
-      <Modal show={showEditModal} onHide={() => setShowEditModal(false)}>
-        <Modal.Header closeButton>
-          <Modal.Title>Edit Meal</Modal.Title>
-        </Modal.Header>
-
-        <Modal.Body>
-          <Form>
-            {editMealName.trim() === '' && (
-              <div className='text-warning small'>Meal name is required</div>
-            )}
-
-            <Form.Control
-              className='mb-2'
-              value={editMealName}
-              onChange={(e) => setEditMealName(e.target.value)}
-            />
-
-            <Form.Control
-              className='mb-3'
-              value={editMealVideoUrl}
-              placeholder='Enter Cooking Video URL'
-              onChange={(e) => setEditMealVideoUrl(e.target.value)}
-            />
-
-            <Form.Control
-              className='mb-3'
-              value={editMealImageUrl}
-              placeholder='Enter Preview Image URL'
-              onChange={(e) => setEditMealImageUrl(e.target.value)}
-            />
-
-            <Form.Label>Meal Types</Form.Label>
-            {editTypes.length === 0 && (
-              <div className='text-warning small'>Select at least one type</div>
-            )}
-            <TypeSelector
-              allTypes={ALL_TYPES}
-              selected={editTypes}
-              setSelected={setEditTypes}
-            />
-
-            <Form.Label>Ingredients</Form.Label>
-            {editIngredientIds.length === 0 && (
-              <div className='text-warning small'>
-                Select at least one ingredient
-              </div>
-            )}
-            <IngredientSelector
-              options={ingredientOptions}
-              selectedIds={editIngredientIds}
-              setSelectedIds={setEditIngredientIds}
-              search={editIngredientSearch}
-              setSearch={setEditIngredientSearch}
-              creating={creatingEditIngredient}
-              onCreateIngredient={handleCreateIngredientInEdit}
-            />
-          </Form>
-        </Modal.Body>
-
-        <Modal.Footer>
-          <Button
-            variant='success'
-            onClick={handleUpdateMeal}
-            disabled={!isEditFormValid}
-          >
-            Save Changes
-          </Button>
-        </Modal.Footer>
-      </Modal>
-
-      {/* ===================================================== */}
-      {/* ================= Delete Modal ====================== */}
-      {/* ===================================================== */}
+      {/* ================= Delete Modal ================= */}
       <ConfirmModal
         show={!!showDeleteModal}
         title='Delete Meal'
@@ -565,13 +429,7 @@ export default function Meals() {
         onConfirm={handleDeleteMeal}
       />
 
-      <AppToast
-        show={toast.show}
-        title={toast.title}
-        message={toast.message}
-        variant={toast.variant}
-        onClose={toast.close}
-      />
+      <AppToast {...toast} />
     </div>
   );
 }

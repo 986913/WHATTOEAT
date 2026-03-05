@@ -93,3 +93,15 @@
 .footer-divider {
   color: #ced4da;
 }
+
+.type-pill-group {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 15px;
+}
+
+.type-pill-btn {
+  border-radius: 20px !important;
+  padding: 4px 14px !important;
+}

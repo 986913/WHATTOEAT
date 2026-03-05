@@ -51,7 +51,7 @@ export function useToast() {
       title,
       message,
       variant,
-      close: () => setShow(false),
+      onClose: () => setShow(false),
     },
     success,
     info,

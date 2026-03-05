@@ -1,14 +1,14 @@
 import { useEffect, useState } from 'react';
-import '../../App.css';
 import './index.css';
 import axios from '../../utils/axios';
 import Table from 'react-bootstrap/Table';
 import { useToast } from '../../hooks/useToast';
-import Pagination from 'react-bootstrap/Pagination';
 import { Button } from 'react-bootstrap';
 import AppToast from '../../components/AppToast';
 import ConfirmModal from '../../components/ConfirmModal';
 import UserFormModal from '../../components/UserFormModal';
+import PageHeader from '../../components/PageHeader';
+import AppPagination from '../../components/AppPagination';
 
 const DEFAULT_LIMIT = 10;
 const PLACEHOLDER_AVATAR =
@@ -180,7 +180,7 @@ export default function Users() {
           photo: editPhoto,
           address: editAddress,
         },
-        roles: editRoles, // ['2','3']
+        roles: editRoles,
       });
 
       setShowCreateModal(false);
@@ -196,13 +196,14 @@ export default function Users() {
   // ================= Render =================
   return (
     <div className='page'>
-      {/* Header */}
-      <div className='page-header'>
-        <h3 className='page-title'>Users</h3>
-        <Button variant='success' onClick={openCreateModal}>
-          <i className='fa-solid fa-plus'></i> Create User
-        </Button>
-      </div>
+      <PageHeader
+        title='Users'
+        action={
+          <Button variant='success' onClick={openCreateModal}>
+            <i className='fa-solid fa-plus'></i> Create User
+          </Button>
+        }
+      />
 
       {/* Filters */}
       <div className='filters-bar'>
@@ -338,28 +339,11 @@ export default function Users() {
         </tbody>
       </Table>
 
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <Pagination className='pagination-bar'>
-          <Pagination.Prev
-            disabled={currentPage === 1}
-            onClick={() => setCurrentPage((p) => p - 1)}
-          />
-          {Array.from({ length: totalPages }).map((_, i) => (
-            <Pagination.Item
-              key={i + 1}
-              active={i + 1 === currentPage}
-              onClick={() => setCurrentPage(i + 1)}
-            >
-              {i + 1}
-            </Pagination.Item>
-          ))}
-          <Pagination.Next
-            disabled={currentPage === totalPages}
-            onClick={() => setCurrentPage((p) => p + 1)}
-          />
-        </Pagination>
-      )}
+      <AppPagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
+      />
 
       {/* Edit Modal */}
       <UserFormModal
@@ -414,13 +398,7 @@ export default function Users() {
         onConfirm={handleDelete}
       />
 
-      <AppToast
-        show={toast.show}
-        title={toast.title}
-        message={toast.message}
-        variant={toast.variant}
-        onClose={toast.close}
-      />
+      <AppToast {...toast} />
     </div>
   );
 }
