@@ -3,14 +3,13 @@ import Signin from './pages/Signin';
 import Signup from './pages/Signup';
 import DefaultLayout from './layouts/default';
 import Dashboard from './pages/dashboard';
-import APITest from './pages/dashboard/APITest';
 import Users from './pages/users';
 import Roles from './pages/roles';
 import Menus from './pages/menus';
 import Meals from './pages/meals';
 import Plans from './pages/plans';
 import Ingredients from './pages/ingredients';
-import WeekPlans from './pages/weekPlans';
+import WeekPlans from './pages/weekplans';
 import UserPlans from './pages/userplans';
 import './styles/base.css';
 
@@ -37,7 +36,6 @@ function App() {
           <Route path='plans' element={<Plans />} />
           <Route path='userplans' element={<UserPlans />} />
           <Route path='wkplans' element={<WeekPlans />} />
-          <Route path='apitest' element={<APITest />} />
 
           {/* 内部兜底，处理 /home/xxxx 这种不存在的路径 */}
           <Route path='*' element={<Navigate to='/home/wkplans' replace />} />
