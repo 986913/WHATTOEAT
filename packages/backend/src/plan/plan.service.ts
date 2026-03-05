@@ -37,16 +37,14 @@ export class PlanService {
   }
 
   private getNext7Days(): string[] {
-    const today = new Date();
-    const dates: string[] = [];
-
+    const start = new Date();
+    const dates = new Set<string>();
     for (let i = 0; i < 7; i++) {
-      const nextDate = new Date(today);
-      nextDate.setDate(today.getDate() + i); // 从今天开始
-      dates.push(nextDate.toISOString().slice(0, 10)); // yyyy-mm-dd
+      const d = new Date(start.getTime() + i * 24 * 60 * 60 * 1000);
+      // 使用 toISOString 保证以 UTC 日期截取 YYYY-MM-DD（避免本地时区偏移导致的重复）
+      dates.add(d.toISOString().slice(0, 10));
     }
-
-    return dates;
+    return Array.from(dates);
   }
 
   findById(planId: number) {
