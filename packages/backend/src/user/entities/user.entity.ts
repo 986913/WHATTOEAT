@@ -22,9 +22,15 @@ export class UserEntity {
   @Column({ unique: true })
   username: string;
 
-  @Column()
+  @Column({ nullable: true })
   @Exclude()
   password: string;
+
+  @Column({ unique: true, nullable: true })
+  googleId: string;
+
+  @Column({ nullable: true })
+  email: string;
 
   /*
     @OneToOne 一个用户只对应一个用户资料:

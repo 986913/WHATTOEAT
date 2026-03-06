@@ -4,8 +4,10 @@ import React, { useState } from 'react';
 import { Form, Button } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import '../styles/auth.css';
+import { API_BASE_URL } from '../config/api';
 import AuthLayout from '../components/AuthLayout';
 import AuthCard from '../components/AuthCard';
+import { GoogleIcon } from '../components/GoogleIcon';
 
 export default function Signin() {
   const navigate = useNavigate();
@@ -80,8 +82,23 @@ export default function Signin() {
             {loading ? 'Signing in...' : 'Sign in'}
           </Button>
 
+          <div className='auth-divider'>
+            <span>or</span>
+          </div>
+
+          <Button
+            variant='outline-dark'
+            className='w-100 mb-3 google-btn'
+            onClick={() => {
+              window.location.href = `${API_BASE_URL}/api/v1/auth/google`;
+            }}
+          >
+            <GoogleIcon />
+            Continue with Google
+          </Button>
+
           <div className='auth-switch'>
-            Don’t have an account?{' '}
+            Don't have an account?{' '}
             <span onClick={() => navigate('/signup')}>Sign up</span>
           </div>
         </Form>

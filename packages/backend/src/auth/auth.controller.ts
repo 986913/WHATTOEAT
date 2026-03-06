@@ -6,13 +6,16 @@ import {
   Get,
   UseGuards,
   Req,
+  Res,
   UseInterceptors,
   ClassSerializerInterceptor,
 } from '@nestjs/common';
+import { Response } from 'express';
 import { AuthService } from './auth.service';
 import { TypeormFilter } from 'src/filters/typeorm.filter';
 import { SigninUserDTO } from './dto/signin-user.dto';
 import { JwtAuthenticationGuard } from 'src/guards/jwt.guard';
+import { GoogleAuthGuard } from 'src/guards/google.guard';
 import { AuthRequest } from 'src/guards/admin.guard';
 
 @UseFilters(new TypeormFilter())
@@ -43,5 +46,21 @@ export class AuthController {
   register(@Body() dto: SigninUserDTO): Promise<any> {
     const { username, password } = dto;
     return this.authService.signup(username, password);
+  }
+
+  // http://localhost:3001/api/v1/auth/google
+  @Get('google')
+  @UseGuards(GoogleAuthGuard)
+  googleAuth() {
+    // GoogleAuthGuard 会自动重定向到 Google 登录页面
+  }
+
+  // http://localhost:3001/api/v1/auth/google/callback
+  @Get('google/callback')
+  @UseGuards(GoogleAuthGuard)
+  async googleCallback(@Req() req: any, @Res() res: Response) {
+    const { access_token } = await this.authService.googleLogin(req.user);
+    // 重定向到前端，通过 query param 传递 token
+    res.redirect(`http://localhost:3000/auth/google/callback?token=${access_token}`);
   }
 }

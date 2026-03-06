@@ -12,13 +12,13 @@ export class ProfileEntity {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column()
+  @Column({ nullable: true })
   gender: string;
 
-  @Column()
+  @Column({ nullable: true })
   photo: string;
 
-  @Column()
+  @Column({ nullable: true })
   address: string;
 
   @OneToOne(() => UserEntity)

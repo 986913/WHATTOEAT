@@ -283,6 +283,7 @@ export default function Users() {
             <th>#</th>
             <th>Photo</th>
             <th>Username</th>
+            <th>Auth</th>
             <th>Gender</th>
             <th>Roles</th>
             <th>Address</th>
@@ -292,7 +293,7 @@ export default function Users() {
         <tbody>
           {users.length === 0 ? (
             <tr>
-              <td colSpan={7} className='table-empty'>
+              <td colSpan={8} className='table-empty'>
                 No Data
               </td>
             </tr>
@@ -308,6 +309,11 @@ export default function Users() {
                   />
                 </td>
                 <td>{user.username}</td>
+                <td>
+                  <span className={`auth-badge ${user.googleId ? 'google' : 'password'}`}>
+                    {user.googleId ? 'Google' : 'Password'}
+                  </span>
+                </td>
                 <td>
                   {user.profile?.gender === '1'
                     ? 'Female'

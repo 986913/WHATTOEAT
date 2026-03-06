@@ -6,7 +6,9 @@ import { CreateUserDTO } from '../dto/create-user.dto';
 export class CreateUserPipe implements PipeTransform {
   transform(value: CreateUserDTO) {
     value.username = value.username.trim();
-    value.password = value.password.trim();
+    if (value.password) {
+      value.password = value.password.trim();
+    }
     // 对用户传来的 username 和 password 进行trim操作，去除前后空格，确保数据的规范性。
     return value;
   }

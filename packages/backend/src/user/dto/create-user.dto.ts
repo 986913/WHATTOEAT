@@ -18,10 +18,18 @@ export class CreateUserDTO {
   @Length(3, 20)
   username: string;
 
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
   @Length(3, 20)
-  password: string;
+  password?: string;
+
+  @IsOptional()
+  @IsString()
+  googleId?: string;
+
+  @IsOptional()
+  @IsString()
+  email?: string;
 
   @IsOptional()
   @ValidateNested()

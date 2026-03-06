@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Signin from './pages/Signin';
 import Signup from './pages/Signup';
+import GoogleCallback from './pages/GoogleCallback';
 import DefaultLayout from './layouts/default';
 import Dashboard from './pages/dashboard';
 import Users from './pages/users';
@@ -20,6 +21,7 @@ function App() {
         {/* 登录注册路由 */}
         <Route path='/signin' element={<Signin />} />
         <Route path='/signup' element={<Signup />} />
+        <Route path='/auth/google/callback' element={<GoogleCallback />} />
 
         {/* 布局路由 */}
         <Route path='/home' element={<DefaultLayout />}>

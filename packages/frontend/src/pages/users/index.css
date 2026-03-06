@@ -23,6 +23,25 @@
   cursor: pointer;
 }
 
+/* ================= Auth Badge ================= */
+.auth-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.auth-badge.google {
+  background-color: #e8f0fe;
+  color: #1a73e8;
+}
+
+.auth-badge.password {
+  background-color: #f0f0f0;
+  color: #555;
+}
+
 /* ================= Avatar ================= */
 .user-avatar {
   width: 40px;

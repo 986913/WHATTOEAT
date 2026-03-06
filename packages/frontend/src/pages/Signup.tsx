@@ -4,8 +4,10 @@ import React, { useState } from 'react';
 import { Form, Button } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import '../styles/auth.css';
+import { API_BASE_URL } from '../config/api';
 import AuthLayout from '../components/AuthLayout';
 import AuthCard from '../components/AuthCard';
+import { GoogleIcon } from '../components/GoogleIcon';
 
 export default function Signup() {
   const navigate = useNavigate();
@@ -102,6 +104,21 @@ export default function Signup() {
 
           <Button type='submit' className='w-100 mb-3' disabled={loading}>
             {loading ? 'Creating...' : 'Create account'}
+          </Button>
+
+          <div className='auth-divider'>
+            <span>or</span>
+          </div>
+
+          <Button
+            variant='outline-dark'
+            className='w-100 mb-3 google-btn'
+            onClick={() => {
+              window.location.href = `${API_BASE_URL}/api/v1/auth/google`;
+            }}
+          >
+            <GoogleIcon />
+            Continue with Google
           </Button>
 
           <div className='auth-switch'>

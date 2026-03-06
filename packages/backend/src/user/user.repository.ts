@@ -38,6 +38,13 @@ export class UserRepository {
     });
   }
 
+  findByGoogleId(googleId: string) {
+    return this.userRepo.findOne({
+      where: { googleId },
+      relations: { roles: true, profile: true },
+    });
+  }
+
   findUserProfile(userId: number) {
     return this.userRepo.findOne({
       where: {
@@ -99,7 +106,7 @@ export class UserRepository {
   }
 
   async createAndSave(user: CreateUserDTO) {
-    const { username, password, profile, roles = [] } = user;
+    const { username, password, googleId, email, profile, roles = [] } = user;
 
     // 1️⃣ 处理 roles（2 | 3 -> RoleEntity[]
     let roleEntities: RoleEntity[] = [];
@@ -117,11 +124,15 @@ export class UserRepository {
     const newUser = this.userRepo.create({
       username,
       password,
+      googleId,
+      email,
       roles: roleEntities,
       profile: profile ? this.profileRepo.create(profile) : undefined,
     });
-    // 使用argon2进行 密码加密:
-    newUser.password = await argon2.hash(newUser.password);
+    // 使用argon2进行 密码加密 (Google用户没有password):
+    if (newUser.password) {
+      newUser.password = await argon2.hash(newUser.password);
+    }
 
     /**
      * 3️⃣ save user

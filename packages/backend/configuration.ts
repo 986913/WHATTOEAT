@@ -22,5 +22,15 @@ const envConfig = yaml.load(readFileSync(envYamlPath, 'utf8'));
 
 // 因为ConfigModule有一个load方法 -> 函数
 export default () => {
-  return _.merge(commonConfig, envConfig) as Record<string, any>;
+  const merged = _.merge(commonConfig, envConfig) as Record<string, any>;
+
+  // 敏感信息从环境变量读取，不提交到代码仓库
+  if (process.env.GOOGLE_CLIENT_ID) {
+    _.set(merged, 'google.clientId', process.env.GOOGLE_CLIENT_ID);
+  }
+  if (process.env.GOOGLE_CLIENT_SECRET) {
+    _.set(merged, 'google.clientSecret', process.env.GOOGLE_CLIENT_SECRET);
+  }
+
+  return merged;
 };

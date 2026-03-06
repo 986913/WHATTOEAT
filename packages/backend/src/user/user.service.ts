@@ -18,6 +18,10 @@ export class UserService {
     return this.userRepository.findByUserName(username);
   }
 
+  findByGoogleId(googleId: string) {
+    return this.userRepository.findByGoogleId(googleId);
+  }
+
   findById(userId: number) {
     return this.userRepository.findById(userId);
   }

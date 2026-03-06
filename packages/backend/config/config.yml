@@ -12,3 +12,7 @@ log:
   on: true
 secrets:
   jwtsecret: what-to-eat-secret-key-build-in-2026-be-better-developer-default-config
+google:
+  clientId: ${GOOGLE_CLIENT_ID}
+  clientSecret: ${GOOGLE_CLIENT_SECRET}
+  callbackUrl: http://localhost:3001/api/v1/auth/google/callback

@@ -10,6 +10,11 @@ export enum ConfigEnum {
 
   // JWT 密钥
   JWT_SECRET = 'secrets.jwtsecret',
+
+  // Google OAuth
+  GOOGLE_CLIENT_ID = 'google.clientId',
+  GOOGLE_CLIENT_SECRET = 'google.clientSecret',
+  GOOGLE_CALLBACK_URL = 'google.callbackUrl',
 }
 
 export enum LogEnum {
