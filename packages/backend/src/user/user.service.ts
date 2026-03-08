@@ -22,6 +22,14 @@ export class UserService {
     return this.userRepository.findByGoogleId(googleId);
   }
 
+  findByEmail(email: string) {
+    return this.userRepository.findByEmail(email);
+  }
+
+  bindGoogleId(userId: number, googleId: string) {
+    return this.userRepository.update(userId, { googleId });
+  }
+
   findById(userId: number) {
     return this.userRepository.findById(userId);
   }

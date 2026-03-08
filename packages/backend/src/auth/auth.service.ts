@@ -79,23 +79,41 @@ export class AuthService {
     let user = await this.userService.findByGoogleId(googleUser.googleId);
 
     if (!user) {
-      // 自动注册: 用 displayName 作为 username，如果重复则加随机后缀
-      let username = googleUser.displayName || googleUser.email.split('@')[0];
-      const existing = await this.userService.findByUserName(username);
-      if (existing) {
-        username = `${username}_${Date.now().toString(36)}`;
-      }
+      // 检查是否已有相同 email 的用户（比如之前用密码注册的）
+      const existingByEmail = await this.userService.findByEmail(
+        googleUser.email,
+      );
 
-      user = await this.userService.create({
-        username,
-        googleId: googleUser.googleId,
-        email: googleUser.email,
-        profile: googleUser.photo ? { photo: googleUser.photo } : undefined,
-      });
-      // 重新查询以获取 roles 关联
-      user = (await this.userService.findById(user.id))!;
+      if (existingByEmail) {
+        // email 已存在：绑定 googleId 到现有账户
+        existingByEmail.googleId = googleUser.googleId;
+        await this.userService.bindGoogleId(
+          existingByEmail.id,
+          googleUser.googleId,
+        );
+        user = existingByEmail;
+      } else {
+        // 全新用户：自动注册，用 displayName 作为 username，如果重复则加随机后缀
+        let username = googleUser.displayName || googleUser.email.split('@')[0];
+        const existing = await this.userService.findByUserName(username);
+        if (existing) {
+          username = `${username}_${Date.now().toString(36)}`;
+        }
+
+        user = await this.userService.create({
+          username,
+          googleId: googleUser.googleId,
+          email: googleUser.email,
+          profile: googleUser.photo ? { photo: googleUser.photo } : undefined,
+        });
+        // 重新查询以获取 roles 关联
+        user = (await this.userService.findById(user.id))!;
+      }
     }
 
+    /* 通过 JWT Service, 生成 JWT token:
+        将 payload 编码为 JWT Token，并使用配置好的 jwtsecret 进行加密签名，最终生成一个可让前端验证的 token 字符串。
+      */
     const access_token = await this.jwtService.signAsync({
       username: user.username,
       sub: user.id,

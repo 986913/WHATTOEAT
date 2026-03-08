@@ -22,6 +22,12 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
     });
   }
 
+  /**
+   * validate 在 Google OAuth 回调时，passport 用 authorization code 换取 token 后自动调用,
+   * 也就通过了 @UseGuards(AuthGuard('google'))
+   * 其中参数 profile 是 passport 用 accessToken 从 Google 获取的用户信息
+   * 其返回的对象（通过 done 回调）会挂载到 req.user
+   */
   validate(
     accessToken: string,
     refreshToken: string,

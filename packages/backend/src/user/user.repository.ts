@@ -45,6 +45,13 @@ export class UserRepository {
     });
   }
 
+  findByEmail(email: string) {
+    return this.userRepo.findOne({
+      where: { email },
+      relations: { roles: true, profile: true },
+    });
+  }
+
   findUserProfile(userId: number) {
     return this.userRepo.findOne({
       where: {
