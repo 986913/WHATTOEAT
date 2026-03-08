@@ -60,12 +60,13 @@ jobs:
             --exclude '.git' \
             --exclude 'packages/backend/node_modules' \
             --exclude 'packages/frontend/node_modules' \
+            --exclude 'packages/frontend/build' \
             -e "ssh" \
             . ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:~/app
 
-      - name: Create .env and deploy on EC2
+      - name: Build frontend and deploy on EC2
         run: |
-          ssh ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'ENDSSH'
+          ssh ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << ENDSSH
             cd ~/app
 
             # 写入 .env 文件供 docker-compose 使用（替代 bashrc）
@@ -77,8 +78,13 @@ jobs:
           DB_PASSWORD=${{ secrets.DB_PASSWORD }}
           ENVEOF
 
-            # 停掉旧容器并重新 build 启动
-            docker compose -p whattoeat-prod down
+            # 安装前端依赖并 build
+            npm --prefix packages/frontend install
+            npm --prefix packages/frontend run build
+
+            # 停掉所有旧容器并重新 build 启动
+            docker compose -p whattoeat-ec2-prod down 2>/dev/null || true
+            docker compose -p whattoeat-prod down 2>/dev/null || true
             docker compose -p whattoeat-prod up -d --build
 
             echo "✅ Deployed v${{ needs.release.outputs.new_release_version }}"
