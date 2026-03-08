@@ -10,16 +10,21 @@
     "prod:backend": "npm --prefix packages/backend run start:prod",
     "prod:frontend": "npm --prefix packages/frontend start",
     "build": "npm --prefix packages/backend run build && npm --prefix packages/frontend run build",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "prepare": "husky"
   },
   "author": "",
   "license": "ISC",
   "description": "",
   "devDependencies": {
+    "@commitlint/cli": "^20.4.3",
+    "@commitlint/config-conventional": "^20.4.3",
     "@types/webpack-env": "^1.18.8",
     "concurrently": "^9.2.1",
+    "husky": "^9.1.7",
     "ru": "^0.0.2",
     "run-script-webpack-plugin": "^0.2.3",
+    "semantic-release": "^24.2.3",
     "webpack": "^5.103.0",
     "webpack-node-externals": "^3.0.0"
   }

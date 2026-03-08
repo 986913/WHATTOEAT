@@ -1,0 +1,81 @@
+name: Release & Deploy
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  # Step 1: semantic-release 分析 commit，自动打 tag + 生成 GitHub Release
+  release:
+    runs-on: ubuntu-latest
+    outputs:
+      new_release_published: ${{ steps.semantic.outputs.new_release_published }}
+      new_release_version: ${{ steps.semantic.outputs.new_release_version }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Run semantic-release
+        id: semantic
+        uses: cycjimmy/semantic-release-action@v4
+        with:
+          extra_plugins: |
+            @semantic-release/git
+            @semantic-release/changelog
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Print release info
+        if: steps.semantic.outputs.new_release_published == 'true'
+        run: echo "🚀 Released v${{ steps.semantic.outputs.new_release_version }}"
+
+  # Step 2: 有新版本发布时，自动部署到 EC2
+  deploy:
+    needs: release
+    if: needs.release.outputs.new_release_published == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/ec2_key
+          chmod 600 ~/.ssh/ec2_key
+          ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Sync code to EC2
+        run: |
+          rsync -avz --delete \
+            --exclude 'node_modules' \
+            --exclude '.git' \
+            --exclude 'packages/backend/node_modules' \
+            --exclude 'packages/frontend/node_modules' \
+            -e "ssh -i ~/.ssh/ec2_key" \
+            . ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:~/app
+
+      - name: Create .env and deploy on EC2
+        run: |
+          ssh -i ~/.ssh/ec2_key ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'ENDSSH'
+            cd ~/app
+
+            # 写入 .env 文件供 docker-compose 使用（替代 bashrc）
+            cat > .env << 'ENVEOF'
+          JWT_SECRET=${{ secrets.JWT_SECRET }}
+          GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}
+          DB_USERNAME=${{ secrets.DB_USERNAME }}
+          DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+          ENVEOF
+
+            # 停掉旧容器并重新 build 启动
+            docker compose -p whattoeat-prod down
+            docker compose -p whattoeat-prod up -d --build
+
+            echo "✅ Deployed v${{ needs.release.outputs.new_release_version }}"
+          ENDSSH
