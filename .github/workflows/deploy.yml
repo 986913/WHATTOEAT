@@ -85,10 +85,19 @@ jobs:
             echo "Build frontend"
             npm --prefix packages/frontend run build
 
+            # 确保 Docker Compose v2 已安装（修复 v1 的 ContainerConfig 错误）
+            if ! docker compose version &>/dev/null; then
+              echo "Installing Docker Compose v2 plugin..."
+              sudo mkdir -p /usr/lib/docker/cli-plugins
+              sudo curl -SL "https://github.com/docker/compose/releases/latest/download/docker-compose-linux-$(uname -m)" \
+                -o /usr/lib/docker/cli-plugins/docker-compose
+              sudo chmod +x /usr/lib/docker/cli-plugins/docker-compose
+            fi
+
             # 停掉所有旧容器并重新 build 启动（后端在 Docker 内 build）
             echo "Restart docker containers"
             docker compose -p whattoeat-prod down 2>/dev/null || true
-            docker compose -p whattoeat-prod up -d --build
+            docker compose -f docker-compose.yml -p whattoeat-prod up -d --build
 
             echo "✅ Deployed v${{ needs.release.outputs.new_release_version }}"
           ENDSSH
