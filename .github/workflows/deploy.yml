@@ -4,6 +4,10 @@ on:
   push:
     branches: [main]
 
+permissions:
+  contents: write
+  issues: write
+
 jobs:
   # Step 1: semantic-release 分析 commit，自动打 tag + 生成 GitHub Release
   release:
@@ -13,8 +17,6 @@ jobs:
       new_release_version: ${{ steps.semantic.outputs.new_release_version }}
     steps:
       - uses: actions/checkout@v4
-        with:
-          persist-credentials: false
 
       - uses: actions/setup-node@v4
         with:
