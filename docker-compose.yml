@@ -6,6 +6,8 @@ services:
     container_name: backend-eat
     environment:
       NODE_ENV: production
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
 
   nginx:
     image: nginx:alpine

@@ -16,3 +16,4 @@ google:
   clientId: ${GOOGLE_CLIENT_ID}
   clientSecret: ${GOOGLE_CLIENT_SECRET}
   callbackUrl: http://localhost:3001/api/v1/auth/google/callback
+  frontendUrl: http://localhost:3000

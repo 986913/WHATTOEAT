@@ -17,12 +17,17 @@ import { SigninUserDTO } from './dto/signin-user.dto';
 import { JwtAuthenticationGuard } from 'src/guards/jwt.guard';
 import { GoogleAuthGuard } from 'src/guards/google.guard';
 import { AuthRequest } from 'src/guards/admin.guard';
+import { ConfigService } from '@nestjs/config';
+import { ConfigEnum } from 'src/enum/config.enum';
 
 @UseFilters(new TypeormFilter())
 @Controller('auth')
 @UseInterceptors(ClassSerializerInterceptor)
 export class AuthController {
-  constructor(private authService: AuthService) {}
+  constructor(
+    private authService: AuthService,
+    private configService: ConfigService,
+  ) {}
 
   // http://localhost:3001/api/v1/auth/signin
   @Post('signin')
@@ -61,6 +66,7 @@ export class AuthController {
   async googleCallback(@Req() req: any, @Res() res: Response) {
     const { access_token } = await this.authService.googleLogin(req.user);
     // 重定向到前端，通过 query param 传递 token
-    res.redirect(`http://localhost:3000/auth/google/callback?token=${access_token}`);
+    const frontendUrl = this.configService.get<string>(ConfigEnum.FRONTEND_URL);
+    res.redirect(`${frontendUrl}/auth/google/callback?token=${access_token}`);
   }
 }

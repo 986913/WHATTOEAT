@@ -18,3 +18,4 @@ google:
   clientId: ${GOOGLE_CLIENT_ID}
   clientSecret: ${GOOGLE_CLIENT_SECRET}
   callbackUrl: http://ec2-3-143-248-131.us-east-2.compute.amazonaws.com:8000/api/v1/auth/google/callback
+  frontendUrl: http://ec2-3-143-248-131.us-east-2.compute.amazonaws.com:8000

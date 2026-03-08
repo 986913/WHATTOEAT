@@ -15,6 +15,7 @@ export enum ConfigEnum {
   GOOGLE_CLIENT_ID = 'google.clientId',
   GOOGLE_CLIENT_SECRET = 'google.clientSecret',
   GOOGLE_CALLBACK_URL = 'google.callbackUrl',
+  FRONTEND_URL = 'google.frontendUrl',
 }
 
 export enum LogEnum {
