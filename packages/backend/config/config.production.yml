@@ -1,21 +1,12 @@
 # 这个文件在 npm run prod 命令下用到
+# 只放与 config.yml 的差异项
 
 db:
   mysql:
     host: database-2.cn40g8yicfus.us-east-2.rds.amazonaws.com
     name: eatdbprod
     port: 3310
-    sync: true
-    type: mysql
-    username: admin
-    password: eatgood2026
-log:
-  level: info
-  on: true
-secrets:
-  jwtsecret: what-to-eat-secret-key-build-in-2026-be-better-developer-production-config-secret-666888
+    # sync: true
 google:
-  clientId: ${GOOGLE_CLIENT_ID}
-  clientSecret: ${GOOGLE_CLIENT_SECRET}
   callbackUrl: http://ec2-3-143-248-131.us-east-2.compute.amazonaws.com:8000/api/v1/auth/google/callback
   frontendUrl: http://ec2-3-143-248-131.us-east-2.compute.amazonaws.com:8000

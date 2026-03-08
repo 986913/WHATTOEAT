@@ -19,6 +19,7 @@ import { GoogleAuthGuard } from 'src/guards/google.guard';
 import { AuthRequest } from 'src/guards/admin.guard';
 import { ConfigService } from '@nestjs/config';
 import { ConfigEnum } from 'src/enum/config.enum';
+import { GoogleAuthRequest } from 'src/guards/google.guard';
 
 @UseFilters(new TypeormFilter())
 @Controller('auth')
@@ -63,7 +64,7 @@ export class AuthController {
   // http://localhost:3001/api/v1/auth/google/callback
   @Get('google/callback')
   @UseGuards(GoogleAuthGuard)
-  async googleCallback(@Req() req: any, @Res() res: Response) {
+  async googleCallback(@Req() req: GoogleAuthRequest, @Res() res: Response) {
     const { access_token } = await this.authService.googleLogin(req.user);
     // 重定向到前端，通过 query param 传递 token
     const frontendUrl = this.configService.get<string>(ConfigEnum.FRONTEND_URL);

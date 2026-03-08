@@ -7,6 +7,7 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import { UserService } from 'src/user/user.service';
 import { AuthUser } from './auth.strategy';
+import { GoogleAuthUser } from './google.strategy';
 
 @Injectable()
 export class AuthService {
@@ -71,12 +72,10 @@ export class AuthService {
    * 如果用户已存在(通过googleId查找)，直接签发token
    * 如果用户不存在，自动创建新用户后签发token
    */
-  async googleLogin(googleUser: {
-    googleId: string;
-    email: string;
-    displayName: string;
-    photo?: string;
-  }) {
+  async googleLogin(googleUser: GoogleAuthUser) {
+    if (!googleUser.email) {
+      throw new UnauthorizedException('Google account has no email');
+    }
     let user = await this.userService.findByGoogleId(googleUser.googleId);
 
     if (!user) {
@@ -98,10 +97,10 @@ export class AuthService {
     }
 
     const access_token = await this.jwtService.signAsync({
-      username: user!.username,
-      sub: user!.id,
-      roles: user!.roles || [],
-      isAdmin: (user!.roles || []).some(
+      username: user.username,
+      sub: user.id,
+      roles: user.roles || [],
+      isAdmin: (user.roles || []).some(
         (r) => r.roleName.toLowerCase() === 'admin' || r.id === 1,
       ),
     });
