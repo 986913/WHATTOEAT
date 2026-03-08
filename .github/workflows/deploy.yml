@@ -78,13 +78,6 @@ jobs:
           DB_PASSWORD=${{ secrets.DB_PASSWORD }}
           ENVEOF
 
-            # 安装前端依赖并 build（nginx 挂载本地 build 目录）
-            echo "Install frontend dependencies"
-            npm --prefix packages/frontend install
-
-            echo "Build frontend"
-            npm --prefix packages/frontend run build
-
             # 确保 Docker Compose v2 已安装（修复 v1 的 ContainerConfig 错误）
             if ! docker compose version &>/dev/null; then
               echo "Installing Docker Compose v2 plugin..."
