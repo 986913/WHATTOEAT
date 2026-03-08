@@ -78,14 +78,24 @@ jobs:
           DB_PASSWORD=${{ secrets.DB_PASSWORD }}
           ENVEOF
 
+            echo "Pull latest code"
+            git pull origin main
+
             # 安装前端依赖并 build
+            echo "Install dependencies"
+            npm --prefix packages/backend install
             npm --prefix packages/frontend install
-            npm --prefix packages/frontend run build
+            npm install
+
+            echo "Build project"
+            npm run build
 
             # 停掉所有旧容器并重新 build 启动
-            docker compose -p whattoeat-ec2-prod down 2>/dev/null || true
-            docker compose -p whattoeat-prod down 2>/dev/null || true
-            docker compose -p whattoeat-prod up -d --build
+            echo "Restart docker containers"
+            docker compose down
+            # docker compose -p whattoeat-ec2-prod down 2>/dev/null || true
+            # docker compose -p whattoeat-prod down 2>/dev/null || true
+            docker-compose -f docker-compose.yml -p whattoeat-prod up -d --build
 
             echo "✅ Deployed v${{ needs.release.outputs.new_release_version }}"
           ENDSSH
