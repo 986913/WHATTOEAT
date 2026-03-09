@@ -21,7 +21,12 @@ services:
     build: ./packages/frontend # 使用 packages/frontend/Dockerfile 构建镜像（多阶段：先 build React，再用 nginx 托管）
     container_name: nginx-eat
     ports:
-      - '8000:8000' # 唯一对外暴露的端口，用户通过 EC2:8000 访问
+      - '80:80'     # HTTP（自动跳转到 HTTPS）
+      - '443:443'   # HTTPS
+    volumes:
+      - /etc/letsencrypt/live/mealdice.com/fullchain.pem:/etc/nginx/ssl/fullchain.pem:ro
+      - /etc/letsencrypt/live/mealdice.com/privkey.pem:/etc/nginx/ssl/privkey.pem:ro
+      - /etc/letsencrypt/archive/mealdice.com:/etc/letsencrypt/archive/mealdice.com:ro
     depends_on:
       - backend # 确保 backend 先启动，因为 nginx 要反向代理到 backend:3001
 

@@ -8,5 +8,5 @@ db:
     port: 3310
     # sync: true
 google:
-  callbackUrl: http://ec2-3-143-248-131.us-east-2.compute.amazonaws.com:8000/api/v1/auth/google/callback
-  frontendUrl: http://ec2-3-143-248-131.us-east-2.compute.amazonaws.com:8000
+  callbackUrl: https://mealdice.com/api/v1/auth/google/callback
+  frontendUrl: https://mealdice.com
