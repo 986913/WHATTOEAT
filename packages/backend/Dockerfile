@@ -1,13 +1,19 @@
+# Backend Dockerfile - NestJS API 服务
+# 构建流程：安装依赖 → TypeScript 编译 → 运行编译后的 JS
+
 FROM node:20-bullseye
 WORKDIR /app
 
+# 先拷贝 package 文件，利用 Docker 缓存层：依赖没变时跳过 npm ci
 COPY package*.json ./
+# ci 比 install 更快更严格，完全按照 lock 文件安装
 RUN npm ci
 
+# 拷贝源码并编译 TypeScript → dist/
 COPY . .
-# 确保 package.json 有 build 脚本，下面会执行它
 RUN npm run build
 
+# 声明容器监听 3001（实际不对外暴露，只在 Docker 内部网络被 nginx 反向代理访问）
 EXPOSE 3001
-# Docker 会用 Node.js 运行 dist/src/main 文件
+# 运行编译后的 NestJS 入口文件
 CMD ["node", "dist/src/main"]

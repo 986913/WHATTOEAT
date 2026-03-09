@@ -1,24 +1,28 @@
-# 这个文件启动：docker-compose -p whattoeat-prod up -d --build
+# 生产环境 docker-compose
+# 启动命令：docker compose -p whattoeat-prod up -d --build
+# 包含两个服务：backend (NestJS API) + nginx (前端静态文件 + 反向代理)
+# 环境变量从项目根目录的 .env 文件读取（由 CI/CD 部署时写入）
 
 services:
   backend:
-    build: ./packages/backend
+    build: ./packages/backend          # 使用 packages/backend/Dockerfile 构建镜像
     container_name: backend-eat
-    environment:
+    environment:                        # 传入容器的环境变量，供 NestJS ConfigService 读取
       NODE_ENV: production
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
       DB_USERNAME: ${DB_USERNAME}
       DB_PASSWORD: ${DB_PASSWORD}
       JWT_SECRET: ${JWT_SECRET}
+    # 注意：backend 没有 ports 映射，不对外暴露，只通过 Docker 内部网络被 nginx 访问
 
   nginx:
-    build: ./packages/frontend
+    build: ./packages/frontend          # 使用 packages/frontend/Dockerfile 构建镜像（多阶段：先 build React，再用 nginx 托管）
     container_name: nginx-eat
     ports:
-      - '8000:8000'
+      - '8000:8000'                     # 唯一对外暴露的端口，用户通过 EC2:8000 访问
     depends_on:
-      - backend
+      - backend                         # 确保 backend 先启动，因为 nginx 要反向代理到 backend:3001
 
 volumes:
   mysql_data:
