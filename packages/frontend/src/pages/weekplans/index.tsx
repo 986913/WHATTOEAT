@@ -92,7 +92,7 @@ export default function WeekPlans() {
       {!isEmptyState && (
         <div className='week-header'>
           <div>
-            <h4 className='week-title'>📅 This Week’s Plan</h4>
+            <h4 className='week-title'>📅 Next 7 Days’ Plan</h4>
             <p className='week-sub'>Review and adjust before saving</p>
           </div>
 

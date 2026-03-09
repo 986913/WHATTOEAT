@@ -171,6 +171,11 @@ export class UserRepository {
     // 更新 username
     if (updateUser.username) user.username = updateUser.username;
 
+    // 更新 password（需要加密）
+    if (updateUser.password) {
+      user.password = await argon2.hash(updateUser.password);
+    }
+
     // 更新 profile
     if (updateUser.profile) {
       const profileRepo = this.profileRepo;

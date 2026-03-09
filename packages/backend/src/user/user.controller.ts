@@ -29,6 +29,7 @@ import { TypeormFilter } from 'src/filters/typeorm.filter';
 import { AdminGuard } from 'src/guards/admin.guard';
 import { AuthRequest } from 'src/guards/admin.guard';
 import { JwtAuthenticationGuard } from 'src/guards/jwt.guard';
+import { OwnerOrAdminGuard } from 'src/guards/owner-or-admin.guard';
 
 @Controller('users')
 @UseFilters(new TypeormFilter())
@@ -93,23 +94,19 @@ export class UserController {
   }
 
   @Put('/:id')
+  @UseGuards(OwnerOrAdminGuard) // 只有本人或管理员可以更新
   // (通过 PathPara 更新一个user) -- http://localhost:3001/api/v1/users/[1]
   updateUser(
     @Param('id', ParseIntPipe) userId: number,
     @Body(UpdateUserPipe) dto: UpdateUserDTO,
-    // @Headers('Authorization') headers: any,
+    @Req() req: AuthRequest,
   ): any {
     this.logger.log(`Updating user with ID: ${userId}`);
-    // 权限1: 判断用户是否是自己 - 说明当前user在尝试update自己的信息
-    // 权限2: 判断和用户能否有更新的权限
-    // 返回数据： 不能包含敏感的password等信息
-
+    // 非管理员不允许修改 roles
+    if (!req.user.isAdmin) {
+      delete dto.roles;
+    }
     return this.userService.update(userId, dto);
-    // if (headers === userId) {
-    // return this.userService.update(userId, dto);
-    // } else {
-    //   throw new UnauthorizedException();
-    // }
   }
 
   @Delete('/:id')

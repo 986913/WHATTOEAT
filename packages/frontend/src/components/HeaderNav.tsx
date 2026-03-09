@@ -2,6 +2,7 @@ import Navbar from 'react-bootstrap/Navbar';
 import Image from 'react-bootstrap/Image';
 import Container from 'react-bootstrap/Container';
 import Button from 'react-bootstrap/Button';
+import { useNavigate } from 'react-router-dom';
 import { useCurrentUserStore } from '../store/useCurrentUserStore';
 
 interface HeaderNavProps {
@@ -10,6 +11,7 @@ interface HeaderNavProps {
 
 export default function HeaderNav({ onLogout }: HeaderNavProps) {
   const currentUser = useCurrentUserStore((s) => s.currentUser);
+  const navigate = useNavigate();
 
   return (
     <Navbar expand='lg' className='bg-body-tertiary pt-2 pb-2 border'>
@@ -30,7 +32,9 @@ export default function HeaderNav({ onLogout }: HeaderNavProps) {
               'https://i.pinimg.com/736x/3c/67/75/3c67757cef723535a7484a6c7bfbfc43.jpg'
             }
             roundedCircle
-            style={{ width: 42, height: 42, objectFit: 'cover' }}
+            style={{ width: 42, height: 42, objectFit: 'cover', cursor: 'pointer' }}
+            onClick={() => navigate('/home/profile')}
+            title='My Profile'
           />
 
           <Button variant='outline-danger' size='sm' onClick={onLogout}>

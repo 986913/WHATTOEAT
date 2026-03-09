@@ -14,8 +14,9 @@ export class UpdateUserDTO {
   @IsString()
   username: string;
 
-  // @IsString()
-  // password?: string;
+  @IsOptional()
+  @IsString()
+  password?: string;
 
   @IsOptional()
   @ValidateNested()
