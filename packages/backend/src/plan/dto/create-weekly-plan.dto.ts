@@ -33,6 +33,19 @@ export class WeeklyCommitDTO {
   plans: WeeklyPlanItemDTO[];
 }
 
+export class ReplaceMealDTO {
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  typeId: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  excludeMealId?: number;
+}
+
 export class WeeklyPlanItemDTO {
   @IsDateString({}, { message: 'date must be a valid ISO date string' })
   date: string;

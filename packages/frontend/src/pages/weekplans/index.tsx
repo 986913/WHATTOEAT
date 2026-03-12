@@ -24,6 +24,7 @@ export default function WeekPlans() {
   const [loadingPreview, setLoadingPreview] = useState(false);
   const [loadingCommit, setLoadingCommit] = useState(false);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
+  const [replacingKey, setReplacingKey] = useState<string | null>(null);
 
   const isEmptyState = draftPlans.length === 0;
 
@@ -81,6 +82,28 @@ export default function WeekPlans() {
       error('Failed to save weekly plans ❌');
     } finally {
       setLoadingCommit(false);
+    }
+  };
+
+  const handleReplaceMeal = async (date: string, typeId: number, currentMealId: number) => {
+    const key = `${date}-${typeId}`;
+    try {
+      setReplacingKey(key);
+      const res = await axios.post('/plans/replace-meal', {
+        typeId,
+        excludeMealId: currentMealId,
+      });
+      setDraftPlans((prev) =>
+        prev.map((p) =>
+          p.date === date && p.typeId === typeId
+            ? { ...p, mealId: res.data.mealId, mealName: res.data.mealName, mealVideoUrl: res.data.mealVideoUrl, mealImageUrl: res.data.mealImageUrl }
+            : p,
+        ),
+      );
+    } catch {
+      error('No other meals available for this type');
+    } finally {
+      setReplacingKey(null);
     }
   };
 
@@ -179,22 +202,28 @@ export default function WeekPlans() {
                   .sort((a, b) => a.typeId - b.typeId)
                   .map((p) => {
                     const t = getMealType(p.typeId);
+                    const key = `${p.date}-${p.typeId}`;
+                    const isReplacing = replacingKey === key;
                     return (
                       <div
-                        key={`${p.date}-${p.typeId}`}
-                        className='meal-item'
-                        onClick={() => {
-                          if (p.mealVideoUrl) setVideoUrl(p.mealVideoUrl);
-                        }}
+                        key={key}
+                        className={`meal-item ${isReplacing ? 'meal-item-replacing' : ''}`}
                       >
-                        <Image
-                          className='meal-image'
-                          src={
-                            p.mealImageUrl ||
-                            'https://thetac.tech/wp-content/uploads/2024/09/placeholder-288.png'
-                          }
-                          alt={p.mealName}
-                        />
+                        <div
+                          className='meal-image-wrapper'
+                          onClick={() => {
+                            if (p.mealVideoUrl) setVideoUrl(p.mealVideoUrl);
+                          }}
+                        >
+                          <Image
+                            className='meal-image'
+                            src={
+                              p.mealImageUrl ||
+                              'https://thetac.tech/wp-content/uploads/2024/09/placeholder-288.png'
+                            }
+                            alt={p.mealName}
+                          />
+                        </div>
 
                         <div className='meal-content'>
                           <div className='meal-type-line'>
@@ -205,6 +234,21 @@ export default function WeekPlans() {
                           </div>
 
                           <div className='meal-title'>{p.mealName}</div>
+
+                          <button
+                            className='replace-btn'
+                            disabled={isReplacing}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleReplaceMeal(p.date, p.typeId, p.mealId);
+                            }}
+                          >
+                            {isReplacing ? (
+                              <Spinner animation='border' size='sm' />
+                            ) : (
+                              '🎲 Replace'
+                            )}
+                          </button>
                         </div>
                       </div>
                     );

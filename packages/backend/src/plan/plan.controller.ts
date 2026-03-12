@@ -17,6 +17,7 @@ import {
 import {
   WeeklyCommitDTO,
   WeeklyPreviewDTO,
+  ReplaceMealDTO,
 } from './dto/create-weekly-plan.dto';
 import { ConfigService } from '@nestjs/config';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
@@ -75,6 +76,15 @@ export class PlanController {
   previewWeeklyPlan(@Body() dto: WeeklyPreviewDTO, @Req() req: AuthRequest) {
     return this.planService.generateWeeklyPreview(
       req.user.userID ?? dto.userId,
+    );
+  }
+
+  // http://localhost:3001/api/v1/plans/replace-meal   → 随机换一个同类型的 meal（不写库）
+  @Post('replace-meal')
+  replaceMeal(@Body() dto: ReplaceMealDTO) {
+    return this.planService.getRandomReplacementMeal(
+      dto.typeId,
+      dto.excludeMealId,
     );
   }
 

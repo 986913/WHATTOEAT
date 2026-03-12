@@ -230,6 +230,40 @@ export class PlanService {
     };
   }
 
+  // ================================
+  // Replace Single Meal (Draft)
+  // ================================
+  async getRandomReplacementMeal(
+    typeId: number,
+    excludeMealId?: number,
+  ): Promise<Omit<DraftPlan, 'date'>> {
+    const queryBuilder = this.mealRepo
+      .createQueryBuilder('meal')
+      .leftJoin('meal.types', 'type')
+      .where('type.id = :typeId', { typeId })
+      .select(['meal.id', 'meal.name', 'meal.videoUrl', 'meal.imageUrl']);
+
+    if (excludeMealId) {
+      queryBuilder.andWhere('meal.id != :excludeMealId', { excludeMealId });
+    }
+
+    const meals = await queryBuilder.getMany();
+    if (meals.length === 0) {
+      throw new BadRequestException(
+        `No other meals available for type ${typeId}`,
+      );
+    }
+
+    const randomMeal = meals[Math.floor(Math.random() * meals.length)];
+    return {
+      typeId,
+      mealId: randomMeal.id,
+      mealName: randomMeal.name,
+      mealVideoUrl: randomMeal.videoUrl,
+      mealImageUrl: randomMeal.imageUrl,
+    };
+  }
+
   async commitWeeklyPlans(userId: number, dto: WeeklyCommitDTO) {
     const { plans } = dto;
     if (!plans || plans.length === 0) {

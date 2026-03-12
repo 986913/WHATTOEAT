@@ -385,3 +385,63 @@
   color: #222;
 }
 
+/* Image wrapper (clickable for video) */
+.meal-image-wrapper {
+  cursor: pointer;
+}
+
+/* ===========================
+   Replace Button
+=========================== */
+
+.replace-btn {
+  margin-top: 8px;
+  padding: 4px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  border: 1px solid #dee2e6;
+  border-radius: 999px;
+  background: white;
+  color: #555;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.replace-btn:hover:not(:disabled) {
+  background: #f0f7f0;
+  border-color: #198754;
+  color: #198754;
+}
+
+.replace-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ===========================
+   Replacing Animation
+=========================== */
+
+.meal-item-replacing {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.meal-item:not(.meal-item-replacing) {
+  animation: fadeInUp 0.3s ease;
+}
+
