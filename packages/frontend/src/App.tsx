@@ -13,6 +13,7 @@ import Ingredients from './pages/ingredients';
 import WeekPlans from './pages/weekplans';
 import UserPlans from './pages/userplans';
 import Profile from './pages/profile';
+import Today from './pages/today';
 import './styles/base.css';
 
 function App() {
@@ -26,10 +27,11 @@ function App() {
 
         {/* 布局路由 */}
         <Route path='/home' element={<DefaultLayout />}>
-          {/* 默认跳转: /home -> /home/dashboard */}
-          <Route index element={<Navigate to='/home/wkplans' replace />} />
+          {/* 默认跳转: /home -> /home/today */}
+          <Route index element={<Navigate to='/home/today' replace />} />
 
-          {/* 已存在的子路由们 */}
+          {/* 核心页面 */}
+          <Route path='today' element={<Today />} />
           <Route path='dashboard' element={<Dashboard />} />
           <Route path='users' element={<Users />} />
           <Route path='roles' element={<Roles />} />
@@ -42,7 +44,7 @@ function App() {
           <Route path='profile' element={<Profile />} />
 
           {/* 内部兜底，处理 /home/xxxx 这种不存在的路径 */}
-          <Route path='*' element={<Navigate to='/home/wkplans' replace />} />
+          <Route path='*' element={<Navigate to='/home/today' replace />} />
         </Route>
 
         {/* 兜底 */}

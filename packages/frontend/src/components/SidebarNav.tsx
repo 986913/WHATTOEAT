@@ -11,22 +11,57 @@ export default function SidebarNav() {
   if (currUser?.roles.some((r) => r.roleName === 'admin')) {
     role = RoleForUI.ADMIN;
   }
-  const visibleMenus = menus.filter((menu) => menu.roles.includes(role));
+
+  const userMenus = menus.filter(
+    (m) => m.roles.includes(role) && m.id < 10,
+  );
+  const adminMenus = menus.filter(
+    (m) => m.roles.includes(role) && m.id >= 10,
+  );
 
   return (
-    <Nav className='flex-column bg-dark vh-100 p-3' variant='underline'>
-      <h3 className='text-center text-white'>What To Eat</h3>
-      {visibleMenus.map((menu) => (
-        <Nav.Link
-          as={NavLink}
-          key={menu.id}
-          to={menu.path}
-          className='text-white'
-        >
-          <span className='me-2'>{menu.icon}</span>
-          {menu.name}
-        </Nav.Link>
-      ))}
-    </Nav>
+    <div className='sidebar'>
+      {/* Brand */}
+      <div className='sidebar-brand'>
+        <span className='sidebar-brand-icon'>🎲</span>
+        <span className='sidebar-brand-text'>MealDice</span>
+      </div>
+
+      {/* User nav */}
+      <Nav className='flex-column sidebar-nav-section'>
+        {userMenus.map((menu) => (
+          <Nav.Link
+            as={NavLink}
+            key={menu.id}
+            to={menu.path}
+            className='sidebar-link'
+          >
+            <span className='sidebar-link-icon'>{menu.icon}</span>
+            <span className='sidebar-link-text'>{menu.name}</span>
+          </Nav.Link>
+        ))}
+      </Nav>
+
+      {/* Admin section */}
+      {adminMenus.length > 0 && (
+        <>
+          <div className='sidebar-divider' />
+          <div className='sidebar-section-label'>Admin</div>
+          <Nav className='flex-column sidebar-nav-section'>
+            {adminMenus.map((menu) => (
+              <Nav.Link
+                as={NavLink}
+                key={menu.id}
+                to={menu.path}
+                className='sidebar-link'
+              >
+                <span className='sidebar-link-icon'>{menu.icon}</span>
+                <span className='sidebar-link-text'>{menu.name}</span>
+              </Nav.Link>
+            ))}
+          </Nav>
+        </>
+      )}
+    </div>
   );
 }

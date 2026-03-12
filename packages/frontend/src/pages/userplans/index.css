@@ -1,118 +1,166 @@
-.page {
-  padding: 24px;
+/* ===========================
+   My Plans Page
+=========================== */
+
+.mp-page {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 8px 24px 60px;
 }
 
-.page-title {
+.mp-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  gap: 16px;
+}
+
+.mp-loading p {
+  font-size: 16px;
+  color: #888;
+}
+
+/* Header */
+.mp-header {
+  margin-bottom: 32px;
+}
+
+.mp-title {
+  font-size: 32px;
+  font-weight: 800;
+  color: #1a1a1a;
+  margin: 0;
+  letter-spacing: -0.5px;
+}
+
+.mp-subtitle {
+  font-size: 15px;
+  color: #999;
+  margin: 4px 0 0;
+}
+
+/* Empty */
+.mp-empty {
+  text-align: center;
+  padding: 80px 20px;
+}
+
+.mp-empty-icon {
+  font-size: 64px;
   margin-bottom: 16px;
 }
 
-.loading-box,
-.table-empty {
-  padding: 16px;
-  color: #777;
+.mp-empty h3 {
+  font-size: 22px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin-bottom: 8px;
 }
 
-/* ===== Day Card ===== */
-.day-card {
-  border: 1px solid #eee;
-  border-radius: 8px;
-  margin-bottom: 12px;
-  background: #fff;
+.mp-empty p {
+  font-size: 15px;
+  color: #999;
 }
 
-/* ===== Header ===== */
-.day-header {
-  padding: 12px 16px;
-  font-weight: 600;
-}
-
-.day-header.clickable {
-  cursor: pointer;
+/* Days */
+.mp-days {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
+  gap: 16px;
 }
 
-.day-header:hover {
+.mp-day {
+  background: white;
+  border-radius: 16px;
+  padding: 18px 20px;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.04);
+}
+
+.mp-day-today {
+  border-left: 4px solid #FF6B35;
+}
+
+.mp-day-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.mp-day-label {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+.mp-day-badge {
+  font-size: 11px;
+  font-weight: 700;
+  background: #fff3ed;
+  color: #FF6B35;
+  padding: 3px 10px;
+  border-radius: 999px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Meals */
+.mp-day-meals {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.mp-meal {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 6px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.mp-meal:hover {
   background: #fafafa;
 }
 
-.chevron {
-  font-size: 12px;
-  opacity: 0.6;
-}
-
-/* ===== Body ===== */
-.day-body {
-  padding: 8px 12px 12px;
-}
-
-/* ===== Meal Row ===== */
-.meal-row {
-  display: grid;
-  grid-template-columns: 120px 1fr auto;
-  gap: 12px;
-  align-items: center;
-  padding: 10px 8px;
+.mp-meal-img-wrap {
+  width: 56px;
+  height: 56px;
   border-radius: 10px;
-  transition:
-    background-color 0.2s ease,
-    box-shadow 0.2s ease,
-    transform 0.15s ease;
+  overflow: hidden;
+  flex-shrink: 0;
 }
 
-.meal-row.clickable {
-  cursor: pointer;
+.mp-meal-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
-.meal-row.clickable:hover {
-  background-color: #f8f9fb;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-  transform: translateY(-1px);
-}
-
-.meal-row:not(:last-child) {
-  border-bottom: 1px dashed #eee;
-}
-
-.meal-type {
-  text-transform: capitalize;
-  font-weight: 500;
-}
-
-.meal-info {
+.mp-meal-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
   min-width: 0;
 }
 
-.meal-title {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.meal-name {
+.mp-meal-type {
+  font-size: 12px;
+  color: #999;
   font-weight: 500;
+  text-transform: capitalize;
 }
 
-.meal-link {
-  font-size: 12px;
-  text-decoration: none;
-}
-
-.ingredient-list {
-  margin-top: 4px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-}
-
-.ingredient-chip {
-  background: #f2f2f2;
-  padding: 2px 6px;
-  border-radius: 6px;
-  font-size: 12px;
-}
-
-.missing {
-  color: #bbb;
+.mp-meal-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1a1a1a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }

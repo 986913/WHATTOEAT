@@ -38,7 +38,7 @@ export default function Signin() {
 
       localStorage.setItem('access_token', res.data.access_token);
 
-      navigate('/home/wkplans');
+      navigate('/home/today');
     } catch (err) {
       let msg = 'Sign in failed';
 

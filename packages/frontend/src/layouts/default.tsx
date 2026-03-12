@@ -10,14 +10,12 @@ export default function DefaultLayout() {
   const setCurrentUser = useCurrentUserStore((s) => s.setCurrentUser);
   const clearCurrentUser = useCurrentUserStore((s) => s.clearCurrentUser);
 
-  // logout 统一逻辑
   const handleLogout = useCallback(() => {
     localStorage.removeItem('access_token');
     clearCurrentUser();
     navigate('/signin', { replace: true });
   }, [clearCurrentUser, navigate]);
 
-  // 初始化恢复
   useEffect(() => {
     const token = localStorage.getItem('access_token');
     if (!token) {
@@ -36,26 +34,25 @@ export default function DefaultLayout() {
   }, [setCurrentUser, handleLogout, navigate]);
 
   return (
-    <div className='container-fluid'>
-      <div className='row'>
-        <div className='col-2 p-0'>
-          <SidebarNav />
-        </div>
-        <div className='col-10 p-0 d-flex flex-column vh-100'>
-          <HeaderNav onLogout={handleLogout} />
+    <div className='app-layout'>
+      <aside className='app-sidebar'>
+        <SidebarNav />
+      </aside>
 
-          <main className='flex-grow-1 p-4 bg-light overflow-auto'>
-            <Outlet />
-          </main>
+      <div className='app-main'>
+        <HeaderNav onLogout={handleLogout} />
 
-          <footer className='app-footer'>
-            <div className='footer-content'>
-              <span>🍽 What To Eat</span>
-              <span className='footer-divider'>·</span>
-              <span>Plan smarter. Eat better.</span>
-            </div>
-          </footer>
-        </div>
+        <main className='app-content'>
+          <Outlet />
+        </main>
+
+        <footer className='app-footer'>
+          <span>🎲 MealDice</span>
+          <span className='footer-divider'>·</span>
+          <span>Plan smarter. Eat better</span>
+          <span className='footer-divider'>·</span>
+          <span>© 2026 Mingyue Liu</span>
+        </footer>
       </div>
     </div>
   );
