@@ -393,6 +393,226 @@
 }
 
 /* ===========================
+   Contribute Teaser
+=========================== */
+
+.today-teaser {
+  margin-top: 56px;
+  padding: 0 4px;
+}
+
+.today-teaser-content {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  background: linear-gradient(135deg, #fff9f6 0%, #fff 100%);
+  border: 1px dashed #ffd4bf;
+  border-radius: 20px;
+  padding: 24px 28px;
+}
+
+.today-teaser-icon {
+  font-size: 36px;
+  flex-shrink: 0;
+}
+
+.today-teaser-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.today-teaser-text h3 {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0 0 4px;
+}
+
+.today-teaser-text p {
+  font-size: 14px;
+  color: #888;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.today-teaser-btn {
+  flex-shrink: 0;
+  padding: 10px 20px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 600;
+  background: white;
+  color: #FF6B35;
+  border: 1.5px solid #FF6B35;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.today-teaser-btn:hover {
+  background: #FF6B35;
+  color: white;
+}
+
+.today-teaser-badge {
+  font-size: 10px;
+  font-weight: 700;
+  background: #fff3ed;
+  color: #FF6B35;
+  padding: 2px 7px;
+  border-radius: 999px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.today-teaser-btn:hover .today-teaser-badge {
+  background: rgba(255, 255, 255, 0.25);
+  color: white;
+}
+
+/* ===========================
+   Contribute Modal
+=========================== */
+
+.today-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.today-modal {
+  background: white;
+  border-radius: 24px;
+  padding: 40px 36px;
+  max-width: 440px;
+  width: 90%;
+  text-align: center;
+  position: relative;
+  animation: modalSlideUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes modalSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.today-modal-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  background: #f5f5f5;
+  color: #999;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  transition: all 0.15s ease;
+}
+
+.today-modal-close:hover {
+  background: #eee;
+  color: #333;
+}
+
+.today-modal-icon {
+  font-size: 48px;
+  margin-bottom: 12px;
+}
+
+.today-modal h2 {
+  font-size: 22px;
+  font-weight: 800;
+  color: #1a1a1a;
+  margin: 0 0 8px;
+}
+
+.today-modal-desc {
+  font-size: 15px;
+  color: #777;
+  line-height: 1.5;
+  margin: 0 0 24px;
+}
+
+.today-modal-features {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  text-align: left;
+  margin-bottom: 24px;
+}
+
+.today-modal-feature {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+  color: #444;
+}
+
+.today-modal-feature i {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: #fff3ed;
+  color: #FF6B35;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  flex-shrink: 0;
+}
+
+.today-modal-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #FF6B35;
+  background: #fff9f6;
+  padding: 8px 16px;
+  border-radius: 999px;
+}
+
+.today-modal-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #FF6B35;
+  animation: pulse 1.5s ease infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.85); }
+}
+
+/* ===========================
    Responsive
 =========================== */
 
@@ -420,5 +640,15 @@
 
   .today-card-image-wrap {
     aspect-ratio: 4 / 3;
+  }
+
+  .today-teaser-content {
+    flex-direction: column;
+    text-align: center;
+    gap: 14px;
+  }
+
+  .today-teaser-text {
+    text-align: center;
   }
 }

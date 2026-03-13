@@ -38,6 +38,7 @@ export default function Today() {
   const [shufflingAll, setShufflingAll] = useState(false);
   const [revealingAll, setRevealingAll] = useState(false);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
+  const [showContributeModal, setShowContributeModal] = useState(false);
   const revealTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const today = new Date().toISOString().slice(0, 10);
@@ -241,6 +242,75 @@ export default function Today() {
             </button>
           </div>
         )
+      )}
+
+      {/* Contribute Teaser */}
+      {todayPlans.length > 0 && (
+        <div className='today-teaser'>
+          <div className='today-teaser-content'>
+            <div className='today-teaser-icon'>🍳</div>
+            <div className='today-teaser-text'>
+              <h3>Don't see your favorite dish?</h3>
+              <p>
+                Add your own meals and they'll be available in your shuffle
+                rotation.
+              </p>
+            </div>
+            <button
+              className='today-teaser-btn'
+              onClick={() => setShowContributeModal(true)}
+            >
+              <i className='fa-solid fa-plus'></i>
+              Create Your Meal
+              <span className='today-teaser-badge'>Beta</span>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Contribute Modal */}
+      {showContributeModal && (
+        <div
+          className='today-modal-backdrop'
+          onClick={() => setShowContributeModal(false)}
+        >
+          <div
+            className='today-modal'
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              className='today-modal-close'
+              onClick={() => setShowContributeModal(false)}
+            >
+              <i className='fa-solid fa-xmark'></i>
+            </button>
+            <div className='today-modal-icon'>🍳</div>
+            <h2>Create Your Own Meal</h2>
+            <p className='today-modal-desc'>
+              We're building a way for you to contribute your favorite recipes.
+              Once added, your meals will join the shuffle rotation — so you'll
+              never run out of ideas.
+            </p>
+            <div className='today-modal-features'>
+              <div className='today-modal-feature'>
+                <i className='fa-solid fa-utensils'></i>
+                <span>Add your own recipes with ingredients</span>
+              </div>
+              <div className='today-modal-feature'>
+                <i className='fa-solid fa-shuffle'></i>
+                <span>Your meals join the shuffle rotation</span>
+              </div>
+              <div className='today-modal-feature'>
+                <i className='fa-solid fa-video'></i>
+                <span>Attach cooking videos for reference</span>
+              </div>
+            </div>
+            <div className='today-modal-status'>
+              <span className='today-modal-status-dot'></span>
+              Currently in testing — launching soon
+            </div>
+          </div>
+        </div>
       )}
 
       <VideoPreviewModal url={videoUrl} onClose={() => setVideoUrl(null)} />
