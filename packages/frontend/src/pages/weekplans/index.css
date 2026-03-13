@@ -1,5 +1,5 @@
 /* ===========================
-   Week Plan Page
+   Week Plan Page — Card Layout
 =========================== */
 
 .wk-page {
@@ -28,35 +28,450 @@
   font-weight: 500;
 }
 
-/* Header */
-.wk-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+/* ===========================
+   Hero
+=========================== */
+
+.wk-hero {
+  text-align: center;
   margin-bottom: 32px;
+  padding-top: 12px;
 }
 
-.wk-title {
-  font-size: 32px;
+.wk-hero-title {
+  font-size: 36px;
+  font-weight: 800;
+  color: var(--text-primary, #1a1a1a);
+  margin-bottom: 6px;
+  letter-spacing: -1px;
+  line-height: 1.15;
+}
+
+.wk-hero-subtitle {
+  font-size: 16px;
+  color: var(--text-muted, #999);
+  margin: 0;
+  font-weight: 400;
+}
+
+/* ===========================
+   State Banner
+=========================== */
+
+.wk-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 20px;
+  border-radius: 16px;
+  margin-bottom: 28px;
+}
+
+.wk-banner-saved {
+  background: #f0faf0;
+  border: 1.5px solid #c8e6c9;
+}
+
+.wk-banner-draft {
+  background: #fff8f3;
+  border: 1.5px solid #ffdcc8;
+}
+
+.wk-banner-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.wk-banner-left > i {
+  font-size: 24px;
+  flex-shrink: 0;
+}
+
+.wk-banner-saved .wk-banner-left > i {
+  color: #2e7d32;
+}
+
+.wk-banner-draft .wk-banner-left > i {
+  color: #FF6B35;
+}
+
+.wk-banner-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin-bottom: 2px;
+}
+
+.wk-banner-desc {
+  font-size: 13px;
+  color: #777;
+  line-height: 1.4;
+}
+
+.wk-banner-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.wk-banner-btn {
+  padding: 8px 16px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  background: white;
+  color: #555;
+  border: 1.5px solid #e0e0e0;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.wk-banner-btn:hover:not(:disabled) {
+  border-color: #FF6B35;
+  color: #FF6B35;
+}
+
+.wk-banner-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.wk-banner-btn-save {
+  padding: 8px 20px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  background: #FF6B35;
+  color: white;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(255, 107, 53, 0.25);
+}
+
+.wk-banner-btn-save:hover:not(:disabled) {
+  background: #e55a28;
+}
+
+.wk-banner-btn-save:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ===========================
+   Day Cards
+=========================== */
+
+.wk-days {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.wk-day-card {
+  background: white;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+}
+
+.wk-day-card-header {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 18px 22px 0;
+}
+
+.wk-day-card-weekday {
+  font-size: 18px;
   font-weight: 800;
   color: #1a1a1a;
-  margin: 0;
-  letter-spacing: -0.5px;
+  letter-spacing: -0.3px;
 }
 
-.wk-subtitle {
-  font-size: 15px;
+.wk-day-card-date {
+  font-size: 14px;
   color: #999;
-  margin: 4px 0 0;
+  font-weight: 500;
 }
 
-.wk-actions {
+/* ===========================
+   Meal Cards within a Day
+=========================== */
+
+.wk-day-card-meals {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  padding: 16px 22px 22px;
+}
+
+.wk-meal-card {
   display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.wk-meal-card-replacing {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+.wk-meal-card-img {
+  position: relative;
+  border-radius: 14px;
+  overflow: hidden;
+  aspect-ratio: 4 / 3;
+  background: #f5f5f5;
+  cursor: pointer;
+}
+
+.wk-meal-card-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.wk-meal-card-img:hover img {
+  transform: scale(1.05);
+}
+
+.wk-meal-card-play {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.15);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.wk-meal-card-img:hover .wk-meal-card-play {
+  opacity: 1;
+}
+
+.wk-meal-card-play i {
+  width: 36px;
+  height: 36px;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: #FF6B35;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.wk-meal-card-info {
+  padding: 10px 4px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.wk-meal-card-type {
+  font-size: 12px;
+  color: #999;
+  font-weight: 500;
+}
+
+.wk-meal-card-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1a1a1a;
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.wk-meal-card-shuffle {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  border: none;
+  background: rgba(255, 255, 255, 0.9);
+  color: #888;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  transition: all 0.15s ease;
+  backdrop-filter: blur(4px);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+}
+
+.wk-meal-card-shuffle:hover:not(:disabled) {
+  background: white;
+  color: #FF6B35;
+  transform: scale(1.1);
+}
+
+.wk-meal-card-shuffle:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ===========================
+   Bottom
+=========================== */
+
+.wk-bottom {
+  display: flex;
+  justify-content: center;
+  padding-top: 32px;
+}
+
+.wk-bottom-link {
+  background: none;
+  border: none;
+  font-size: 14px;
+  font-weight: 600;
+  color: #888;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: color 0.2s ease;
+}
+
+.wk-bottom-link:hover {
+  color: #FF6B35;
+}
+
+.wk-bottom-link i {
+  font-size: 12px;
+}
+
+/* ===========================
+   Save Success Overlay
+=========================== */
+
+.wk-saved-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: wkFadeIn 0.2s ease;
+}
+
+@keyframes wkFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.wk-saved-modal {
+  background: white;
+  border-radius: 24px;
+  padding: 44px 40px;
+  max-width: 400px;
+  width: 90%;
+  text-align: center;
+  animation: wkSlideUp 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes wkSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(24px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.wk-saved-check {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: #e8f5e9;
+  color: #2e7d32;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  margin: 0 auto 20px;
+  animation: wkCheckPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) 0.2s both;
+}
+
+@keyframes wkCheckPop {
+  from {
+    transform: scale(0);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.wk-saved-modal h2 {
+  font-size: 24px;
+  font-weight: 800;
+  color: #1a1a1a;
+  margin: 0 0 8px;
+}
+
+.wk-saved-modal p {
+  font-size: 15px;
+  color: #888;
+  margin: 0 0 28px;
+  line-height: 1.5;
+}
+
+.wk-saved-actions {
+  display: flex;
+  flex-direction: column;
   gap: 10px;
 }
 
-.wk-btn-outline {
-  padding: 10px 20px;
+.wk-saved-btn-primary {
+  padding: 14px 24px;
+  border-radius: 999px;
+  font-size: 15px;
+  font-weight: 700;
+  background: #FF6B35;
+  color: white;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 4px 12px rgba(255, 107, 53, 0.3);
+}
+
+.wk-saved-btn-primary:hover {
+  background: #e55a28;
+  transform: translateY(-1px);
+}
+
+.wk-saved-btn-outline {
+  padding: 12px 24px;
   border-radius: 999px;
   font-size: 14px;
   font-weight: 600;
@@ -67,191 +482,69 @@
   transition: all 0.2s ease;
   display: flex;
   align-items: center;
-  gap: 6px;
-}
-
-.wk-btn-outline:hover:not(:disabled) {
-  border-color: #FF6B35;
-  color: #FF6B35;
-}
-
-.wk-btn-outline:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.wk-btn-primary {
-  padding: 10px 24px;
-  border-radius: 999px;
-  font-size: 14px;
-  font-weight: 700;
-  background: #FF6B35;
-  color: white;
-  border: none;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: 0 2px 8px rgba(255, 107, 53, 0.25);
-}
-
-.wk-btn-primary:hover:not(:disabled) {
-  background: #e55a28;
-}
-
-.wk-btn-primary:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-/* Days Container */
-.wk-days {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-/* Day Row */
-.wk-day {
-  background: white;
-  border-radius: 16px;
-  padding: 18px 20px;
-  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.04);
-  transition: box-shadow 0.2s ease;
-}
-
-.wk-day:hover {
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.07);
-}
-
-.wk-day-today {
-  border-left: 4px solid #FF6B35;
-}
-
-.wk-day-header {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 14px;
-}
-
-.wk-day-label {
-  font-size: 16px;
-  font-weight: 700;
-  color: #1a1a1a;
-}
-
-.wk-day-badge {
-  font-size: 11px;
-  font-weight: 700;
-  background: #fff3ed;
-  color: #FF6B35;
-  padding: 3px 10px;
-  border-radius: 999px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-/* Meals in a day */
-.wk-day-meals {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.wk-meal {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 6px;
-  border-radius: 12px;
-  transition: background 0.15s ease;
-}
-
-.wk-meal:hover {
-  background: #fafafa;
-}
-
-.wk-meal-replacing {
-  opacity: 0.4;
-  pointer-events: none;
-}
-
-/* Meal thumbnail */
-.wk-meal-img-wrap {
-  width: 56px;
-  height: 56px;
-  border-radius: 10px;
-  overflow: hidden;
-  flex-shrink: 0;
-  cursor: pointer;
-}
-
-.wk-meal-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-/* Meal info */
-.wk-meal-info {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-}
-
-.wk-meal-type {
-  font-size: 12px;
-  color: #999;
-  font-weight: 500;
-}
-
-.wk-meal-name {
-  font-size: 15px;
-  font-weight: 600;
-  color: #1a1a1a;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* Replace button */
-.wk-meal-replace {
-  width: 34px;
-  height: 34px;
-  border-radius: 8px;
-  border: 1px solid #eee;
-  background: white;
-  color: #bbb;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
   justify-content: center;
-  font-size: 13px;
-  flex-shrink: 0;
-  transition: all 0.15s ease;
+  gap: 8px;
 }
 
-.wk-meal-replace:hover:not(:disabled) {
+.wk-saved-btn-outline:hover {
   border-color: #FF6B35;
   color: #FF6B35;
-  background: #fff9f6;
 }
 
-.wk-meal-replace:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+.wk-saved-btn-text {
+  padding: 8px;
+  background: none;
+  border: none;
+  font-size: 13px;
+  color: #aaa;
+  cursor: pointer;
+  transition: color 0.15s ease;
 }
 
-/* Responsive */
-@media (max-width: 600px) {
-  .wk-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 16px;
+.wk-saved-btn-text:hover {
+  color: #FF6B35;
+}
+
+/* ===========================
+   Responsive
+=========================== */
+
+@media (max-width: 700px) {
+  .wk-day-card-meals {
+    grid-template-columns: 1fr;
+    gap: 12px;
   }
 
-  .wk-title {
-    font-size: 24px;
+  .wk-meal-card {
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .wk-meal-card-img {
+    width: 72px;
+    height: 72px;
+    aspect-ratio: auto;
+    flex-shrink: 0;
+  }
+
+  .wk-meal-card-info {
+    padding: 0;
+    flex: 1;
+  }
+
+  .wk-meal-card-shuffle {
+    position: static;
+    flex-shrink: 0;
+  }
+
+  .wk-banner {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .wk-hero-title {
+    font-size: 28px;
   }
 }

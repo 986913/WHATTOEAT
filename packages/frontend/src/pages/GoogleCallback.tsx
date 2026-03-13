@@ -9,7 +9,7 @@ export default function GoogleCallback() {
     const token = searchParams.get('token');
     if (token) {
       localStorage.setItem('access_token', token);
-      navigate('/home/wkplans');
+      navigate('/home/today');
     } else {
       navigate('/signin');
     }

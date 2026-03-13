@@ -29,16 +29,16 @@ export const useMenuStore = create<MenuState>(() => ({
     },
     {
       id: 2,
-      name: 'Week Plan',
+      name: 'Plan Your Week',
       path: '/home/wkplans',
       icon: <i className='fa-solid fa-calendar-week'></i>,
       roles: [RoleForUI.USER, RoleForUI.ADMIN],
     },
     {
       id: 3,
-      name: 'My Plans',
+      name: 'History',
       path: '/home/userplans',
-      icon: <i className='fa-solid fa-bookmark'></i>,
+      icon: <i className='fa-solid fa-clock-rotate-left'></i>,
       roles: [RoleForUI.USER, RoleForUI.ADMIN],
     },
     {

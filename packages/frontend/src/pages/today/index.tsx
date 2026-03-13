@@ -26,27 +26,37 @@ const MEAL_TYPES = [
 const PLACEHOLDER_IMG =
   'https://thetac.tech/wp-content/uploads/2024/09/placeholder-288.png';
 
+const TYPE_NAME_TO_ID: Record<string, number> = {
+  breakfast: 1,
+  lunch: 2,
+  dinner: 3,
+};
+
 export default function Today() {
   const { toast, success, error } = useToast();
   const currentUser = useCurrentUserStore((s) => s.currentUser);
   const navigate = useNavigate();
 
-  const [allDrafts, setAllDrafts] = useState<DraftPlan[]>([]);
+  const [todayPlans, setTodayPlans] = useState<DraftPlan[]>([]);
+  const [isSaved, setIsSaved] = useState(false);
   const [loading, setLoading] = useState(false);
   const [shufflingType, setShufflingType] = useState<number | null>(null);
   const [revealingType, setRevealingType] = useState<number | null>(null);
   const [shufflingAll, setShufflingAll] = useState(false);
   const [revealingAll, setRevealingAll] = useState(false);
+  const [savingToday, setSavingToday] = useState(false);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [showContributeModal, setShowContributeModal] = useState(false);
   const revealTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const initialized = useRef(false);
+  const hasSavedPlan = useRef(false);
 
   const today = new Date().toISOString().slice(0, 10);
-  const todayPlans = allDrafts.filter((p) => p.date === today);
 
   useEffect(() => {
-    if (currentUser?.id && allDrafts.length === 0) {
-      handleGenerate();
+    if (currentUser?.id && !initialized.current) {
+      initialized.current = true;
+      loadToday();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentUser?.id]);
@@ -57,14 +67,53 @@ export default function Today() {
     };
   }, []);
 
-  const handleGenerate = async () => {
+  // Try saved plans first, fallback to generate
+  const loadToday = async () => {
+    if (!currentUser?.id) return;
+    try {
+      setLoading(true);
+      const res = await axios.get('/plans/me', {
+        params: { from: today, to: today },
+      });
+      const allPlans: any[] = Array.isArray(res.data) ? res.data : [];
+
+      const savedToday = allPlans.map((p: any) => ({
+          date: p.date,
+          typeId:
+            p.type?.id ??
+            TYPE_NAME_TO_ID[p.type?.name?.toLowerCase()] ??
+            0,
+          mealId: p.meal?.id ?? 0,
+          mealName: p.meal?.name,
+          mealVideoUrl: p.meal?.videoUrl,
+          mealImageUrl: p.meal?.imageUrl,
+        }));
+
+      if (savedToday.length > 0) {
+        setTodayPlans(savedToday);
+        setIsSaved(true);
+        hasSavedPlan.current = true;
+      } else {
+        await generateFresh();
+      }
+    } catch {
+      await generateFresh();
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const generateFresh = async () => {
     if (!currentUser?.id) return;
     try {
       setLoading(true);
       const res = await axios.post('/plans/weekly-preview', {
         userId: currentUser.id,
+        startOffset: 0,
       });
-      setAllDrafts(res.data.draftPlans || []);
+      const allDrafts: DraftPlan[] = res.data.draftPlans || [];
+      setTodayPlans(allDrafts.filter((p) => p.date === today));
+      setIsSaved(false);
     } catch {
       error('Failed to generate meals');
     } finally {
@@ -79,9 +128,9 @@ export default function Today() {
         typeId,
         excludeMealId: currentMealId,
       });
-      setAllDrafts((prev) =>
+      setTodayPlans((prev) =>
         prev.map((p) =>
-          p.date === today && p.typeId === typeId
+          p.typeId === typeId
             ? {
                 ...p,
                 mealId: res.data.mealId,
@@ -92,6 +141,7 @@ export default function Today() {
             : p,
         ),
       );
+      setIsSaved(false);
       setShufflingType(null);
       setRevealingType(typeId);
       revealTimer.current = setTimeout(() => setRevealingType(null), 500);
@@ -101,14 +151,39 @@ export default function Today() {
     }
   };
 
+  const handleSaveToday = async () => {
+    if (!currentUser?.id || !todayPlans.length) return;
+    try {
+      setSavingToday(true);
+      await axios.post('/plans/weekly-commit', {
+        plans: todayPlans.map((p) => ({
+          date: p.date,
+          typeId: p.typeId,
+          mealId: p.mealId,
+          userId: currentUser.id,
+        })),
+      });
+      setIsSaved(true);
+      hasSavedPlan.current = true;
+      success('Today\'s plan saved!');
+    } catch {
+      error('Failed to save today\'s plan');
+    } finally {
+      setSavingToday(false);
+    }
+  };
+
   const handleShuffleAll = async () => {
     if (!currentUser?.id) return;
     try {
       setShufflingAll(true);
       const res = await axios.post('/plans/weekly-preview', {
         userId: currentUser.id,
+        startOffset: 0,
       });
-      setAllDrafts(res.data.draftPlans || []);
+      const allDrafts: DraftPlan[] = res.data.draftPlans || [];
+      setTodayPlans(allDrafts.filter((p) => p.date === today));
+      setIsSaved(false);
       setShufflingAll(false);
       setRevealingAll(true);
       revealTimer.current = setTimeout(() => setRevealingAll(false), 600);
@@ -145,6 +220,39 @@ export default function Today() {
 
       {todayPlans.length > 0 ? (
         <>
+          {isSaved ? (
+            <div className='today-banner today-banner-saved'>
+              <div className='today-banner-left'>
+                <i className='fa-solid fa-circle-check'></i>
+                <div>
+                  <div className='today-banner-title'>Saved Plan</div>
+                  <div className='today-banner-desc'>
+                    Your meals for today are locked in. Shuffle to explore other
+                    options.
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className='today-banner today-banner-draft'>
+              <div className='today-banner-left'>
+                <i className='fa-solid fa-wand-magic-sparkles'></i>
+                <div>
+                  <div className='today-banner-title'>Draft Preview</div>
+                  <div className='today-banner-desc'>
+                    These meals were randomly picked. Shuffle what you don't
+                    like, then save.
+                  </div>
+                </div>
+              </div>
+              {hasSavedPlan.current && (
+                <button className='today-banner-back' onClick={loadToday}>
+                  <i className='fa-solid fa-rotate-left'></i> Back to Saved
+                </button>
+              )}
+            </div>
+          )}
+
           <div className='today-cards'>
             {MEAL_TYPES.map((type) => {
               const plan = todayPlans.find((p) => p.typeId === type.id);
@@ -223,11 +331,28 @@ export default function Today() {
                 </>
               )}
             </button>
+            {!isSaved && (
+              <button
+                className='today-btn-save'
+                onClick={handleSaveToday}
+                disabled={savingToday}
+              >
+                {savingToday ? (
+                  <>
+                    <Spinner animation='border' size='sm' /> Saving...
+                  </>
+                ) : (
+                  <>
+                    <i className='fa-solid fa-bookmark'></i> Save Today's Plan
+                  </>
+                )}
+              </button>
+            )}
             <button
               className='today-btn-secondary'
               onClick={() => navigate('/home/wkplans')}
             >
-              View Full Week <i className='fa-solid fa-arrow-right'></i>
+              Plan Your Week <i className='fa-solid fa-arrow-right'></i>
             </button>
           </div>
         </>
@@ -237,7 +362,7 @@ export default function Today() {
             <div className='today-empty-dice'>🎲</div>
             <h2>Ready to roll?</h2>
             <p>Let us pick today's meals for you</p>
-            <button className='today-btn-main' onClick={handleGenerate}>
+            <button className='today-btn-main' onClick={generateFresh}>
               <span className='today-btn-main-dice'>🎲</span> Roll the Dice
             </button>
           </div>

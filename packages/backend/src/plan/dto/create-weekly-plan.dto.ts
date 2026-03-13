@@ -15,6 +15,12 @@ export class WeeklyPreviewDTO {
   @IsInt()
   @Min(1)
   userId?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  startOffset?: number; // 0 = start from today, 1 = start from tomorrow
 }
 
 // export class WeeklyCommitDTO {

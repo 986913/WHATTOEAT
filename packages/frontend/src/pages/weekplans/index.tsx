@@ -1,9 +1,10 @@
 import './index.css';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import axios from '../../utils/axios';
 import AppToast from '../../components/AppToast';
 import { useToast } from '../../hooks/useToast';
-import { Spinner, Image } from 'react-bootstrap';
+import { Spinner } from 'react-bootstrap';
 import { useCurrentUserStore } from '../../store/useCurrentUserStore';
 import VideoPreviewModal from '../../components/VideoPreviewModal';
 
@@ -19,6 +20,12 @@ type DraftPlan = {
 const PLACEHOLDER_IMG =
   'https://thetac.tech/wp-content/uploads/2024/09/placeholder-288.png';
 
+const TYPE_NAME_TO_ID: Record<string, number> = {
+  breakfast: 1,
+  lunch: 2,
+  dinner: 3,
+};
+
 function getMealType(typeId: number) {
   if (typeId === 1) return { label: 'Breakfast', icon: '🍳' };
   if (typeId === 2) return { label: 'Lunch', icon: '🥗' };
@@ -26,13 +33,12 @@ function getMealType(typeId: number) {
   return { label: 'Unknown', icon: '❓' };
 }
 
-function formatDate(dateStr: string) {
+function formatDayHeader(dateStr: string) {
   const d = new Date(dateStr + 'T00:00:00');
-  return d.toLocaleDateString('en-US', {
-    weekday: 'short',
-    month: 'short',
-    day: 'numeric',
-  });
+  return {
+    weekday: d.toLocaleDateString('en-US', { weekday: 'long' }),
+    date: d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+  };
 }
 
 function groupPlansByDate(plans: DraftPlan[]) {
@@ -45,33 +51,75 @@ function groupPlansByDate(plans: DraftPlan[]) {
 }
 
 export default function WeekPlans() {
-  const { toast, success, error } = useToast();
+  const { toast, error } = useToast();
   const currentUser = useCurrentUserStore((s) => s.currentUser);
+  const navigate = useNavigate();
+  const initialized = useRef(false);
+  const hasSavedPlan = useRef(false);
 
   const [draftPlans, setDraftPlans] = useState<DraftPlan[]>([]);
+  const [isSaved, setIsSaved] = useState(false);
   const [loadingPreview, setLoadingPreview] = useState(false);
   const [loadingCommit, setLoadingCommit] = useState(false);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [replacingKey, setReplacingKey] = useState<string | null>(null);
+  const [saved, setSaved] = useState(false);
 
-  const today = new Date().toISOString().slice(0, 10);
+  const tomorrow = new Date(Date.now() + 86400000).toISOString().slice(0, 10);
 
-  // Auto-generate on load
   useEffect(() => {
-    if (currentUser?.id && draftPlans.length === 0) {
-      handleGenerateWeekly();
+    if (currentUser?.id && !initialized.current) {
+      initialized.current = true;
+      loadWeek();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentUser?.id]);
 
-  const handleGenerateWeekly = async () => {
+  const loadWeek = async () => {
+    if (!currentUser?.id) return;
+    try {
+      setLoadingPreview(true);
+      const res = await axios.get('/plans/me', {
+        params: { from: tomorrow, sort: 'ASC' },
+      });
+      const allPlans: any[] = Array.isArray(res.data) ? res.data : [];
+
+      const upcomingPlans = allPlans.map((p: any) => ({
+        date: p.date,
+        typeId:
+          p.type?.id ??
+          TYPE_NAME_TO_ID[p.type?.name?.toLowerCase()] ??
+          0,
+        mealId: p.meal?.id ?? 0,
+        mealName: p.meal?.name,
+        mealVideoUrl: p.meal?.videoUrl,
+        mealImageUrl: p.meal?.imageUrl,
+      }));
+
+      if (upcomingPlans.length > 0) {
+        setDraftPlans(upcomingPlans);
+        setIsSaved(true);
+        hasSavedPlan.current = true;
+      } else {
+        await generateFresh();
+      }
+    } catch {
+      await generateFresh();
+    } finally {
+      setLoadingPreview(false);
+    }
+  };
+
+  const generateFresh = async () => {
     if (!currentUser?.id) return;
     try {
       setLoadingPreview(true);
       const res = await axios.post('/plans/weekly-preview', {
         userId: currentUser.id,
+        startOffset: 1,
       });
       setDraftPlans(res.data.draftPlans || []);
+      setIsSaved(false);
     } catch {
       error('Failed to generate weekly plan');
     } finally {
@@ -91,7 +139,9 @@ export default function WeekPlans() {
           userId: currentUser.id,
         })),
       });
-      success('Week saved!');
+      setSaved(true);
+      setIsSaved(true);
+      hasSavedPlan.current = true;
     } catch {
       error('Failed to save weekly plans');
     } finally {
@@ -124,6 +174,7 @@ export default function WeekPlans() {
             : p,
         ),
       );
+      setIsSaved(false);
     } catch {
       error('No other meals available for this type');
     } finally {
@@ -133,12 +184,11 @@ export default function WeekPlans() {
 
   const grouped = groupPlansByDate(draftPlans);
 
-  // Loading
   if (loadingPreview && draftPlans.length === 0) {
     return (
       <div className='wk-loading'>
         <div className='wk-loading-icon'>📅</div>
-        <p>Generating your week...</p>
+        <p>Loading your week...</p>
         <Spinner animation='border' variant='warning' />
       </div>
     );
@@ -146,60 +196,105 @@ export default function WeekPlans() {
 
   return (
     <div className='wk-page'>
-      {/* Header */}
-      <div className='wk-header'>
-        <div>
-          <h1 className='wk-title'>Your Week</h1>
-          <p className='wk-subtitle'>
-            Review, adjust, and save your meal plan
-          </p>
-        </div>
-        <div className='wk-actions'>
-          <button
-            className='wk-btn-outline'
-            onClick={handleGenerateWeekly}
-            disabled={loadingPreview || loadingCommit}
-          >
-            {loadingPreview ? (
-              <>
-                <Spinner animation='border' size='sm' /> Generating...
-              </>
-            ) : (
-              <>
-                <i className='fa-solid fa-shuffle'></i> Regenerate
-              </>
-            )}
-          </button>
-          <button
-            className='wk-btn-primary'
-            onClick={handleSaveWeek}
-            disabled={!draftPlans.length || loadingCommit}
-          >
-            {loadingCommit ? (
-              <>
-                <Spinner animation='border' size='sm' /> Saving...
-              </>
-            ) : (
-              'Save Week'
-            )}
-          </button>
-        </div>
+      {/* Hero */}
+      <div className='wk-hero'>
+        <h1 className='wk-hero-title'>Plan Your Week</h1>
+        <p className='wk-hero-subtitle'>
+          {new Date(tomorrow + 'T00:00:00').toLocaleDateString('en-US', {
+            month: 'long',
+            day: 'numeric',
+          })}{' '}
+          —{' '}
+          {draftPlans.length > 0
+            ? new Date(
+                draftPlans[draftPlans.length - 1].date + 'T00:00:00',
+              ).toLocaleDateString('en-US', {
+                month: 'long',
+                day: 'numeric',
+              })
+            : '...'}
+        </p>
       </div>
 
-      {/* Days */}
+      {/* State Banner */}
+      {isSaved ? (
+        <div className='wk-banner wk-banner-saved'>
+          <div className='wk-banner-left'>
+            <i className='fa-solid fa-circle-check'></i>
+            <div>
+              <div className='wk-banner-title'>Saved Plan</div>
+              <div className='wk-banner-desc'>
+                Your upcoming week is all set. Shuffle individual meals or
+                regenerate the whole week.
+              </div>
+            </div>
+          </div>
+          <button
+            className='wk-banner-btn'
+            onClick={() => {
+              generateFresh();
+            }}
+            disabled={loadingPreview}
+          >
+            <i className='fa-solid fa-arrows-rotate'></i> Regenerate
+          </button>
+        </div>
+      ) : (
+        <div className='wk-banner wk-banner-draft'>
+          <div className='wk-banner-left'>
+            <i className='fa-solid fa-wand-magic-sparkles'></i>
+            <div>
+              <div className='wk-banner-title'>Draft Preview</div>
+              <div className='wk-banner-desc'>
+                These meals were randomly generated. Shuffle what you don't like,
+                then save.
+              </div>
+            </div>
+          </div>
+          <div className='wk-banner-actions'>
+            {hasSavedPlan.current && (
+              <button className='wk-banner-btn' onClick={loadWeek}>
+                <i className='fa-solid fa-rotate-left'></i> Back to Saved
+              </button>
+            )}
+            <button
+              className='wk-banner-btn-save'
+              onClick={handleSaveWeek}
+              disabled={loadingCommit || !draftPlans.length}
+            >
+              {loadingCommit ? (
+                <>
+                  <Spinner animation='border' size='sm' /> Saving...
+                </>
+              ) : (
+                <>
+                  <i className='fa-solid fa-bookmark'></i> Save Week
+                </>
+              )}
+            </button>
+            <button
+              className='wk-banner-btn'
+              onClick={() => generateFresh()}
+              disabled={loadingPreview}
+            >
+              <i className='fa-solid fa-arrows-rotate'></i>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Day Cards */}
       <div className='wk-days'>
         {Object.entries(grouped).map(([date, plans]) => {
-          const isToday = date === today;
+          const { weekday, date: dateLabel } = formatDayHeader(date);
           return (
-            <div
-              key={date}
-              className={`wk-day ${isToday ? 'wk-day-today' : ''}`}
-            >
-              <div className='wk-day-header'>
-                <span className='wk-day-label'>{formatDate(date)}</span>
-                {isToday && <span className='wk-day-badge'>Today</span>}
+            <div key={date} className='wk-day-card'>
+              <div className='wk-day-card-header'>
+                <span className='wk-day-card-weekday'>{weekday}</span>
+                <span className='wk-day-card-date'>{dateLabel}</span>
               </div>
-              <div className='wk-day-meals'>
+
+              <div className='wk-day-card-meals'>
                 {plans
                   .sort((a, b) => a.typeId - b.typeId)
                   .map((p) => {
@@ -210,28 +305,34 @@ export default function WeekPlans() {
                     return (
                       <div
                         key={key}
-                        className={`wk-meal ${isReplacing ? 'wk-meal-replacing' : ''}`}
+                        className={`wk-meal-card ${isReplacing ? 'wk-meal-card-replacing' : ''}`}
                       >
                         <div
-                          className='wk-meal-img-wrap'
+                          className='wk-meal-card-img'
                           onClick={() => {
                             if (p.mealVideoUrl) setVideoUrl(p.mealVideoUrl);
                           }}
                         >
-                          <Image
-                            className='wk-meal-img'
+                          <img
                             src={p.mealImageUrl || PLACEHOLDER_IMG}
                             alt={p.mealName}
                           />
+                          {p.mealVideoUrl && (
+                            <div className='wk-meal-card-play'>
+                              <i className='fa-solid fa-play'></i>
+                            </div>
+                          )}
                         </div>
-                        <div className='wk-meal-info'>
-                          <span className='wk-meal-type'>
+                        <div className='wk-meal-card-info'>
+                          <span className='wk-meal-card-type'>
                             {t.icon} {t.label}
                           </span>
-                          <span className='wk-meal-name'>{p.mealName}</span>
+                          <span className='wk-meal-card-name'>
+                            {p.mealName}
+                          </span>
                         </div>
                         <button
-                          className='wk-meal-replace'
+                          className='wk-meal-card-shuffle'
                           disabled={isReplacing}
                           onClick={() =>
                             handleReplaceMeal(p.date, p.typeId, p.mealId)
@@ -251,6 +352,54 @@ export default function WeekPlans() {
           );
         })}
       </div>
+
+      {/* Bottom */}
+      <div className='wk-bottom'>
+        <button
+          className='wk-bottom-link'
+          onClick={() => navigate('/home/today')}
+        >
+          <i className='fa-solid fa-arrow-left'></i> Back to Today
+        </button>
+      </div>
+
+      {/* Save Success Overlay */}
+      {saved && (
+        <div className='wk-saved-backdrop'>
+          <div className='wk-saved-modal'>
+            <div className='wk-saved-check'>
+              <i className='fa-solid fa-check'></i>
+            </div>
+            <h2>Week Saved!</h2>
+            <p>Your meal plan is locked in. Here's what you can do next:</p>
+            <div className='wk-saved-actions'>
+              <button
+                className='wk-saved-btn-primary'
+                onClick={() => navigate('/home/today')}
+              >
+                <i className='fa-solid fa-house'></i>
+                See Today's Meals
+              </button>
+              <button
+                className='wk-saved-btn-outline'
+                onClick={() => navigate('/home/userplans')}
+              >
+                <i className='fa-solid fa-clock-rotate-left'></i>
+                View Meal History
+              </button>
+              <button
+                className='wk-saved-btn-text'
+                onClick={() => {
+                  setSaved(false);
+                  generateFresh();
+                }}
+              >
+                or generate a new week
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <VideoPreviewModal url={videoUrl} onClose={() => setVideoUrl(null)} />
       <AppToast {...toast} />

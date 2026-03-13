@@ -36,10 +36,10 @@ export class PlanService {
     return exists;
   }
 
-  private getNext7Days(): string[] {
+  private getNextDays(startOffset = 0, count = 7): string[] {
     const start = new Date();
     const dates = new Set<string>();
-    for (let i = 0; i < 7; i++) {
+    for (let i = startOffset; i < startOffset + count; i++) {
       const d = new Date(start.getTime() + i * 24 * 60 * 60 * 1000);
       // 使用 toISOString 保证以 UTC 日期截取 YYYY-MM-DD（避免本地时区偏移导致的重复）
       dates.add(d.toISOString().slice(0, 10));
@@ -100,14 +100,28 @@ export class PlanService {
     return Array.from(grouped.values());
   }
 
-  findByUser(userId: number) {
-    return this.planRepo
+  findByUser(
+    userId: number,
+    from?: string,
+    to?: string,
+    sort?: 'ASC' | 'DESC',
+  ) {
+    const qb = this.planRepo
       .createQueryBuilder('plan')
       .leftJoinAndSelect('plan.type', 'type')
       .leftJoinAndSelect('plan.meal', 'meal')
       .leftJoinAndSelect('meal.ingredients', 'ingredients')
-      .where('plan.user_id = :userId', { userId })
-      .orderBy('plan.date', 'DESC')
+      .where('plan.user_id = :userId', { userId });
+
+    if (from) {
+      qb.andWhere('plan.date >= :from', { from });
+    }
+    if (to) {
+      qb.andWhere('plan.date <= :to', { to });
+    }
+
+    return qb
+      .orderBy('plan.date', sort === 'ASC' ? 'ASC' : 'DESC')
       .addOrderBy('type.id', 'ASC')
       .getMany();
   }
@@ -183,7 +197,7 @@ export class PlanService {
   // ================================
   // Weekly Preview (Draft Only)
   // ================================
-  async generateWeeklyPreview(userId: number) {
+  async generateWeeklyPreview(userId: number, startOffset = 0) {
     const user = await this.userRepo.findOne({
       where: { id: userId },
     });
@@ -191,7 +205,7 @@ export class PlanService {
       throw new BadRequestException(`User ${userId} not found`);
     }
 
-    const dates = this.getNext7Days();
+    const dates = this.getNextDays(startOffset);
     const mealTypeIds = [1, 2, 3]; // breakfast/lunch/dinner
     const draftPlans: DraftPlan[] = [];
 

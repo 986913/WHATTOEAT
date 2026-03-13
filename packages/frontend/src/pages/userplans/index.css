@@ -1,14 +1,14 @@
 /* ===========================
-   My Plans Page
+   History Page — Timeline
 =========================== */
 
-.mp-page {
-  max-width: 960px;
+.hist-page {
+  max-width: 720px;
   margin: 0 auto;
   padding: 8px 24px 60px;
 }
 
-.mp-loading {
+.hist-loading {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -17,150 +17,185 @@
   gap: 16px;
 }
 
-.mp-loading p {
+.hist-loading p {
   font-size: 16px;
   color: #888;
 }
 
-/* Header */
-.mp-header {
-  margin-bottom: 32px;
+/* Hero */
+.hist-hero {
+  text-align: center;
+  margin-bottom: 36px;
+  padding-top: 12px;
 }
 
-.mp-title {
+.hist-title {
   font-size: 32px;
   font-weight: 800;
   color: #1a1a1a;
-  margin: 0;
+  margin: 0 0 6px;
   letter-spacing: -0.5px;
 }
 
-.mp-subtitle {
+.hist-subtitle {
   font-size: 15px;
   color: #999;
-  margin: 4px 0 0;
+  margin: 0;
 }
 
 /* Empty */
-.mp-empty {
+.hist-empty {
   text-align: center;
   padding: 80px 20px;
 }
 
-.mp-empty-icon {
-  font-size: 64px;
+.hist-empty-icon {
+  font-size: 56px;
   margin-bottom: 16px;
 }
 
-.mp-empty h3 {
-  font-size: 22px;
+.hist-empty h3 {
+  font-size: 20px;
   font-weight: 700;
   color: #1a1a1a;
   margin-bottom: 8px;
 }
 
-.mp-empty p {
-  font-size: 15px;
+.hist-empty p {
+  font-size: 14px;
   color: #999;
 }
 
-/* Days */
-.mp-days {
+/* ===========================
+   Timeline
+=========================== */
+
+.hist-timeline {
   display: flex;
   flex-direction: column;
-  gap: 16px;
 }
 
-.mp-day {
-  background: white;
-  border-radius: 16px;
-  padding: 18px 20px;
-  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.04);
-}
-
-.mp-day-today {
-  border-left: 4px solid #FF6B35;
-}
-
-.mp-day-header {
+.hist-row {
   display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 14px;
+  align-items: flex-start;
+  gap: 0;
+  position: relative;
+  padding-bottom: 24px;
 }
 
-.mp-day-label {
-  font-size: 16px;
-  font-weight: 700;
+.hist-row:last-child {
+  padding-bottom: 0;
+}
+
+/* Date column */
+.hist-date {
+  width: 64px;
+  flex-shrink: 0;
+  text-align: right;
+  padding-right: 16px;
+  padding-top: 2px;
+}
+
+.hist-date-day {
+  display: block;
+  font-size: 22px;
+  font-weight: 800;
   color: #1a1a1a;
+  line-height: 1;
 }
 
-.mp-day-badge {
+.hist-date-meta {
+  display: block;
   font-size: 11px;
-  font-weight: 700;
-  background: #fff3ed;
-  color: #FF6B35;
-  padding: 3px 10px;
-  border-radius: 999px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  color: #999;
+  font-weight: 500;
+  margin-top: 2px;
+}
+
+/* Dot + vertical line */
+.hist-dot {
+  width: 24px;
+  flex-shrink: 0;
+  display: flex;
+  justify-content: center;
+  position: relative;
+  padding-top: 6px;
+}
+
+.hist-dot::before {
+  content: '';
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #FF6B35;
+  display: block;
+  z-index: 1;
+}
+
+.hist-dot::after {
+  content: '';
+  position: absolute;
+  top: 20px;
+  bottom: -24px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 2px;
+  background: #f0f0f0;
+}
+
+.hist-row:last-child .hist-dot::after {
+  display: none;
 }
 
 /* Meals */
-.mp-day-meals {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.mp-meal {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 6px;
-  border-radius: 12px;
-  cursor: pointer;
-  transition: background 0.15s ease;
-}
-
-.mp-meal:hover {
-  background: #fafafa;
-}
-
-.mp-meal-img-wrap {
-  width: 56px;
-  height: 56px;
-  border-radius: 10px;
-  overflow: hidden;
-  flex-shrink: 0;
-}
-
-.mp-meal-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.mp-meal-info {
+.hist-meals {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 6px;
+  padding-top: 0;
   min-width: 0;
 }
 
-.mp-meal-type {
-  font-size: 12px;
-  color: #999;
-  font-weight: 500;
-  text-transform: capitalize;
+.hist-meal {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
 }
 
-.mp-meal-name {
-  font-size: 15px;
+.hist-meal-icon {
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.hist-meal-name {
+  font-size: 14px;
   font-weight: 600;
   color: #1a1a1a;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* ===========================
+   Responsive
+=========================== */
+
+@media (max-width: 480px) {
+  .hist-date {
+    width: 50px;
+    padding-right: 12px;
+  }
+
+  .hist-date-day {
+    font-size: 18px;
+  }
+
+  .hist-title {
+    font-size: 24px;
+  }
 }

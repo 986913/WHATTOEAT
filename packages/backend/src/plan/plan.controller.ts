@@ -8,6 +8,7 @@ import {
   Get,
   Delete,
   Param,
+  Query,
   ParseIntPipe,
   UseGuards,
   Req,
@@ -57,11 +58,16 @@ export class PlanController {
     return this.planService.findAllGroupedByUser();
   }
 
-  // http://localhost:3001/api/v1/plans/me
+  // http://localhost:3001/api/v1/plans/me?from=2026-03-13&to=2026-03-13&sort=ASC
   @Get('me')
-  getMyPlans(@Req() req: AuthRequest) {
-    const userId = req.user.userID; // JwtAuthenticationGuard 负责认证并将用户信息附加到 req.user
-    return this.planService.findByUser(userId);
+  getMyPlans(
+    @Req() req: AuthRequest,
+    @Query('from') from?: string,
+    @Query('to') to?: string,
+    @Query('sort') sort?: 'ASC' | 'DESC',
+  ) {
+    const userId = req.user.userID;
+    return this.planService.findByUser(userId, from, to, sort);
   }
 
   // http://localhost:3001/api/v1/plans
@@ -76,6 +82,7 @@ export class PlanController {
   previewWeeklyPlan(@Body() dto: WeeklyPreviewDTO, @Req() req: AuthRequest) {
     return this.planService.generateWeeklyPreview(
       req.user.userID ?? dto.userId,
+      dto.startOffset ?? 0,
     );
   }
 
