@@ -42,6 +42,23 @@ export default function SidebarNav() {
         ))}
       </Nav>
 
+      {/* Extras */}
+      <div className='sidebar-divider' />
+      <Nav className='flex-column sidebar-nav-section'>
+        <Nav.Link as={NavLink} to='/home/contribute' className='sidebar-link'>
+          <span className='sidebar-link-icon'>
+            <i className='fa-solid fa-plus'></i>
+          </span>
+          <span className='sidebar-link-text'>Add Your Meal</span>
+        </Nav.Link>
+        <Nav.Link as={NavLink} to='/home/feedback' className='sidebar-link'>
+          <span className='sidebar-link-icon'>
+            <i className='fa-regular fa-comment-dots'></i>
+          </span>
+          <span className='sidebar-link-text'>Feedback</span>
+        </Nav.Link>
+      </Nav>
+
       {/* Admin section */}
       {adminMenus.length > 0 && (
         <>
