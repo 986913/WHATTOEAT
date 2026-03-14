@@ -13,6 +13,7 @@ import { UserEntity } from 'src/user/entities/user.entity';
 import { CreatePlanDTO } from './dto/create-plan.dto';
 import { DraftPlan } from './model/draft-plan.type';
 import { WeeklyCommitDTO } from './dto/create-weekly-plan.dto';
+import * as dayjs from 'dayjs';
 
 @Injectable()
 export class PlanService {
@@ -36,15 +37,11 @@ export class PlanService {
     return exists;
   }
 
-  private getNextDays(startOffset = 0, count = 7): string[] {
-    const now = new Date();
+  private getNextDays(startDate?: string, count = 7): string[] {
+    const start = startDate ? dayjs(startDate) : dayjs();
     const dates: string[] = [];
-    for (let i = startOffset; i < startOffset + count; i++) {
-      const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() + i);
-      const yyyy = d.getFullYear();
-      const mm = String(d.getMonth() + 1).padStart(2, '0');
-      const dd = String(d.getDate()).padStart(2, '0');
-      dates.push(`${yyyy}-${mm}-${dd}`);
+    for (let i = 0; i < count; i++) {
+      dates.push(start.add(i, 'day').format('YYYY-MM-DD'));
     }
     return dates;
   }
@@ -199,7 +196,7 @@ export class PlanService {
   // ================================
   // Weekly Preview (Draft Only)
   // ================================
-  async generateWeeklyPreview(userId: number, startOffset = 0) {
+  async generateWeeklyPreview(userId: number, startDate?: string) {
     const user = await this.userRepo.findOne({
       where: { id: userId },
     });
@@ -207,7 +204,7 @@ export class PlanService {
       throw new BadRequestException(`User ${userId} not found`);
     }
 
-    const dates = this.getNextDays(startOffset);
+    const dates = this.getNextDays(startDate);
     const mealTypeIds = [1, 2, 3]; // breakfast/lunch/dinner
     const draftPlans: DraftPlan[] = [];
 

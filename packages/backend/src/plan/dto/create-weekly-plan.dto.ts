@@ -17,10 +17,14 @@ export class WeeklyPreviewDTO {
   userId?: number;
 
   @IsOptional()
+  @IsDateString({}, { message: 'startDate must be YYYY-MM-DD' })
+  startDate?: string; // e.g. '2026-03-14', sent by frontend to avoid timezone mismatch
+
+  @IsOptional()
   @Type(() => Number)
   @IsInt()
   @Min(0)
-  startOffset?: number; // 0 = start from today, 1 = start from tomorrow
+  startOffset?: number; // fallback: 0 = today, 1 = tomorrow (uses server time)
 }
 
 // export class WeeklyCommitDTO {

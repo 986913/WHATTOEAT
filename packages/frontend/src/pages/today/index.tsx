@@ -8,6 +8,7 @@ import { Spinner } from 'react-bootstrap';
 import { useCurrentUserStore } from '../../store/useCurrentUserStore';
 import VideoPreviewModal from '../../components/VideoPreviewModal';
 import MealCard, { type MealCardPlan } from '../../components/MealCard';
+import dayjs from 'dayjs';
 
 type DraftPlan = MealCardPlan;
 
@@ -43,10 +44,7 @@ export default function Today() {
   const initialized = useRef(false);
   const hasSavedPlan = useRef(false);
 
-  const today = (() => {
-    const d = new Date();
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-  })();
+  const today = dayjs().format('YYYY-MM-DD');
 
   useEffect(() => {
     if (currentUser?.id && !initialized.current) {
@@ -108,7 +106,7 @@ export default function Today() {
       setLoading(true);
       const res = await axios.post('/plans/weekly-preview', {
         userId: currentUser.id,
-        startOffset: 0,
+        startDate: today,
       });
       const allDrafts: DraftPlan[] = res.data.draftPlans || [];
       setTodayPlans(allDrafts.filter((p) => p.date === today));
@@ -179,7 +177,7 @@ export default function Today() {
       setShufflingAll(true);
       const res = await axios.post('/plans/weekly-preview', {
         userId: currentUser.id,
-        startOffset: 0,
+        startDate: today,
       });
       const allDrafts: DraftPlan[] = res.data.draftPlans || [];
       setTodayPlans(allDrafts.filter((p) => p.date === today));

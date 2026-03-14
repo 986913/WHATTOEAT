@@ -82,7 +82,7 @@ export class PlanController {
   previewWeeklyPlan(@Body() dto: WeeklyPreviewDTO, @Req() req: AuthRequest) {
     return this.planService.generateWeeklyPreview(
       req.user.userID ?? dto.userId,
-      dto.startOffset ?? 0,
+      dto.startDate,
     );
   }
 

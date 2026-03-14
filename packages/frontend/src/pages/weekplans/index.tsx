@@ -8,6 +8,7 @@ import { Spinner } from 'react-bootstrap';
 import { useCurrentUserStore } from '../../store/useCurrentUserStore';
 import VideoPreviewModal from '../../components/VideoPreviewModal';
 import MealCard, { type MealCardPlan } from '../../components/MealCard';
+import dayjs from 'dayjs';
 
 type DraftPlan = MealCardPlan;
 
@@ -57,11 +58,7 @@ export default function WeekPlans() {
   const [flippedKey, setFlippedKey] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
 
-  const tomorrow = (() => {
-    const d = new Date();
-    d.setDate(d.getDate() + 1);
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-  })();
+  const tomorrow = dayjs().add(1, 'day').format('YYYY-MM-DD');
 
   useEffect(() => {
     if (currentUser?.id && !initialized.current) {
@@ -116,7 +113,7 @@ export default function WeekPlans() {
       setLoadingPreview(true);
       const res = await axios.post('/plans/weekly-preview', {
         userId: currentUser.id,
-        startOffset: 1,
+        startDate: tomorrow,
       });
       setDraftPlans(res.data.draftPlans || []);
       setIsSaved(false);

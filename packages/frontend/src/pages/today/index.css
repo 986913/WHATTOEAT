@@ -264,6 +264,9 @@
 .today-empty {
   text-align: center;
   padding: 80px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .today-empty-dice {
