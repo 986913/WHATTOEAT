@@ -47,6 +47,7 @@ export default function Users() {
 
   // ================= Form State (Edit / Create 共用) =================
   const [editUsername, setEditUsername] = useState('');
+  const [editEmail, setEditEmail] = useState('');
   const [editPassword, setEditPassword] = useState('');
   const [editGender, setEditGender] = useState<'1' | '2'>('1');
   const [editRoles, setEditRoles] = useState<string[]>([]);
@@ -101,6 +102,7 @@ export default function Users() {
   const openEditModal = (user: any) => {
     setSelectedUser(user);
     setEditUsername(user.username);
+    setEditEmail(user.email || '');
     setEditGender(user.profile?.gender || '1');
     setEditRoles(
       user.roles?.map((r: any) => String(r.id)).filter(Boolean) || [],
@@ -113,6 +115,7 @@ export default function Users() {
   const openCreateModal = () => {
     setSelectedUser(null);
     setEditUsername('');
+    setEditEmail('');
     setEditPassword('');
     setEditGender('1');
     setEditRoles([]);
@@ -140,6 +143,7 @@ export default function Users() {
     try {
       await axios.put(`/users/${selectedUser.id}`, {
         username: editUsername,
+        email: editEmail,
         profile: {
           address: editAddress,
           gender: editGender,
@@ -174,6 +178,7 @@ export default function Users() {
     try {
       await axios.post('/users', {
         username: editUsername,
+        email: editEmail,
         password: editPassword,
         profile: {
           gender: editGender,
@@ -283,6 +288,7 @@ export default function Users() {
             <th>#</th>
             <th>Photo</th>
             <th>Username</th>
+            <th>Email</th>
             <th>Auth</th>
             <th>Gender</th>
             <th>Roles</th>
@@ -293,7 +299,7 @@ export default function Users() {
         <tbody>
           {users.length === 0 ? (
             <tr>
-              <td colSpan={8} className='table-empty'>
+              <td colSpan={9} className='table-empty'>
                 No Data
               </td>
             </tr>
@@ -309,6 +315,7 @@ export default function Users() {
                   />
                 </td>
                 <td>{user.username}</td>
+                <td>{user.email || '-'}</td>
                 <td>
                   <span className={`auth-badge ${user.googleId ? 'google' : 'password'}`}>
                     {user.googleId ? 'Google' : 'Password'}
@@ -362,6 +369,8 @@ export default function Users() {
         isSubmitDisabled={!isEditFormValid}
         username={editUsername}
         setUsername={setEditUsername}
+        email={editEmail}
+        setEmail={setEditEmail}
         gender={editGender}
         setGender={setEditGender}
         roles={editRoles}
@@ -382,6 +391,8 @@ export default function Users() {
         isSubmitDisabled={!isEditFormValid}
         username={editUsername}
         setUsername={setEditUsername}
+        email={editEmail}
+        setEmail={setEditEmail}
         password={editPassword}
         setPassword={setEditPassword}
         showPassword={true}

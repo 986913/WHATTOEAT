@@ -14,6 +14,7 @@ import { Response } from 'express';
 import { AuthService } from './auth.service';
 import { TypeormFilter } from 'src/filters/typeorm.filter';
 import { SigninUserDTO } from './dto/signin-user.dto';
+import { SignupUserDTO } from './dto/signup-user.dto';
 import { ForgotPasswordDTO } from './dto/forgot-password.dto';
 import { ResetPasswordDTO } from './dto/reset-password.dto';
 import { JwtAuthenticationGuard } from 'src/guards/jwt.guard';
@@ -51,9 +52,9 @@ export class AuthController {
 
   // http://localhost:3001/api/v1/auth/signup
   @Post('signup')
-  register(@Body() dto: SigninUserDTO): Promise<any> {
-    const { username, password } = dto;
-    return this.authService.signup(username, password);
+  register(@Body() dto: SignupUserDTO): Promise<any> {
+    const { username, password, email } = dto;
+    return this.authService.signup(username, password, email);
   }
 
   // http://localhost:3001/api/v1/auth/forgot-password

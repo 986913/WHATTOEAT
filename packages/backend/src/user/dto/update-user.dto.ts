@@ -19,6 +19,10 @@ export class UpdateUserDTO {
   password?: string;
 
   @IsOptional()
+  @IsString()
+  email?: string;
+
+  @IsOptional()
   @ValidateNested()
   @Type(() => UpdateProfileDTO)
   profile?: UpdateProfileDTO;

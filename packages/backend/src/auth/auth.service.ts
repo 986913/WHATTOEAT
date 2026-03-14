@@ -61,7 +61,7 @@ export class AuthService {
     return await this.userService.findById(user.userID);
   }
 
-  async signup(username: string, password: string) {
+  async signup(username: string, password: string, email: string) {
     const foundUser = await this.userService.findByUserName(username);
     if (foundUser) {
       return new ForbiddenException('User already exist');
@@ -70,6 +70,7 @@ export class AuthService {
     const newUser = await this.userService.create({
       username,
       password,
+      email,
     });
     return newUser;
   }
@@ -88,9 +89,16 @@ export class AuthService {
 
     // Google-only 用户不能重置密码
     if (user.googleId && !user.password) {
-      return {
-        message: 'This account uses Google login. Please sign in with Google.',
-      };
+      throw new BadRequestException(
+        'This account uses Google login. Please sign in with Google.',
+      );
+    }
+
+    // 没有 email 的用户无法接收重置邮件
+    if (!user.email) {
+      throw new BadRequestException(
+        'No email associated with this account. Please contact support.',
+      );
     }
 
     // 生成 reset token

@@ -12,6 +12,9 @@ interface UserFormModalProps {
   username: string;
   setUsername: (v: string) => void;
 
+  email?: string;
+  setEmail?: (v: string) => void;
+
   password?: string;
   setPassword?: (v: string) => void;
   showPassword?: boolean; // 👈 控制 Create / Edit 是否显示
@@ -38,6 +41,8 @@ export default function UserFormModal({
   isSubmitDisabled,
   username,
   setUsername,
+  email,
+  setEmail,
   password,
   setPassword,
   showPassword = false,
@@ -67,6 +72,19 @@ export default function UserFormModal({
               onChange={(e) => setUsername(e.target.value)}
             />
           </Form.Group>
+
+          {/* Email */}
+          {setEmail && (
+            <Form.Group className='mb-2'>
+              <Form.Label>Email</Form.Label>
+              <Form.Control
+                type='email'
+                value={email || ''}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder='user@example.com'
+              />
+            </Form.Group>
+          )}
 
           {/* Password（仅 Create 显示） */}
           {showPassword && setPassword && (

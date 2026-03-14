@@ -13,6 +13,7 @@ export default function Signup() {
   const navigate = useNavigate();
 
   const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
 
@@ -26,6 +27,11 @@ export default function Signup() {
 
     if (!username.trim()) {
       setErrorMsg('Username required');
+      return;
+    }
+
+    if (!email.trim() || !/\S+@\S+\.\S+/.test(email)) {
+      setErrorMsg('A valid email is required');
       return;
     }
 
@@ -45,6 +51,7 @@ export default function Signup() {
       await axios.post('/auth/signup', {
         username,
         password,
+        email,
       });
 
       //auto signin after success signup
@@ -79,6 +86,17 @@ export default function Signup() {
             <Form.Control
               value={username}
               onChange={(e) => setUsername(e.target.value)}
+            />
+          </Form.Group>
+
+          <Form.Group className='mb-3'>
+            <Form.Label>Email</Form.Label>
+
+            <Form.Control
+              type='email'
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder='your@email.com'
             />
           </Form.Group>
 
