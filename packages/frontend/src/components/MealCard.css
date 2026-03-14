@@ -1,0 +1,474 @@
+/* ===========================
+   Shared MealCard Component
+=========================== */
+
+.mc-card {
+  background: #fff;
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.05);
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow 0.3s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.mc-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.1);
+}
+
+/* Compact variant (for week plan) */
+.mc-card-compact {
+  border-radius: 16px;
+  box-shadow: 0 1px 8px rgba(0, 0, 0, 0.04);
+}
+
+.mc-card-compact:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+/* Shuffle animation */
+.mc-card-shuffling {
+  pointer-events: none;
+  animation: mcShake 0.4s ease-in-out;
+}
+
+@keyframes mcShake {
+  0%, 100% { transform: translateX(0) rotate(0); }
+  15% { transform: translateX(-6px) rotate(-1.5deg); }
+  30% { transform: translateX(5px) rotate(1deg); }
+  45% { transform: translateX(-4px) rotate(-0.5deg); }
+  60% { transform: translateX(3px) rotate(0.5deg); }
+  75% { transform: translateX(-2px) rotate(0); }
+}
+
+/* Reveal animation */
+.mc-card-reveal {
+  animation: mcReveal 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes mcReveal {
+  0% { opacity: 0.3; transform: scale(0.92); }
+  50% { opacity: 0.8; }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+/* ===========================
+   Label
+=========================== */
+
+.mc-label {
+  font-size: 15px;
+  font-weight: 700;
+  text-align: center;
+  padding: 20px 16px 14px;
+  color: var(--text-secondary, #666);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.mc-card-compact .mc-label {
+  font-size: 12px;
+  padding: 12px 12px 8px;
+  letter-spacing: 0.5px;
+}
+
+.mc-label-icon {
+  font-size: 18px;
+}
+
+.mc-card-compact .mc-label-icon {
+  font-size: 14px;
+}
+
+/* ===========================
+   Flip Card
+=========================== */
+
+.mc-flipper {
+  position: relative;
+  margin: 0 14px;
+  border-radius: 16px;
+  overflow: hidden;
+  cursor: pointer;
+  aspect-ratio: 1 / 1;
+  perspective: 800px;
+}
+
+.mc-card-compact .mc-flipper {
+  margin: 0 10px;
+  border-radius: 12px;
+  aspect-ratio: 4 / 3;
+}
+
+.mc-front,
+.mc-back {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  backface-visibility: hidden;
+  transition: transform 0.5s ease;
+  overflow: hidden;
+}
+
+.mc-front {
+  background: #f5f5f5;
+}
+
+.mc-back {
+  background: linear-gradient(135deg, #fff9f6 0%, #fff 100%);
+  border: 1.5px solid #ffdcc8;
+  transform: rotateY(180deg);
+  display: flex;
+  flex-direction: column;
+  padding: 18px;
+  overflow-y: auto;
+}
+
+.mc-card-compact .mc-back {
+  padding: 12px;
+}
+
+.mc-card-flipped .mc-front {
+  transform: rotateY(-180deg);
+}
+
+.mc-card-flipped .mc-back {
+  transform: rotateY(0deg);
+}
+
+.mc-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.4s ease;
+}
+
+.mc-front:hover .mc-image {
+  transform: scale(1.06);
+}
+
+/* Flip hint overlay */
+.mc-flip-hint {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.6);
+  color: white;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+  white-space: nowrap;
+  backdrop-filter: blur(4px);
+}
+
+.mc-card-compact .mc-flip-hint {
+  padding: 4px 10px;
+  font-size: 10px;
+  bottom: 6px;
+}
+
+.mc-front:hover .mc-flip-hint {
+  opacity: 1;
+}
+
+/* Back — ingredients */
+.mc-back-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #FF6B35;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mc-card-compact .mc-back-title {
+  font-size: 11px;
+  margin-bottom: 8px;
+  gap: 6px;
+}
+
+.mc-ingredients {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.mc-card-compact .mc-ingredients {
+  gap: 3px;
+}
+
+.mc-ingredients li {
+  font-size: 13px;
+  color: #444;
+  padding: 6px 10px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.mc-card-compact .mc-ingredients li {
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+
+.mc-ingredients li::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #FF6B35;
+  margin-right: 8px;
+  vertical-align: middle;
+}
+
+.mc-card-compact .mc-ingredients li::before {
+  width: 5px;
+  height: 5px;
+  margin-right: 6px;
+}
+
+.mc-no-ing {
+  color: #999 !important;
+  font-style: italic;
+  background: none !important;
+  box-shadow: none !important;
+}
+
+.mc-no-ing::before {
+  display: none !important;
+}
+
+.mc-back-hint {
+  font-size: 11px;
+  color: #bbb;
+  text-align: center;
+  margin-top: 10px;
+}
+
+.mc-card-compact .mc-back-hint {
+  font-size: 9px;
+  margin-top: 6px;
+}
+
+/* ===========================
+   Body
+=========================== */
+
+.mc-body {
+  padding: 16px 18px 22px;
+  text-align: center;
+}
+
+.mc-card-compact .mc-body {
+  padding: 10px 12px 14px;
+}
+
+.mc-name {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text-primary, #1a1a1a);
+  margin-bottom: 14px;
+  line-height: 1.3;
+}
+
+.mc-card-compact .mc-name {
+  font-size: 14px;
+  margin-bottom: 10px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ===========================
+   Actions (Video + Shuffle)
+=========================== */
+
+.mc-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.mc-btn {
+  padding: 9px 20px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.mc-card-compact .mc-btn {
+  padding: 6px 14px;
+  font-size: 12px;
+  gap: 4px;
+}
+
+.mc-btn-video {
+  background: #f7f7f7;
+  color: #555;
+}
+
+.mc-btn-video:hover {
+  background: #fff3ed;
+  color: #FF6B35;
+}
+
+.mc-btn-shuffle {
+  background: #f7f7f7;
+  color: #555;
+}
+
+.mc-btn-shuffle:hover:not(:disabled) {
+  background: #fff3ed;
+  color: #FF6B35;
+}
+
+.mc-btn-shuffle:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ===========================
+   Responsive — Tablet (≤ 768px)
+=========================== */
+
+@media (max-width: 768px) {
+  .mc-card {
+    border-radius: 18px;
+  }
+
+  .mc-card-compact {
+    border-radius: 14px;
+  }
+
+  .mc-label {
+    padding: 14px 14px 10px;
+    font-size: 13px;
+  }
+
+  .mc-card-compact .mc-label {
+    font-size: 11px;
+    padding: 10px 10px 6px;
+  }
+
+  .mc-flipper {
+    margin: 0 10px;
+  }
+
+  .mc-card-compact .mc-flipper {
+    margin: 0 8px;
+  }
+
+  .mc-body {
+    padding: 12px 14px 16px;
+  }
+
+  .mc-name {
+    font-size: 15px;
+    margin-bottom: 10px;
+  }
+
+  .mc-card-compact .mc-name {
+    font-size: 13px;
+    margin-bottom: 8px;
+  }
+
+  .mc-btn {
+    padding: 7px 14px;
+    font-size: 12px;
+  }
+
+  .mc-card-compact .mc-btn {
+    padding: 5px 10px;
+    font-size: 11px;
+  }
+}
+
+/* ===========================
+   Responsive — Mobile (≤ 480px)
+=========================== */
+
+@media (max-width: 480px) {
+  .mc-flipper {
+    aspect-ratio: 4 / 3;
+    margin: 0 12px;
+  }
+
+  .mc-card-compact .mc-flipper {
+    margin: 0 8px;
+  }
+
+  .mc-label {
+    padding: 12px 14px 8px;
+    font-size: 12px;
+    letter-spacing: 0.5px;
+  }
+
+  .mc-label-icon {
+    font-size: 15px;
+  }
+
+  .mc-body {
+    padding: 10px 12px 16px;
+  }
+
+  .mc-name {
+    font-size: 15px;
+    margin-bottom: 10px;
+  }
+
+  .mc-card-compact .mc-name {
+    font-size: 13px;
+  }
+
+  /* Stack buttons vertically when they don't fit */
+  .mc-actions {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .mc-btn {
+    width: 100%;
+    justify-content: center;
+    padding: 8px 16px;
+  }
+
+  .mc-card-compact .mc-btn {
+    width: 100%;
+    justify-content: center;
+    padding: 6px 12px;
+  }
+
+  .mc-flip-hint {
+    display: none;
+  }
+}

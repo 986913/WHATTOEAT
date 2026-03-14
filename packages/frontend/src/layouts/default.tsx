@@ -1,5 +1,5 @@
-import { Outlet, useNavigate } from 'react-router-dom';
-import { useEffect, useCallback } from 'react';
+import { Outlet, useNavigate, useLocation } from 'react-router-dom';
+import { useEffect, useCallback, useState } from 'react';
 import axios from '../utils/axios';
 import SidebarNav from '../components/SidebarNav';
 import HeaderNav from '../components/HeaderNav';
@@ -7,8 +7,10 @@ import { useCurrentUserStore } from '../store/useCurrentUserStore';
 
 export default function DefaultLayout() {
   const navigate = useNavigate();
+  const location = useLocation();
   const setCurrentUser = useCurrentUserStore((s) => s.setCurrentUser);
   const clearCurrentUser = useCurrentUserStore((s) => s.clearCurrentUser);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const handleLogout = useCallback(() => {
     localStorage.removeItem('access_token');
@@ -33,14 +35,30 @@ export default function DefaultLayout() {
       });
   }, [setCurrentUser, handleLogout, navigate]);
 
+  // Close sidebar on route change
+  useEffect(() => {
+    setSidebarOpen(false);
+  }, [location.pathname]);
+
   return (
     <div className='app-layout'>
-      <aside className='app-sidebar'>
+      {/* Mobile overlay */}
+      {sidebarOpen && (
+        <div
+          className='app-sidebar-overlay'
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      <aside className={`app-sidebar${sidebarOpen ? ' app-sidebar-open' : ''}`}>
         <SidebarNav />
       </aside>
 
       <div className='app-main'>
-        <HeaderNav onLogout={handleLogout} />
+        <HeaderNav
+          onLogout={handleLogout}
+          onMenuToggle={() => setSidebarOpen((v) => !v)}
+        />
 
         <main className='app-content'>
           <Outlet />

@@ -182,20 +182,66 @@
 }
 
 /* ===========================
-   Responsive
+   Responsive — Tablet (≤ 768px)
+=========================== */
+
+@media (max-width: 768px) {
+  .hist-page {
+    padding: 4px 12px 48px;
+  }
+
+  .hist-title {
+    font-size: 26px;
+  }
+
+  .hist-hero {
+    margin-bottom: 24px;
+  }
+}
+
+/* ===========================
+   Responsive — Mobile (≤ 480px)
 =========================== */
 
 @media (max-width: 480px) {
+  .hist-page {
+    padding: 0 8px 40px;
+  }
+
   .hist-date {
-    width: 50px;
-    padding-right: 12px;
+    width: 48px;
+    padding-right: 10px;
   }
 
   .hist-date-day {
     font-size: 18px;
   }
 
+  .hist-date-meta {
+    font-size: 10px;
+  }
+
   .hist-title {
-    font-size: 24px;
+    font-size: 22px;
+  }
+
+  .hist-subtitle {
+    font-size: 13px;
+  }
+
+  .hist-hero {
+    margin-bottom: 20px;
+  }
+
+  .hist-meal {
+    padding: 6px 10px;
+  }
+
+  .hist-meal-name {
+    font-size: 13px;
+  }
+
+  .hist-row {
+    padding-bottom: 18px;
   }
 }

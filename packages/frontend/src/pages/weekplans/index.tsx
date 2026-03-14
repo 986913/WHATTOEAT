@@ -7,18 +7,9 @@ import { useToast } from '../../hooks/useToast';
 import { Spinner } from 'react-bootstrap';
 import { useCurrentUserStore } from '../../store/useCurrentUserStore';
 import VideoPreviewModal from '../../components/VideoPreviewModal';
+import MealCard, { type MealCardPlan } from '../../components/MealCard';
 
-type DraftPlan = {
-  date: string;
-  typeId: number;
-  mealId: number;
-  mealName?: string;
-  mealVideoUrl?: string;
-  mealImageUrl?: string;
-};
-
-const PLACEHOLDER_IMG =
-  'https://thetac.tech/wp-content/uploads/2024/09/placeholder-288.png';
+type DraftPlan = MealCardPlan;
 
 const TYPE_NAME_TO_ID: Record<string, number> = {
   breakfast: 1,
@@ -63,9 +54,14 @@ export default function WeekPlans() {
   const [loadingCommit, setLoadingCommit] = useState(false);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [replacingKey, setReplacingKey] = useState<string | null>(null);
+  const [flippedKey, setFlippedKey] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
 
-  const tomorrow = new Date(Date.now() + 86400000).toISOString().slice(0, 10);
+  const tomorrow = (() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 1);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  })();
 
   useEffect(() => {
     if (currentUser?.id && !initialized.current) {
@@ -94,6 +90,10 @@ export default function WeekPlans() {
         mealName: p.meal?.name,
         mealVideoUrl: p.meal?.videoUrl,
         mealImageUrl: p.meal?.imageUrl,
+        mealIngredients: p.meal?.ingredients?.map((ing: any) => ({
+          id: ing.id,
+          name: ing.name,
+        })),
       }));
 
       if (upcomingPlans.length > 0) {
@@ -170,6 +170,7 @@ export default function WeekPlans() {
                 mealName: res.data.mealName,
                 mealVideoUrl: res.data.mealVideoUrl,
                 mealImageUrl: res.data.mealImageUrl,
+                mealIngredients: res.data.mealIngredients,
               }
             : p,
         ),
@@ -301,50 +302,25 @@ export default function WeekPlans() {
                     const t = getMealType(p.typeId);
                     const key = `${p.date}-${p.typeId}`;
                     const isReplacing = replacingKey === key;
+                    const isFlipped = flippedKey === key;
 
                     return (
-                      <div
+                      <MealCard
                         key={key}
-                        className={`wk-meal-card ${isReplacing ? 'wk-meal-card-replacing' : ''}`}
-                      >
-                        <div
-                          className='wk-meal-card-img'
-                          onClick={() => {
-                            if (p.mealVideoUrl) setVideoUrl(p.mealVideoUrl);
-                          }}
-                        >
-                          <img
-                            src={p.mealImageUrl || PLACEHOLDER_IMG}
-                            alt={p.mealName}
-                          />
-                          {p.mealVideoUrl && (
-                            <div className='wk-meal-card-play'>
-                              <i className='fa-solid fa-play'></i>
-                            </div>
-                          )}
-                        </div>
-                        <div className='wk-meal-card-info'>
-                          <span className='wk-meal-card-type'>
-                            {t.icon} {t.label}
-                          </span>
-                          <span className='wk-meal-card-name'>
-                            {p.mealName}
-                          </span>
-                        </div>
-                        <button
-                          className='wk-meal-card-shuffle'
-                          disabled={isReplacing}
-                          onClick={() =>
-                            handleReplaceMeal(p.date, p.typeId, p.mealId)
-                          }
-                        >
-                          {isReplacing ? (
-                            <Spinner animation='border' size='sm' />
-                          ) : (
-                            <i className='fa-solid fa-shuffle'></i>
-                          )}
-                        </button>
-                      </div>
+                        plan={p}
+                        typeLabel={t.label}
+                        typeIcon={t.icon}
+                        compact
+                        isShuffling={isReplacing}
+                        isFlipped={isFlipped}
+                        onFlip={() =>
+                          setFlippedKey(isFlipped ? null : key)
+                        }
+                        onShuffle={() =>
+                          handleReplaceMeal(p.date, p.typeId, p.mealId)
+                        }
+                        onVideo={(url) => setVideoUrl(url)}
+                      />
                     );
                   })}
               </div>

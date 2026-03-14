@@ -37,14 +37,16 @@ export class PlanService {
   }
 
   private getNextDays(startOffset = 0, count = 7): string[] {
-    const start = new Date();
-    const dates = new Set<string>();
+    const now = new Date();
+    const dates: string[] = [];
     for (let i = startOffset; i < startOffset + count; i++) {
-      const d = new Date(start.getTime() + i * 24 * 60 * 60 * 1000);
-      // 使用 toISOString 保证以 UTC 日期截取 YYYY-MM-DD（避免本地时区偏移导致的重复）
-      dates.add(d.toISOString().slice(0, 10));
+      const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() + i);
+      const yyyy = d.getFullYear();
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      const dd = String(d.getDate()).padStart(2, '0');
+      dates.push(`${yyyy}-${mm}-${dd}`);
     }
-    return Array.from(dates);
+    return dates;
   }
 
   findById(planId: number) {
@@ -215,8 +217,16 @@ export class PlanService {
         const meals = await this.mealRepo
           .createQueryBuilder('meal')
           .leftJoin('meal.types', 'type')
+          .leftJoinAndSelect('meal.ingredients', 'ingredients')
           .where('type.id = :typeId', { typeId })
-          .select(['meal.id', 'meal.name', 'meal.videoUrl', 'meal.imageUrl'])
+          .select([
+            'meal.id',
+            'meal.name',
+            'meal.videoUrl',
+            'meal.imageUrl',
+            'ingredients.id',
+            'ingredients.name',
+          ])
           .getMany();
         if (meals.length === 0) {
           throw new BadRequestException(
@@ -233,6 +243,10 @@ export class PlanService {
           mealName: randomMeal.name,
           mealVideoUrl: randomMeal.videoUrl,
           mealImageUrl: randomMeal.imageUrl,
+          mealIngredients: randomMeal.ingredients?.map((ing) => ({
+            id: ing.id,
+            name: ing.name,
+          })),
         });
       }
     }
@@ -254,8 +268,16 @@ export class PlanService {
     const queryBuilder = this.mealRepo
       .createQueryBuilder('meal')
       .leftJoin('meal.types', 'type')
+      .leftJoinAndSelect('meal.ingredients', 'ingredients')
       .where('type.id = :typeId', { typeId })
-      .select(['meal.id', 'meal.name', 'meal.videoUrl', 'meal.imageUrl']);
+      .select([
+        'meal.id',
+        'meal.name',
+        'meal.videoUrl',
+        'meal.imageUrl',
+        'ingredients.id',
+        'ingredients.name',
+      ]);
 
     if (excludeMealId) {
       queryBuilder.andWhere('meal.id != :excludeMealId', { excludeMealId });
@@ -275,6 +297,10 @@ export class PlanService {
       mealName: randomMeal.name,
       mealVideoUrl: randomMeal.videoUrl,
       mealImageUrl: randomMeal.imageUrl,
+      mealIngredients: randomMeal.ingredients?.map((ing) => ({
+        id: ing.id,
+        name: ing.name,
+      })),
     };
   }
 

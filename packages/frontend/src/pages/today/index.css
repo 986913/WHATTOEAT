@@ -124,217 +124,6 @@
 }
 
 /* ===========================
-   Single Card
-=========================== */
-
-.today-card {
-  background: #fff;
-  border-radius: 24px;
-  overflow: hidden;
-  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.05);
-  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1),
-    box-shadow 0.3s ease;
-  display: flex;
-  flex-direction: column;
-}
-
-.today-card:hover {
-  transform: translateY(-6px);
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.1);
-}
-
-/* Shuffle animation — shake */
-.today-card-shuffling {
-  pointer-events: none;
-  animation: cardShake 0.4s ease-in-out;
-}
-
-@keyframes cardShake {
-  0%,
-  100% {
-    transform: translateX(0) rotate(0);
-  }
-  15% {
-    transform: translateX(-6px) rotate(-1.5deg);
-  }
-  30% {
-    transform: translateX(5px) rotate(1deg);
-  }
-  45% {
-    transform: translateX(-4px) rotate(-0.5deg);
-  }
-  60% {
-    transform: translateX(3px) rotate(0.5deg);
-  }
-  75% {
-    transform: translateX(-2px) rotate(0);
-  }
-}
-
-/* Reveal animation — scale + fade */
-.today-card-reveal {
-  animation: cardReveal 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-@keyframes cardReveal {
-  0% {
-    opacity: 0.3;
-    transform: scale(0.92);
-  }
-  50% {
-    opacity: 0.8;
-  }
-  100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-/* ===========================
-   Card Label
-=========================== */
-
-.today-card-label {
-  font-size: 15px;
-  font-weight: 700;
-  text-align: center;
-  padding: 20px 16px 14px;
-  color: var(--text-secondary, #666);
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-}
-
-.today-card-label-icon {
-  font-size: 18px;
-}
-
-/* ===========================
-   Card Image — Large & Immersive
-=========================== */
-
-.today-card-image-wrap {
-  position: relative;
-  margin: 0 14px;
-  border-radius: 16px;
-  overflow: hidden;
-  cursor: pointer;
-  aspect-ratio: 1 / 1;
-  background: #f5f5f5;
-}
-
-.today-card-image {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transition: transform 0.4s ease;
-}
-
-.today-card-image-wrap:hover .today-card-image {
-  transform: scale(1.06);
-}
-
-/* Play overlay */
-.today-card-play {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(0, 0, 0, 0.15);
-  opacity: 0;
-  transition: opacity 0.25s ease;
-}
-
-.today-card-play i {
-  width: 48px;
-  height: 48px;
-  background: rgba(255, 255, 255, 0.95);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 16px;
-  color: #FF6B35;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
-.today-card-image-wrap:hover .today-card-play {
-  opacity: 1;
-}
-
-/* ===========================
-   Card Body
-=========================== */
-
-.today-card-body {
-  padding: 16px 18px 22px;
-  text-align: center;
-}
-
-.today-card-name {
-  font-size: 17px;
-  font-weight: 700;
-  color: var(--text-primary, #1a1a1a);
-  margin-bottom: 14px;
-  line-height: 1.3;
-}
-
-/* ===========================
-   Card Actions
-=========================== */
-
-.today-card-actions {
-  display: flex;
-  gap: 10px;
-  justify-content: center;
-}
-
-.today-btn {
-  padding: 9px 22px;
-  border-radius: 999px;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  border: none;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.today-btn-cook {
-  background: #FF6B35;
-  color: white;
-  box-shadow: 0 2px 8px rgba(255, 107, 53, 0.3);
-}
-
-.today-btn-cook:hover {
-  background: #e55a28;
-  box-shadow: 0 4px 14px rgba(255, 107, 53, 0.4);
-  transform: translateY(-1px);
-}
-
-.today-btn-shuffle {
-  background: #f7f7f7;
-  color: #555;
-  border: none;
-}
-
-.today-btn-shuffle:hover:not(:disabled) {
-  background: #fff3ed;
-  color: #FF6B35;
-}
-
-.today-btn-shuffle:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-/* ===========================
    Bottom Actions
 =========================== */
 
@@ -718,42 +507,134 @@
 }
 
 /* ===========================
-   Responsive
+   Responsive — Tablet (≤ 768px)
 =========================== */
 
-@media (max-width: 900px) {
+@media (max-width: 768px) {
+  .today-page {
+    padding: 4px 12px 48px;
+  }
+
   .today-cards {
     grid-template-columns: 1fr 1fr;
-    gap: 20px;
-  }
-}
-
-@media (max-width: 600px) {
-  .today-cards {
-    grid-template-columns: 1fr;
-    gap: 20px;
+    gap: 16px;
   }
 
   .today-title {
     font-size: 28px;
   }
 
-  .today-bottom {
-    flex-direction: column;
-    align-items: center;
+  .today-hero {
+    margin-bottom: 24px;
+    padding-top: 4px;
   }
 
-  .today-card-image-wrap {
-    aspect-ratio: 4 / 3;
+  .today-banner {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 14px;
+    margin: -12px 0 20px;
+  }
+
+  .today-btn-main {
+    padding: 12px 28px;
+    font-size: 15px;
+  }
+
+  .today-btn-save {
+    padding: 12px 24px;
+    font-size: 14px;
   }
 
   .today-teaser-content {
     flex-direction: column;
     text-align: center;
     gap: 14px;
+    padding: 20px;
   }
 
   .today-teaser-text {
     text-align: center;
+  }
+}
+
+/* ===========================
+   Responsive — Mobile (≤ 480px)
+=========================== */
+
+@media (max-width: 480px) {
+  .today-page {
+    padding: 0 8px 40px;
+  }
+
+  .today-cards {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .today-title {
+    font-size: 24px;
+  }
+
+  .today-subtitle {
+    font-size: 13px;
+  }
+
+  .today-hero {
+    margin-bottom: 16px;
+  }
+
+  .today-bottom {
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .today-btn-main {
+    width: 100%;
+    justify-content: center;
+    padding: 14px 20px;
+    font-size: 15px;
+  }
+
+  .today-btn-save {
+    width: 100%;
+    justify-content: center;
+    padding: 14px 20px;
+  }
+
+  .today-btn-secondary {
+    padding: 10px 20px;
+    font-size: 14px;
+  }
+
+  .today-banner {
+    padding: 10px 12px;
+    border-radius: 12px;
+    margin: -8px 0 16px;
+  }
+
+  .today-banner-title {
+    font-size: 13px;
+  }
+
+  .today-banner-desc {
+    font-size: 11px;
+  }
+
+  .today-banner-back {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+
+  .today-modal {
+    padding: 28px 20px;
+    width: 94%;
+    border-radius: 20px;
+  }
+
+  .today-teaser {
+    margin-top: 32px;
   }
 }

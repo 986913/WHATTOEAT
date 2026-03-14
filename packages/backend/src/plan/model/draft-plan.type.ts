@@ -5,4 +5,5 @@ export type DraftPlan = {
   mealName?: string;
   mealVideoUrl?: string;
   mealImageUrl?: string;
+  mealIngredients?: { id: number; name: string }[];
 };

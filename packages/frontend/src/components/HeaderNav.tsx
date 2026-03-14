@@ -4,14 +4,18 @@ import { useCurrentUserStore } from '../store/useCurrentUserStore';
 
 interface HeaderNavProps {
   onLogout: () => void;
+  onMenuToggle?: () => void;
 }
 
-export default function HeaderNav({ onLogout }: HeaderNavProps) {
+export default function HeaderNav({ onLogout, onMenuToggle }: HeaderNavProps) {
   const currentUser = useCurrentUserStore((s) => s.currentUser);
   const navigate = useNavigate();
 
   return (
     <header className='app-header'>
+      <button className='app-header-menu' onClick={onMenuToggle}>
+        <i className='fa-solid fa-bars'></i>
+      </button>
       <div className='app-header-right'>
         <span className='app-header-name'>{currentUser?.username}</span>
 

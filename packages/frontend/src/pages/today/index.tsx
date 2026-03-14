@@ -7,24 +7,15 @@ import { useToast } from '../../hooks/useToast';
 import { Spinner } from 'react-bootstrap';
 import { useCurrentUserStore } from '../../store/useCurrentUserStore';
 import VideoPreviewModal from '../../components/VideoPreviewModal';
+import MealCard, { type MealCardPlan } from '../../components/MealCard';
 
-type DraftPlan = {
-  date: string;
-  typeId: number;
-  mealId: number;
-  mealName?: string;
-  mealVideoUrl?: string;
-  mealImageUrl?: string;
-};
+type DraftPlan = MealCardPlan;
 
 const MEAL_TYPES = [
   { id: 1, label: 'Breakfast', icon: '🍳' },
   { id: 2, label: 'Lunch', icon: '🥗' },
   { id: 3, label: 'Dinner', icon: '🍝' },
 ];
-
-const PLACEHOLDER_IMG =
-  'https://thetac.tech/wp-content/uploads/2024/09/placeholder-288.png';
 
 const TYPE_NAME_TO_ID: Record<string, number> = {
   breakfast: 1,
@@ -45,13 +36,17 @@ export default function Today() {
   const [shufflingAll, setShufflingAll] = useState(false);
   const [revealingAll, setRevealingAll] = useState(false);
   const [savingToday, setSavingToday] = useState(false);
+  const [flippedType, setFlippedType] = useState<number | null>(null);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [showContributeModal, setShowContributeModal] = useState(false);
   const revealTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const initialized = useRef(false);
   const hasSavedPlan = useRef(false);
 
-  const today = new Date().toISOString().slice(0, 10);
+  const today = (() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  })();
 
   useEffect(() => {
     if (currentUser?.id && !initialized.current) {
@@ -87,6 +82,10 @@ export default function Today() {
           mealName: p.meal?.name,
           mealVideoUrl: p.meal?.videoUrl,
           mealImageUrl: p.meal?.imageUrl,
+          mealIngredients: p.meal?.ingredients?.map((ing: any) => ({
+            id: ing.id,
+            name: ing.name,
+          })),
         }));
 
       if (savedToday.length > 0) {
@@ -137,6 +136,7 @@ export default function Today() {
                 mealName: res.data.mealName,
                 mealVideoUrl: res.data.mealVideoUrl,
                 mealImageUrl: res.data.mealImageUrl,
+                mealIngredients: res.data.mealIngredients,
               }
             : p,
         ),
@@ -260,56 +260,23 @@ export default function Today() {
 
               const isShuffling = shufflingType === type.id || shufflingAll;
               const isRevealing = revealingType === type.id || revealingAll;
-
-              let cardClass = 'today-card';
-              if (isShuffling) cardClass += ' today-card-shuffling';
-              if (isRevealing) cardClass += ' today-card-reveal';
+              const isFlipped = flippedType === type.id;
 
               return (
-                <div key={type.id} className={cardClass}>
-                  <div className='today-card-label'>
-                    <span className='today-card-label-icon'>{type.icon}</span>
-                    {type.label}
-                  </div>
-
-                  <div
-                    className='today-card-image-wrap'
-                    onClick={() => {
-                      if (plan.mealVideoUrl) setVideoUrl(plan.mealVideoUrl);
-                    }}
-                  >
-                    <img
-                      className='today-card-image'
-                      src={plan.mealImageUrl || PLACEHOLDER_IMG}
-                      alt={plan.mealName}
-                    />
-                    {plan.mealVideoUrl && (
-                      <div className='today-card-play'>
-                        <i className='fa-solid fa-play'></i>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className='today-card-body'>
-                    <div className='today-card-name'>{plan.mealName}</div>
-
-                    <div className='today-card-actions'>
-                      <button
-                        className='today-btn today-btn-shuffle'
-                        disabled={isShuffling}
-                        onClick={() => handleShuffle(type.id, plan.mealId)}
-                      >
-                        {isShuffling ? (
-                          <Spinner animation='border' size='sm' />
-                        ) : (
-                          <>
-                            <i className='fa-solid fa-shuffle'></i> Shuffle
-                          </>
-                        )}
-                      </button>
-                    </div>
-                  </div>
-                </div>
+                <MealCard
+                  key={type.id}
+                  plan={plan}
+                  typeLabel={type.label}
+                  typeIcon={type.icon}
+                  isShuffling={isShuffling}
+                  isRevealing={isRevealing}
+                  isFlipped={isFlipped}
+                  onFlip={() =>
+                    setFlippedType(isFlipped ? null : type.id)
+                  }
+                  onShuffle={() => handleShuffle(type.id, plan.mealId)}
+                  onVideo={(url) => setVideoUrl(url)}
+                />
               );
             })}
           </div>
