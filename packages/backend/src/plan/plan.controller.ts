@@ -58,16 +58,27 @@ export class PlanController {
     return this.planService.findAllGroupedByUser();
   }
 
-  // http://localhost:3001/api/v1/plans/me?from=2026-03-13&to=2026-03-13&sort=ASC
+  // http://localhost:3001/api/v1/plans/me?from=2026-03-13&to=2026-03-13&sort=ASC&page=1&limit=10&mealName=chicken
   @Get('me')
   getMyPlans(
     @Req() req: AuthRequest,
     @Query('from') from?: string,
     @Query('to') to?: string,
     @Query('sort') sort?: 'ASC' | 'DESC',
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('mealName') mealName?: string,
   ) {
     const userId = req.user.userID;
-    return this.planService.findByUser(userId, from, to, sort);
+    return this.planService.findByUser(
+      userId,
+      from,
+      to,
+      sort,
+      page ? Number(page) : undefined,
+      limit ? Number(limit) : undefined,
+      mealName,
+    );
   }
 
   // http://localhost:3001/api/v1/plans

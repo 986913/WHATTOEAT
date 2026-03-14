@@ -104,6 +104,9 @@ export class PlanService {
     from?: string,
     to?: string,
     sort?: 'ASC' | 'DESC',
+    page?: number,
+    limit?: number,
+    mealName?: string,
   ) {
     const qb = this.planRepo
       .createQueryBuilder('plan')
@@ -118,11 +121,27 @@ export class PlanService {
     if (to) {
       qb.andWhere('plan.date <= :to', { to });
     }
+    if (mealName) {
+      qb.andWhere('meal.name LIKE :mealName', {
+        mealName: `%${mealName}%`,
+      });
+    }
 
-    return qb
-      .orderBy('plan.date', sort === 'ASC' ? 'ASC' : 'DESC')
-      .addOrderBy('type.id', 'ASC')
-      .getMany();
+    qb.orderBy('plan.date', sort === 'ASC' ? 'ASC' : 'DESC').addOrderBy(
+      'type.id',
+      'ASC',
+    );
+
+    // 如果传了分页参数，返回分页结果
+    if (page && limit) {
+      return qb
+        .skip((page - 1) * limit)
+        .take(limit)
+        .getManyAndCount()
+        .then(([data, total]) => ({ data, total, page, limit }));
+    }
+
+    return qb.getMany();
   }
 
   async create(plan: CreatePlanDTO) {

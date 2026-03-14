@@ -6,6 +6,9 @@
   max-width: 720px;
   margin: 0 auto;
   padding: 8px 24px 60px;
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
 }
 
 .hist-loading {
@@ -64,6 +67,37 @@
 .hist-empty p {
   font-size: 14px;
   color: #999;
+}
+
+/* ===========================
+   Filters
+=========================== */
+
+.hist-filters {
+  margin-bottom: 24px;
+  align-items: center;
+}
+
+.hist-filters .filters-left {
+  flex-wrap: wrap;
+}
+
+.hist-filters .btn-clear {
+  white-space: nowrap;
+}
+
+.hist-filters .filter-input {
+  max-width: 160px;
+}
+
+.hist-filters .filter-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #555;
+  white-space: nowrap;
 }
 
 /* ===========================
@@ -206,6 +240,15 @@
 @media (max-width: 480px) {
   .hist-page {
     padding: 0 8px 40px;
+  }
+
+  .hist-filters {
+    flex-direction: column;
+  }
+
+  .hist-filters .filter-input {
+    max-width: 100%;
+    flex: 1;
   }
 
   .hist-date {

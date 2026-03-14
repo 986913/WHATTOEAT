@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   Card,
   Form,
@@ -11,6 +11,8 @@ import {
 } from 'react-bootstrap';
 import axios from '../../utils/axios';
 import { useCurrentUserStore } from '../../store/useCurrentUserStore';
+import { useNavigate } from 'react-router-dom';
+import ConfirmModal from '../../components/ConfirmModal';
 
 const PLACEHOLDER_PHOTO =
   'https://i.pinimg.com/736x/3c/67/75/3c67757cef723535a7484a6c7bfbfc43.jpg';
@@ -18,6 +20,7 @@ const PLACEHOLDER_PHOTO =
 export default function Profile() {
   const currentUser = useCurrentUserStore((s) => s.currentUser);
   const setCurrentUser = useCurrentUserStore((s) => s.setCurrentUser);
+  const navigate = useNavigate();
 
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -32,6 +35,8 @@ export default function Profile() {
     text: string;
   } | null>(null);
 
+  const [showLeaveModal, setShowLeaveModal] = useState(false);
+
   // 初始化表单
   useEffect(() => {
     if (currentUser) {
@@ -41,6 +46,32 @@ export default function Profile() {
       setAddress(currentUser.profile?.address || '');
     }
   }, [currentUser]);
+
+  // 检测是否有未保存的改动
+  const isDirty = useMemo(() => {
+    if (!currentUser) return false;
+    return (
+      username !== (currentUser.username || '') ||
+      photo !== (currentUser.profile?.photo || '') ||
+      gender !== ((currentUser.profile?.gender as '1' | '2') || '1') ||
+      address !== (currentUser.profile?.address || '') ||
+      password !== '' ||
+      confirmPassword !== ''
+    );
+  }, [currentUser, username, photo, gender, address, password, confirmPassword]);
+
+  const handleClose = useCallback(() => {
+    if (isDirty) {
+      setShowLeaveModal(true);
+    } else {
+      navigate(-1);
+    }
+  }, [isDirty, navigate]);
+
+  const handleConfirmLeave = () => {
+    setShowLeaveModal(false);
+    navigate(-1);
+  };
 
   const handleSubmit = async () => {
     if (!currentUser) return;
@@ -111,7 +142,15 @@ export default function Profile() {
   return (
     <div className='d-flex justify-content-center'>
       <Card style={{ width: '100%', maxWidth: 560 }}>
-        <Card.Header as='h5'>My Profile</Card.Header>
+        <Card.Header className='d-flex justify-content-between align-items-center'>
+          <h5 className='mb-0'>My Profile</h5>
+          <button
+            type='button'
+            className='btn-close'
+            aria-label='Close'
+            onClick={handleClose}
+          />
+        </Card.Header>
         <Card.Body>
           {message && (
             <Alert
@@ -235,7 +274,7 @@ export default function Profile() {
               <Button
                 variant='primary'
                 onClick={handleSubmit}
-                disabled={loading || !username.trim()}
+                disabled={loading || !username.trim() || !isDirty}
               >
                 {loading ? (
                   <Spinner animation='border' size='sm' />
@@ -247,6 +286,14 @@ export default function Profile() {
           </Form>
         </Card.Body>
       </Card>
+
+      <ConfirmModal
+        show={showLeaveModal}
+        title='Unsaved Changes'
+        message='You have unsaved changes. Are you sure you want to leave? Your changes will be lost.'
+        onCancel={() => setShowLeaveModal(false)}
+        onConfirm={handleConfirmLeave}
+      />
     </div>
   );
 }

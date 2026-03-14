@@ -88,6 +88,9 @@
 =========================== */
 
 .page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
 }
 
 .page-header {
@@ -156,7 +159,8 @@
 
 .pagination-bar {
   justify-content: center;
-  margin-top: 16px;
+  margin-top: auto;
+  padding-top: 16px;
 }
 
 /* ===========================
