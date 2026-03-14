@@ -168,6 +168,18 @@
   cursor: not-allowed;
 }
 
+.wk-banner-btn-save-hidden {
+  background: #e0e0e0;
+  color: #999;
+  box-shadow: none;
+  cursor: default;
+  transition: all 0.4s ease;
+}
+
+.wk-banner-btn-save-hidden:disabled {
+  opacity: 1;
+}
+
 /* ===========================
    Day Cards
 =========================== */

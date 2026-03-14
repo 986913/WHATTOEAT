@@ -8,6 +8,7 @@ import { Spinner } from 'react-bootstrap';
 import { useCurrentUserStore } from '../../store/useCurrentUserStore';
 import VideoPreviewModal from '../../components/VideoPreviewModal';
 import MealCard, { type MealCardPlan } from '../../components/MealCard';
+import GroceryListModal from '../../components/GroceryListModal';
 import dayjs from 'dayjs';
 
 type DraftPlan = MealCardPlan;
@@ -40,6 +41,7 @@ export default function Today() {
   const [flippedType, setFlippedType] = useState<number | null>(null);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [showContributeModal, setShowContributeModal] = useState(false);
+  const [showGroceryList, setShowGroceryList] = useState(false);
   const revealTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const initialized = useRef(false);
   const hasSavedPlan = useRef(false);
@@ -163,6 +165,7 @@ export default function Today() {
       });
       setIsSaved(true);
       hasSavedPlan.current = true;
+      setShowGroceryList(true);
       success('Today\'s plan saved!');
     } catch {
       error('Failed to save today\'s plan');
@@ -230,6 +233,12 @@ export default function Today() {
                   </div>
                 </div>
               </div>
+              <button
+                className='today-banner-back'
+                onClick={() => setShowGroceryList(true)}
+              >
+                <i className='fa-solid fa-cart-shopping'></i> Grocery List
+              </button>
             </div>
           ) : (
             <div className='today-banner today-banner-draft'>
@@ -403,6 +412,12 @@ export default function Today() {
         </div>
       )}
 
+      {showGroceryList && (
+        <GroceryListModal
+          plans={todayPlans}
+          onClose={() => setShowGroceryList(false)}
+        />
+      )}
       <VideoPreviewModal url={videoUrl} onClose={() => setVideoUrl(null)} />
       <AppToast {...toast} />
     </div>

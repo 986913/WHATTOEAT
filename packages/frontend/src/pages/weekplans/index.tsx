@@ -8,6 +8,7 @@ import { Spinner } from 'react-bootstrap';
 import { useCurrentUserStore } from '../../store/useCurrentUserStore';
 import VideoPreviewModal from '../../components/VideoPreviewModal';
 import MealCard, { type MealCardPlan } from '../../components/MealCard';
+import GroceryListModal from '../../components/GroceryListModal';
 import dayjs from 'dayjs';
 
 type DraftPlan = MealCardPlan;
@@ -57,6 +58,9 @@ export default function WeekPlans() {
   const [replacingKey, setReplacingKey] = useState<string | null>(null);
   const [flippedKey, setFlippedKey] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
+  const [showGroceryList, setShowGroceryList] = useState(false);
+  const [saveReady, setSaveReady] = useState(true);
+  const saveReadyTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const tomorrow = dayjs().add(1, 'day').format('YYYY-MM-DD');
 
@@ -67,6 +71,12 @@ export default function WeekPlans() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentUser?.id]);
+
+  useEffect(() => {
+    return () => {
+      if (saveReadyTimer.current) clearTimeout(saveReadyTimer.current);
+    };
+  }, []);
 
   const loadWeek = async () => {
     if (!currentUser?.id) return;
@@ -111,14 +121,19 @@ export default function WeekPlans() {
     if (!currentUser?.id) return;
     try {
       setLoadingPreview(true);
+      setSaveReady(false);
+      if (saveReadyTimer.current) clearTimeout(saveReadyTimer.current);
       const res = await axios.post('/plans/weekly-preview', {
         userId: currentUser.id,
         startDate: tomorrow,
       });
       setDraftPlans(res.data.draftPlans || []);
       setIsSaved(false);
+      // Give the user time to review meals before showing Save
+      saveReadyTimer.current = setTimeout(() => setSaveReady(true), 3000);
     } catch {
       error('Failed to generate weekly plan');
+      setSaveReady(true);
     } finally {
       setLoadingPreview(false);
     }
@@ -227,15 +242,23 @@ export default function WeekPlans() {
               </div>
             </div>
           </div>
-          <button
-            className='wk-banner-btn'
-            onClick={() => {
-              generateFresh();
-            }}
-            disabled={loadingPreview}
-          >
-            <i className='fa-solid fa-arrows-rotate'></i> Regenerate
-          </button>
+          <div className='wk-banner-actions'>
+            <button
+              className='wk-banner-btn'
+              onClick={() => setShowGroceryList(true)}
+            >
+              <i className='fa-solid fa-cart-shopping'></i> Grocery List
+            </button>
+            <button
+              className='wk-banner-btn'
+              onClick={() => {
+                generateFresh();
+              }}
+              disabled={loadingPreview}
+            >
+              <i className='fa-solid fa-arrows-rotate'></i> Regenerate
+            </button>
+          </div>
         </div>
       ) : (
         <div className='wk-banner wk-banner-draft'>
@@ -256,13 +279,17 @@ export default function WeekPlans() {
               </button>
             )}
             <button
-              className='wk-banner-btn-save'
+              className={`wk-banner-btn-save ${!saveReady ? 'wk-banner-btn-save-hidden' : ''}`}
               onClick={handleSaveWeek}
-              disabled={loadingCommit || !draftPlans.length}
+              disabled={loadingCommit || !draftPlans.length || !saveReady}
             >
               {loadingCommit ? (
                 <>
                   <Spinner animation='border' size='sm' /> Saving...
+                </>
+              ) : !saveReady ? (
+                <>
+                  <i className='fa-solid fa-eye'></i> Review your meals...
                 </>
               ) : (
                 <>
@@ -355,6 +382,16 @@ export default function WeekPlans() {
               </button>
               <button
                 className='wk-saved-btn-outline'
+                onClick={() => {
+                  setSaved(false);
+                  setShowGroceryList(true);
+                }}
+              >
+                <i className='fa-solid fa-cart-shopping'></i>
+                View Grocery List
+              </button>
+              <button
+                className='wk-saved-btn-outline'
                 onClick={() => navigate('/home/userplans')}
               >
                 <i className='fa-solid fa-clock-rotate-left'></i>
@@ -374,6 +411,12 @@ export default function WeekPlans() {
         </div>
       )}
 
+      {showGroceryList && (
+        <GroceryListModal
+          plans={draftPlans}
+          onClose={() => setShowGroceryList(false)}
+        />
+      )}
       <VideoPreviewModal url={videoUrl} onClose={() => setVideoUrl(null)} />
       <AppToast {...toast} />
     </div>
