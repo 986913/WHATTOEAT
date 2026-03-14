@@ -3,6 +3,7 @@ import { Module } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { UserModule } from 'src/user/user.module';
+import { MailModule } from 'src/mail/mail.module';
 import { PassportModule } from '@nestjs/passport';
 import { ConfigEnum } from 'src/enum/config.enum';
 import { JwtStrategy } from './auth.strategy';
@@ -12,6 +13,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 @Module({
   imports: [
     UserModule,
+    MailModule,
     PassportModule,
     JwtModule.registerAsync({
       imports: [ConfigModule], // 导入 ConfigModule 以使用 ConfigService

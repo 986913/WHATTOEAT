@@ -223,6 +223,27 @@ export class UserRepository {
     return this.userRepo.save(user);
   }
 
+  findByResetToken(token: string) {
+    return this.userRepo.findOne({
+      where: { resetPasswordToken: token },
+    });
+  }
+
+  async saveResetToken(userId: number, token: string, expires: Date) {
+    return this.userRepo.update(userId, {
+      resetPasswordToken: token,
+      resetPasswordExpires: expires,
+    });
+  }
+
+  async resetPassword(userId: number, hashedPassword: string) {
+    return this.userRepo.update(userId, {
+      password: hashedPassword,
+      resetPasswordToken: undefined,
+      resetPasswordExpires: undefined,
+    });
+  }
+
   /* 这个只是适合单模型的update, 不适合有关系的模型update */
   update(userId: number, user: Partial<UserEntity>) {
     return this.userRepo.update(userId, user);

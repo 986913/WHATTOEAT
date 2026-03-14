@@ -1,6 +1,8 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Signin from './pages/Signin';
 import Signup from './pages/Signup';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
 import GoogleCallback from './pages/GoogleCallback';
 import DefaultLayout from './layouts/default';
 import Dashboard from './pages/dashboard';
@@ -23,6 +25,8 @@ function App() {
         {/* 登录注册路由 */}
         <Route path='/signin' element={<Signin />} />
         <Route path='/signup' element={<Signup />} />
+        <Route path='/forgot-password' element={<ForgotPassword />} />
+        <Route path='/reset-password' element={<ResetPassword />} />
         <Route path='/auth/google/callback' element={<GoogleCallback />} />
 
         {/* 布局路由 */}

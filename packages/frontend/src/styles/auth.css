@@ -45,6 +45,25 @@
   margin-bottom: 16px;
 }
 
+.auth-success {
+  background: #e8f5e9;
+  border: 1px solid #a5d6a7;
+  color: #2e7d32;
+  padding: 10px;
+  border-radius: 6px;
+  margin-bottom: 16px;
+}
+
+.auth-forgot-password {
+  text-align: right;
+  font-size: 13px;
+}
+
+.auth-forgot-password span {
+  color: #FF6B35;
+  cursor: pointer;
+}
+
 .auth-switch {
   text-align: center;
   font-size: 14px;

@@ -16,6 +16,10 @@ export enum ConfigEnum {
   GOOGLE_CLIENT_SECRET = 'google.clientSecret',
   GOOGLE_CALLBACK_URL = 'google.callbackUrl',
   FRONTEND_URL = 'google.frontendUrl',
+
+  // Mail (Gmail SMTP)
+  MAIL_USER = 'mail.user',
+  MAIL_PASS = 'mail.pass',
 }
 
 export enum LogEnum {

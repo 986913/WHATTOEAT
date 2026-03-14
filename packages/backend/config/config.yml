@@ -15,3 +15,6 @@ secrets:
 google:
   clientId: ${GOOGLE_CLIENT_ID}
   clientSecret: ${GOOGLE_CLIENT_SECRET}
+mail:
+  user: ${MAIL_USER}
+  pass: ${MAIL_PASS}

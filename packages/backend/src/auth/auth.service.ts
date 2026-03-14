@@ -1,11 +1,16 @@
 import * as argon2 from 'argon2';
+import * as crypto from 'crypto';
 import {
+  BadRequestException,
   ForbiddenException,
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
 import { UserService } from 'src/user/user.service';
+import { MailService } from 'src/mail/mail.service';
+import { ConfigEnum } from 'src/enum/config.enum';
 import { AuthUser } from './auth.strategy';
 import { GoogleAuthUser } from './google.strategy';
 
@@ -13,6 +18,8 @@ import { GoogleAuthUser } from './google.strategy';
 export class AuthService {
   constructor(
     private readonly userService: UserService,
+    private readonly mailService: MailService,
+    private readonly configService: ConfigService,
     private jwtService: JwtService,
   ) {}
 
@@ -65,6 +72,79 @@ export class AuthService {
       password,
     });
     return newUser;
+  }
+
+  /**
+   * 忘记密码 - 生成重置token
+   * 返回 reset token（开发环境直接返回，生产环境应通过邮件发送）
+   */
+  async forgotPassword(username: string) {
+    const user = await this.userService.findByUserName(username);
+    if (!user) {
+      throw new BadRequestException(
+        'No account found with that username. Please check your username and try again.',
+      );
+    }
+
+    // Google-only 用户不能重置密码
+    if (user.googleId && !user.password) {
+      return {
+        message: 'This account uses Google login. Please sign in with Google.',
+      };
+    }
+
+    // 生成 reset token
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    const resetExpires = new Date(Date.now() + 30 * 60 * 1000); // 30分钟有效
+
+    await this.userService.saveResetToken(user.id, resetToken, resetExpires);
+
+    const frontendUrl =
+      this.configService.get<string>(ConfigEnum.FRONTEND_URL) ||
+      'http://localhost:3000';
+
+    // 尝试通过邮件发送 reset link
+    const emailSent = user.email
+      ? await this.mailService.sendPasswordResetEmail(
+          user.email,
+          username,
+          resetToken,
+          frontendUrl,
+        )
+      : false;
+
+    if (emailSent) {
+      // 生产环境: 邮件发送成功，不返回token
+      return {
+        message: 'A password reset link has been sent to your email.',
+      };
+    }
+
+    // 开发环境 或 邮件未配置: 直接返回token方便前端跳转
+    console.log(`🔑 Password reset token for "${username}": ${resetToken}`);
+    return {
+      message: 'Password reset link generated.',
+      resetToken,
+    };
+  }
+
+  /**
+   * 重置密码 - 通过 reset token 验证后设置新密码
+   */
+  async resetPassword(token: string, newPassword: string) {
+    const user = await this.userService.findByResetToken(token);
+    if (!user) {
+      throw new BadRequestException('Invalid or expired reset token');
+    }
+
+    if (!user.resetPasswordExpires || user.resetPasswordExpires < new Date()) {
+      throw new BadRequestException('Reset token has expired');
+    }
+
+    const hashedPassword = await argon2.hash(newPassword);
+    await this.userService.resetPassword(user.id, hashedPassword);
+
+    return { message: 'Password has been reset successfully' };
   }
 
   /**

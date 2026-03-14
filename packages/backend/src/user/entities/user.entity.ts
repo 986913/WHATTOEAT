@@ -32,6 +32,14 @@ export class UserEntity {
   @Column({ nullable: true })
   email: string;
 
+  @Column({ nullable: true })
+  @Exclude()
+  resetPasswordToken: string;
+
+  @Column({ type: 'datetime', nullable: true })
+  @Exclude()
+  resetPasswordExpires: Date;
+
   /*
     @OneToOne 一个用户只对应一个用户资料:
       第一个参数: 告诉 TypeORM 关联的是哪个实体（这里是 ProfileEntity)

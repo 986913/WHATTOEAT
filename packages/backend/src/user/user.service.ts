@@ -49,6 +49,18 @@ export class UserService {
     return this.userRepository.createAndSave(user);
   }
 
+  findByResetToken(token: string) {
+    return this.userRepository.findByResetToken(token);
+  }
+
+  saveResetToken(userId: number, token: string, expires: Date) {
+    return this.userRepository.saveResetToken(userId, token, expires);
+  }
+
+  resetPassword(userId: number, hashedPassword: string) {
+    return this.userRepository.resetPassword(userId, hashedPassword);
+  }
+
   async update(userId: number, user: UpdateUserDTO) {
     const foundUserWithProfile = await this.findProfile(userId);
     return this.userRepository.deepUpdate(foundUserWithProfile!, user);

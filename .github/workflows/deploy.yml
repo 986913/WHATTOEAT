@@ -76,6 +76,8 @@ jobs:
           GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}
           DB_USERNAME=${{ secrets.DB_USERNAME }}
           DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+          MAIL_USER=${{ secrets.MAIL_USER }}
+          MAIL_PASS=${{ secrets.MAIL_PASS }}
           ENVEOF
 
             # 确保 Docker Compose v2 已安装（修复 v1 的 ContainerConfig 错误）

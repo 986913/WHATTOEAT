@@ -14,6 +14,8 @@ import { Response } from 'express';
 import { AuthService } from './auth.service';
 import { TypeormFilter } from 'src/filters/typeorm.filter';
 import { SigninUserDTO } from './dto/signin-user.dto';
+import { ForgotPasswordDTO } from './dto/forgot-password.dto';
+import { ResetPasswordDTO } from './dto/reset-password.dto';
 import { JwtAuthenticationGuard } from 'src/guards/jwt.guard';
 import { GoogleAuthGuard } from 'src/guards/google.guard';
 import { AuthRequest } from 'src/guards/admin.guard';
@@ -52,6 +54,18 @@ export class AuthController {
   register(@Body() dto: SigninUserDTO): Promise<any> {
     const { username, password } = dto;
     return this.authService.signup(username, password);
+  }
+
+  // http://localhost:3001/api/v1/auth/forgot-password
+  @Post('forgot-password')
+  forgotPassword(@Body() dto: ForgotPasswordDTO) {
+    return this.authService.forgotPassword(dto.username);
+  }
+
+  // http://localhost:3001/api/v1/auth/reset-password
+  @Post('reset-password')
+  resetPassword(@Body() dto: ResetPasswordDTO) {
+    return this.authService.resetPassword(dto.token, dto.password);
   }
 
   // http://localhost:3001/api/v1/auth/google

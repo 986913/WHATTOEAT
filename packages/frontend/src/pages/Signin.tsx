@@ -68,7 +68,7 @@ export default function Signin() {
             />
           </Form.Group>
 
-          <Form.Group className='mb-4'>
+          <Form.Group className='mb-3'>
             <Form.Label>Password</Form.Label>
 
             <Form.Control
@@ -77,6 +77,12 @@ export default function Signin() {
               onChange={(e) => setPassword(e.target.value)}
             />
           </Form.Group>
+
+          <div className='auth-forgot-password mb-3'>
+            <span onClick={() => navigate('/forgot-password')}>
+              Forgot password?
+            </span>
+          </div>
 
           <Button type='submit' className='w-100 mb-3' disabled={loading}>
             {loading ? 'Signing in...' : 'Sign in'}
