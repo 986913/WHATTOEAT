@@ -55,132 +55,6 @@
 }
 
 /* ===========================
-   State Banner
-=========================== */
-
-.wk-banner {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 16px 20px;
-  border-radius: 16px;
-  margin-bottom: 28px;
-}
-
-.wk-banner-saved {
-  background: #f0faf0;
-  border: 1.5px solid #c8e6c9;
-}
-
-.wk-banner-draft {
-  background: #fff8f3;
-  border: 1.5px solid #ffdcc8;
-}
-
-.wk-banner-left {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-}
-
-.wk-banner-left > i {
-  font-size: 24px;
-  flex-shrink: 0;
-}
-
-.wk-banner-saved .wk-banner-left > i {
-  color: #2e7d32;
-}
-
-.wk-banner-draft .wk-banner-left > i {
-  color: #FF6B35;
-}
-
-.wk-banner-title {
-  font-size: 15px;
-  font-weight: 700;
-  color: #1a1a1a;
-  margin-bottom: 2px;
-}
-
-.wk-banner-desc {
-  font-size: 13px;
-  color: #777;
-  line-height: 1.4;
-}
-
-.wk-banner-actions {
-  display: flex;
-  gap: 8px;
-  flex-shrink: 0;
-}
-
-.wk-banner-btn {
-  padding: 8px 16px;
-  border-radius: 10px;
-  font-size: 13px;
-  font-weight: 600;
-  background: white;
-  color: #555;
-  border: 1.5px solid #e0e0e0;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  white-space: nowrap;
-}
-
-.wk-banner-btn:hover:not(:disabled) {
-  border-color: #FF6B35;
-  color: #FF6B35;
-}
-
-.wk-banner-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.wk-banner-btn-save {
-  padding: 8px 20px;
-  border-radius: 10px;
-  font-size: 13px;
-  font-weight: 700;
-  background: #FF6B35;
-  color: white;
-  border: none;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  white-space: nowrap;
-  box-shadow: 0 2px 8px rgba(255, 107, 53, 0.25);
-}
-
-.wk-banner-btn-save:hover:not(:disabled) {
-  background: #e55a28;
-}
-
-.wk-banner-btn-save:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.wk-banner-btn-save-hidden {
-  background: #e0e0e0;
-  color: #999;
-  box-shadow: none;
-  cursor: default;
-  transition: all 0.4s ease;
-}
-
-.wk-banner-btn-save-hidden:disabled {
-  opacity: 1;
-}
-
-/* ===========================
    Day Cards
 =========================== */
 
@@ -417,24 +291,12 @@
     gap: 12px;
   }
 
-  .wk-banner {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 12px;
-    padding: 12px 14px;
-  }
-
   .wk-hero-title {
     font-size: 26px;
   }
 
   .wk-hero-subtitle {
     font-size: 14px;
-  }
-
-  .wk-banner-actions {
-    width: 100%;
-    justify-content: flex-start;
   }
 
   .wk-day-card {
@@ -482,26 +344,6 @@
 
   .wk-hero {
     margin-bottom: 20px;
-  }
-
-  .wk-banner {
-    padding: 10px 12px;
-    border-radius: 12px;
-    margin-bottom: 20px;
-  }
-
-  .wk-banner-title {
-    font-size: 13px;
-  }
-
-  .wk-banner-desc {
-    font-size: 11px;
-  }
-
-  .wk-banner-btn,
-  .wk-banner-btn-save {
-    padding: 6px 12px;
-    font-size: 12px;
   }
 
   .wk-days {

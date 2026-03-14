@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import './index.css';
+import '../../styles/pages/users.css';
 import axios from '../../utils/axios';
 import Table from 'react-bootstrap/Table';
 import { useToast } from '../../hooks/useToast';

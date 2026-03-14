@@ -1,4 +1,4 @@
-import './index.css';
+import '../../styles/pages/today.css';
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from '../../utils/axios';
@@ -9,6 +9,7 @@ import { useCurrentUserStore } from '../../store/useCurrentUserStore';
 import VideoPreviewModal from '../../components/VideoPreviewModal';
 import MealCard, { type MealCardPlan } from '../../components/MealCard';
 import GroceryListModal from '../../components/GroceryListModal';
+import PlanBanner from '../../components/PlanBanner';
 import dayjs from 'dayjs';
 
 type DraftPlan = MealCardPlan;
@@ -222,42 +223,32 @@ export default function Today() {
       {todayPlans.length > 0 ? (
         <>
           {isSaved ? (
-            <div className='today-banner today-banner-saved'>
-              <div className='today-banner-left'>
-                <i className='fa-solid fa-circle-check'></i>
-                <div>
-                  <div className='today-banner-title'>Saved Plan</div>
-                  <div className='today-banner-desc'>
-                    Your meals for today are locked in. Shuffle to explore other
-                    options.
-                  </div>
-                </div>
-              </div>
-              <button
-                className='today-banner-back'
-                onClick={() => setShowGroceryList(true)}
-              >
-                <i className='fa-solid fa-cart-shopping'></i> Grocery List
-              </button>
-            </div>
-          ) : (
-            <div className='today-banner today-banner-draft'>
-              <div className='today-banner-left'>
-                <i className='fa-solid fa-wand-magic-sparkles'></i>
-                <div>
-                  <div className='today-banner-title'>Draft Preview</div>
-                  <div className='today-banner-desc'>
-                    These meals were randomly picked. Shuffle what you don't
-                    like, then save.
-                  </div>
-                </div>
-              </div>
-              {hasSavedPlan.current && (
-                <button className='today-banner-back' onClick={loadToday}>
-                  <i className='fa-solid fa-rotate-left'></i> Back to Saved
+            <PlanBanner
+              variant='saved'
+              title='Saved Plan'
+              description="Your meals for today are locked in. Shuffle to explore other options."
+              actions={
+                <button
+                  className='plan-banner-btn'
+                  onClick={() => setShowGroceryList(true)}
+                >
+                  <i className='fa-solid fa-cart-shopping'></i> Grocery List
                 </button>
-              )}
-            </div>
+              }
+            />
+          ) : (
+            <PlanBanner
+              variant='draft'
+              title='Draft Preview'
+              description="These meals were randomly picked. Shuffle what you don't like, then save."
+              actions={
+                hasSavedPlan.current ? (
+                  <button className='plan-banner-btn' onClick={loadToday}>
+                    <i className='fa-solid fa-rotate-left'></i> Back to Saved
+                  </button>
+                ) : undefined
+              }
+            />
           )}
 
           <div className='today-cards'>

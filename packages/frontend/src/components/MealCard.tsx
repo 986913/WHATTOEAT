@@ -1,4 +1,4 @@
-import './MealCard.css';
+import '../styles/components/MealCard.css';
 import { Spinner } from 'react-bootstrap';
 
 export type Ingredient = { id: number; name: string };

@@ -1,4 +1,4 @@
-import './index.css';
+import '../../styles/pages/weekplans.css';
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from '../../utils/axios';
@@ -9,6 +9,7 @@ import { useCurrentUserStore } from '../../store/useCurrentUserStore';
 import VideoPreviewModal from '../../components/VideoPreviewModal';
 import MealCard, { type MealCardPlan } from '../../components/MealCard';
 import GroceryListModal from '../../components/GroceryListModal';
+import PlanBanner from '../../components/PlanBanner';
 import dayjs from 'dayjs';
 
 type DraftPlan = MealCardPlan;
@@ -231,81 +232,69 @@ export default function WeekPlans() {
 
       {/* State Banner */}
       {isSaved ? (
-        <div className='wk-banner wk-banner-saved'>
-          <div className='wk-banner-left'>
-            <i className='fa-solid fa-circle-check'></i>
-            <div>
-              <div className='wk-banner-title'>Saved Plan</div>
-              <div className='wk-banner-desc'>
-                Your upcoming week is all set. Shuffle individual meals or
-                regenerate the whole week.
-              </div>
-            </div>
-          </div>
-          <div className='wk-banner-actions'>
-            <button
-              className='wk-banner-btn'
-              onClick={() => setShowGroceryList(true)}
-            >
-              <i className='fa-solid fa-cart-shopping'></i> Grocery List
-            </button>
-            <button
-              className='wk-banner-btn'
-              onClick={() => {
-                generateFresh();
-              }}
-              disabled={loadingPreview}
-            >
-              <i className='fa-solid fa-arrows-rotate'></i> Regenerate
-            </button>
-          </div>
-        </div>
-      ) : (
-        <div className='wk-banner wk-banner-draft'>
-          <div className='wk-banner-left'>
-            <i className='fa-solid fa-wand-magic-sparkles'></i>
-            <div>
-              <div className='wk-banner-title'>Draft Preview</div>
-              <div className='wk-banner-desc'>
-                These meals were randomly generated. Shuffle what you don't like,
-                then save.
-              </div>
-            </div>
-          </div>
-          <div className='wk-banner-actions'>
-            {hasSavedPlan.current && (
-              <button className='wk-banner-btn' onClick={loadWeek}>
-                <i className='fa-solid fa-rotate-left'></i> Back to Saved
+        <PlanBanner
+          variant='saved'
+          title='Saved Plan'
+          description='Your upcoming week is all set. Shuffle individual meals or regenerate the whole week.'
+          actions={
+            <>
+              <button
+                className='plan-banner-btn'
+                onClick={() => setShowGroceryList(true)}
+              >
+                <i className='fa-solid fa-cart-shopping'></i> Grocery List
               </button>
-            )}
-            <button
-              className={`wk-banner-btn-save ${!saveReady ? 'wk-banner-btn-save-hidden' : ''}`}
-              onClick={handleSaveWeek}
-              disabled={loadingCommit || !draftPlans.length || !saveReady}
-            >
-              {loadingCommit ? (
-                <>
-                  <Spinner animation='border' size='sm' /> Saving...
-                </>
-              ) : !saveReady ? (
-                <>
-                  <i className='fa-solid fa-eye'></i> Review your meals...
-                </>
-              ) : (
-                <>
-                  <i className='fa-solid fa-bookmark'></i> Save Week
-                </>
+              <button
+                className='plan-banner-btn'
+                onClick={() => generateFresh()}
+                disabled={loadingPreview}
+              >
+                <i className='fa-solid fa-arrows-rotate'></i> Regenerate
+              </button>
+            </>
+          }
+        />
+      ) : (
+        <PlanBanner
+          variant='draft'
+          title='Draft Preview'
+          description="These meals were randomly generated. Shuffle what you don't like, then save."
+          actions={
+            <>
+              {hasSavedPlan.current && (
+                <button className='plan-banner-btn' onClick={loadWeek}>
+                  <i className='fa-solid fa-rotate-left'></i> Back to Saved
+                </button>
               )}
-            </button>
-            <button
-              className='wk-banner-btn'
-              onClick={() => generateFresh()}
-              disabled={loadingPreview}
-            >
-              <i className='fa-solid fa-arrows-rotate'></i>
-            </button>
-          </div>
-        </div>
+              <button
+                className={`plan-banner-btn-save ${!saveReady ? 'plan-banner-btn-save-hidden' : ''}`}
+                onClick={handleSaveWeek}
+                disabled={loadingCommit || !draftPlans.length || !saveReady}
+              >
+                {loadingCommit ? (
+                  <>
+                    <Spinner animation='border' size='sm' /> Saving...
+                  </>
+                ) : !saveReady ? (
+                  <>
+                    <i className='fa-solid fa-eye'></i> Review your meals...
+                  </>
+                ) : (
+                  <>
+                    <i className='fa-solid fa-bookmark'></i> Save Week
+                  </>
+                )}
+              </button>
+              <button
+                className='plan-banner-btn'
+                onClick={() => generateFresh()}
+                disabled={loadingPreview}
+              >
+                <i className='fa-solid fa-arrows-rotate'></i>
+              </button>
+            </>
+          }
+        />
       )}
 
       {/* Day Cards */}

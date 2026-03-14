@@ -1,4 +1,4 @@
-import './index.css';
+import '../../styles/pages/userplans.css';
 import { useEffect, useMemo, useState } from 'react';
 import axios from '../../utils/axios';
 import AppToast from '../../components/AppToast';

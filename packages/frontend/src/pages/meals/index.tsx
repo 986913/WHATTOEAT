@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import './index.css';
+import '../../styles/pages/meals.css';
 import { isAxiosError } from 'axios';
 import axios from '../../utils/axios';
 import { useToast } from '../../hooks/useToast';

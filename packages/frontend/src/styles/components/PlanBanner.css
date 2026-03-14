@@ -1,0 +1,173 @@
+/* ===========================
+   PlanBanner — Shared Component
+=========================== */
+
+.plan-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 18px;
+  border-radius: 16px;
+  margin-bottom: 28px;
+}
+
+.plan-banner-saved {
+  background: #f0faf0;
+  border: 1.5px solid #c8e6c9;
+}
+
+.plan-banner-draft {
+  background: #fff8f3;
+  border: 1.5px solid #ffdcc8;
+}
+
+.plan-banner-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.plan-banner-left > i {
+  font-size: 22px;
+  flex-shrink: 0;
+}
+
+.plan-banner-saved .plan-banner-left > i {
+  color: #2e7d32;
+}
+
+.plan-banner-draft .plan-banner-left > i {
+  color: #FF6B35;
+}
+
+.plan-banner-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin-bottom: 1px;
+}
+
+.plan-banner-desc {
+  font-size: 13px;
+  color: #777;
+  line-height: 1.4;
+}
+
+/* Actions area */
+.plan-banner-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+/* Outline button */
+.plan-banner-btn {
+  padding: 8px 16px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  background: white;
+  color: #555;
+  border: 1.5px solid #e0e0e0;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.plan-banner-btn:hover:not(:disabled) {
+  border-color: #FF6B35;
+  color: #FF6B35;
+}
+
+.plan-banner-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Primary save button */
+.plan-banner-btn-save {
+  padding: 8px 20px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  background: #FF6B35;
+  color: white;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(255, 107, 53, 0.25);
+}
+
+.plan-banner-btn-save:hover:not(:disabled) {
+  background: #e55a28;
+}
+
+.plan-banner-btn-save:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.plan-banner-btn-save-hidden {
+  background: #e0e0e0;
+  color: #999;
+  box-shadow: none;
+  cursor: default;
+  transition: all 0.4s ease;
+}
+
+.plan-banner-btn-save-hidden:disabled {
+  opacity: 1;
+}
+
+/* ===========================
+   Responsive — Tablet (<=768px)
+=========================== */
+
+@media (max-width: 768px) {
+  .plan-banner {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 14px;
+  }
+
+  .plan-banner-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+}
+
+/* ===========================
+   Responsive — Mobile (<=480px)
+=========================== */
+
+@media (max-width: 480px) {
+  .plan-banner {
+    padding: 10px 12px;
+    border-radius: 12px;
+    margin-bottom: 16px;
+  }
+
+  .plan-banner-title {
+    font-size: 13px;
+  }
+
+  .plan-banner-desc {
+    font-size: 11px;
+  }
+
+  .plan-banner-btn,
+  .plan-banner-btn-save {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+}

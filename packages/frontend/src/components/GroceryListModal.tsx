@@ -1,4 +1,4 @@
-import './GroceryListModal.css';
+import '../styles/components/GroceryListModal.css';
 import { useState } from 'react';
 import type { MealCardPlan } from './MealCard';
 

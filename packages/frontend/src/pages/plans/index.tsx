@@ -1,4 +1,4 @@
-import './index.css';
+import '../../styles/pages/plans.css';
 import { useEffect, useState } from 'react';
 import axios from '../../utils/axios';
 import ConfirmModal from '../../components/ConfirmModal';
