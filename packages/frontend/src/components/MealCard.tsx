@@ -11,6 +11,7 @@ export type MealCardPlan = {
   mealVideoUrl?: string;
   mealImageUrl?: string;
   mealIngredients?: Ingredient[];
+  isOwnMeal?: boolean;
 };
 
 const PLACEHOLDER_IMG =
@@ -87,7 +88,12 @@ export default function MealCard({
       </div>
 
       <div className='mc-body'>
-        <div className='mc-name'>{plan.mealName}</div>
+        <div className='mc-name'>
+          {plan.mealName}
+          {plan.isOwnMeal && (
+            <span className='mc-own-badge'>My Meal</span>
+          )}
+        </div>
 
         <div className='mc-actions'>
           {plan.mealVideoUrl && onVideo && (

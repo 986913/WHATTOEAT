@@ -68,25 +68,31 @@ export default function MealFormModal({
             <div className='text-warning small'>Meal name is required</div>
           )}
           <Form.Control
-            placeholder='Meal Name'
+            placeholder='Meal Name (e.g. Tomato Egg Stir Fry)'
             className='mb-2'
             value={name}
             onChange={(e) => setName(e.target.value)}
           />
 
           <Form.Control
-            className='mb-3'
+            className='mb-2'
             value={videoUrl}
-            placeholder='Enter Cooking Video URL'
+            placeholder='YouTube cooking tutorial link'
             onChange={(e) => setVideoUrl(e.target.value)}
           />
+          <Form.Text className='text-muted d-block mb-3' style={{ fontSize: 12, marginTop: -4 }}>
+            Paste a YouTube link so others can learn how to cook this dish
+          </Form.Text>
 
           <Form.Control
-            className='mb-3'
+            className='mb-2'
             value={imageUrl}
-            placeholder='Enter Preview Image URL'
+            placeholder='Meal photo URL (what the dish looks like)'
             onChange={(e) => setImageUrl(e.target.value)}
           />
+          <Form.Text className='text-muted d-block mb-3' style={{ fontSize: 12, marginTop: -4 }}>
+            A preview image helps identify this meal during shuffle
+          </Form.Text>
 
           <Form.Label>Meal Types</Form.Label>
           {selectedTypes.length === 0 && (

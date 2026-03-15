@@ -45,11 +45,11 @@ export default function SidebarNav() {
       {/* Extras */}
       <div className='sidebar-divider' />
       <Nav className='flex-column sidebar-nav-section'>
-        <Nav.Link as={NavLink} to='/home/contribute' className='sidebar-link'>
+        <Nav.Link as={NavLink} to='/home/mymeals' className='sidebar-link'>
           <span className='sidebar-link-icon'>
-            <i className='fa-solid fa-plus'></i>
+            <i className='fa-solid fa-bowl-food'></i>
           </span>
-          <span className='sidebar-link-text'>Add Your Meal</span>
+          <span className='sidebar-link-text'>Custom Meals <span style={{ fontSize: 9, fontWeight: 700, background: '#FF6B35', color: '#fff', padding: '1px 5px', borderRadius: 6, marginLeft: 4, verticalAlign: 'middle' }}>Beta</span></span>
         </Nav.Link>
         <Nav.Link as={NavLink} to='/home/feedback' className='sidebar-link'>
           <span className='sidebar-link-icon'>

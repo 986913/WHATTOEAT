@@ -16,7 +16,7 @@ import WeekPlans from './pages/weekplans';
 import UserPlans from './pages/userplans';
 import Profile from './pages/profile';
 import Feedback from './pages/feedback';
-import Contribute from './pages/contribute';
+import MyMeals from './pages/mymeals';
 import Today from './pages/today';
 import './styles/base.css';
 
@@ -49,7 +49,7 @@ function App() {
           <Route path='wkplans' element={<WeekPlans />} />
           <Route path='profile' element={<Profile />} />
           <Route path='feedback' element={<Feedback />} />
-          <Route path='contribute' element={<Contribute />} />
+          <Route path='mymeals' element={<MyMeals />} />
 
           {/* 内部兜底，处理 /home/xxxx 这种不存在的路径 */}
           <Route path='*' element={<Navigate to='/home/today' replace />} />

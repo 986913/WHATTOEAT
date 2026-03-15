@@ -6,4 +6,5 @@ export type DraftPlan = {
   mealVideoUrl?: string;
   mealImageUrl?: string;
   mealIngredients?: { id: number; name: string }[];
+  isOwnMeal?: boolean;
 };

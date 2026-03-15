@@ -113,6 +113,8 @@ export class PlanService {
       .leftJoinAndSelect('plan.type', 'type')
       .leftJoinAndSelect('plan.meal', 'meal')
       .leftJoinAndSelect('meal.ingredients', 'ingredients')
+      .leftJoin('meal.creator', 'creator')
+      .addSelect('creator.id')
       .where('plan.user_id = :userId', { userId });
 
     if (from) {
@@ -132,16 +134,31 @@ export class PlanService {
       'ASC',
     );
 
+    const addOwnMealFlag = (plans: PlanEntity[]) =>
+      plans.map((p) => ({
+        ...p,
+        meal: {
+          ...p.meal,
+          isOwnMeal: !!p.meal?.creator,
+          creator: undefined,
+        },
+      }));
+
     // 如果传了分页参数，返回分页结果
     if (page && limit) {
       return qb
         .skip((page - 1) * limit)
         .take(limit)
         .getManyAndCount()
-        .then(([data, total]) => ({ data, total, page, limit }));
+        .then(([data, total]) => ({
+          data: addOwnMealFlag(data),
+          total,
+          page,
+          limit,
+        }));
     }
 
-    return qb.getMany();
+    return qb.getMany().then(addOwnMealFlag);
   }
 
   async create(plan: CreatePlanDTO) {
@@ -229,17 +246,22 @@ export class PlanService {
 
     for (const date of dates) {
       for (const typeId of mealTypeIds) {
-        // 1. fetch meals allowed for this type
+        // 1. fetch meals allowed for this type (public + user's own)
         const meals = await this.mealRepo
           .createQueryBuilder('meal')
           .leftJoin('meal.types', 'type')
           .leftJoinAndSelect('meal.ingredients', 'ingredients')
           .where('type.id = :typeId', { typeId })
+          .andWhere('(meal.creator_id IS NULL OR meal.creator_id = :userId)', {
+            userId,
+          })
+          .leftJoin('meal.creator', 'creator')
           .select([
             'meal.id',
             'meal.name',
             'meal.videoUrl',
             'meal.imageUrl',
+            'creator.id',
             'ingredients.id',
             'ingredients.name',
           ])
@@ -263,6 +285,7 @@ export class PlanService {
             id: ing.id,
             name: ing.name,
           })),
+          isOwnMeal: !!randomMeal.creator,
         });
       }
     }
@@ -280,20 +303,30 @@ export class PlanService {
   async getRandomReplacementMeal(
     typeId: number,
     excludeMealId?: number,
+    userId?: number,
   ): Promise<Omit<DraftPlan, 'date'>> {
     const queryBuilder = this.mealRepo
       .createQueryBuilder('meal')
       .leftJoin('meal.types', 'type')
       .leftJoinAndSelect('meal.ingredients', 'ingredients')
+      .leftJoin('meal.creator', 'creator')
       .where('type.id = :typeId', { typeId })
       .select([
         'meal.id',
         'meal.name',
         'meal.videoUrl',
         'meal.imageUrl',
+        'creator.id',
         'ingredients.id',
         'ingredients.name',
       ]);
+
+    if (userId) {
+      queryBuilder.andWhere(
+        '(meal.creator_id IS NULL OR meal.creator_id = :userId)',
+        { userId },
+      );
+    }
 
     if (excludeMealId) {
       queryBuilder.andWhere('meal.id != :excludeMealId', { excludeMealId });
@@ -317,6 +350,7 @@ export class PlanService {
         id: ing.id,
         name: ing.name,
       })),
+      isOwnMeal: !!randomMeal.creator,
     };
   }
 

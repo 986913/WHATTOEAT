@@ -3,11 +3,14 @@ import {
   PrimaryGeneratedColumn,
   Column,
   ManyToMany,
+  ManyToOne,
   OneToMany,
+  JoinColumn,
 } from 'typeorm';
 import { TypeEntity } from '../../type/entities/type.entity';
 import { IngredientEntity } from 'src/ingredient/entities/ingredient.entity';
 import { PlanEntity } from '../../plan/entities/plan.entity';
+import { UserEntity } from '../../user/entities/user.entity';
 
 //@Entity(meals)装饰器告诉 TypeORM：这是一个数据库的表, 表名为meals
 @Entity('meals') // 表名为复数
@@ -23,6 +26,11 @@ export class MealEntity {
 
   @Column()
   imageUrl: string; // for preview
+
+  // null = public/system meal, set = private user-created meal
+  @ManyToOne(() => UserEntity, { nullable: true, onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'creator_id' })
+  creator: UserEntity;
 
   /*
       @ManyToMany 一个meal可以有多个types:

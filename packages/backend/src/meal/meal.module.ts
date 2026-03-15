@@ -3,15 +3,16 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { MealEntity } from './entities/meal.entity';
 import { TypeEntity } from '../type/entities/type.entity';
 import { MealService } from './meal.service';
-import { MealController } from './meal.controller';
+import { MealController, UserMealController } from './meal.controller';
 import { IngredientEntity } from 'src/ingredient/entities/ingredient.entity';
+import { UserEntity } from 'src/user/entities/user.entity';
 
 @Module({
   //请 TypeORM 帮我在当前模块中注册MealEntity实体的repository，否则我在MealService里就没法用@InjectRepository(MealEntity)
   imports: [
-    TypeOrmModule.forFeature([MealEntity, TypeEntity, IngredientEntity]),
+    TypeOrmModule.forFeature([MealEntity, TypeEntity, IngredientEntity, UserEntity]),
   ],
-  controllers: [MealController],
+  controllers: [UserMealController, MealController],
   providers: [MealService],
   exports: [MealService],
 })

@@ -90,10 +90,7 @@ export default function WeekPlans() {
 
       const upcomingPlans = allPlans.map((p: any) => ({
         date: p.date,
-        typeId:
-          p.type?.id ??
-          TYPE_NAME_TO_ID[p.type?.name?.toLowerCase()] ??
-          0,
+        typeId: p.type?.id ?? TYPE_NAME_TO_ID[p.type?.name?.toLowerCase()] ?? 0,
         mealId: p.meal?.id ?? 0,
         mealName: p.meal?.name,
         mealVideoUrl: p.meal?.videoUrl,
@@ -102,6 +99,7 @@ export default function WeekPlans() {
           id: ing.id,
           name: ing.name,
         })),
+        isOwnMeal: !!p.meal?.isOwnMeal,
       }));
 
       if (upcomingPlans.length > 0) {
@@ -184,6 +182,7 @@ export default function WeekPlans() {
                 mealVideoUrl: res.data.mealVideoUrl,
                 mealImageUrl: res.data.mealImageUrl,
                 mealIngredients: res.data.mealIngredients,
+                isOwnMeal: res.data.isOwnMeal,
               }
             : p,
         ),
@@ -326,9 +325,7 @@ export default function WeekPlans() {
                         compact
                         isShuffling={isReplacing}
                         isFlipped={isFlipped}
-                        onFlip={() =>
-                          setFlippedKey(isFlipped ? null : key)
-                        }
+                        onFlip={() => setFlippedKey(isFlipped ? null : key)}
                         onShuffle={() =>
                           handleReplaceMeal(p.date, p.typeId, p.mealId)
                         }

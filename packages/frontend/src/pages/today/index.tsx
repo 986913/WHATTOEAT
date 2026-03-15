@@ -10,7 +10,6 @@ import VideoPreviewModal from '../../components/VideoPreviewModal';
 import MealCard, { type MealCardPlan } from '../../components/MealCard';
 import GroceryListModal from '../../components/GroceryListModal';
 import PlanBanner from '../../components/PlanBanner';
-import ContributeContent from '../../components/ContributeContent';
 import dayjs from 'dayjs';
 
 type DraftPlan = MealCardPlan;
@@ -42,7 +41,6 @@ export default function Today() {
   const [savingToday, setSavingToday] = useState(false);
   const [flippedType, setFlippedType] = useState<number | null>(null);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
-  const [showContributeModal, setShowContributeModal] = useState(false);
   const [showGroceryList, setShowGroceryList] = useState(false);
   const revealTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const initialized = useRef(false);
@@ -88,6 +86,7 @@ export default function Today() {
             id: ing.id,
             name: ing.name,
           })),
+          isOwnMeal: !!p.meal?.isOwnMeal,
         }));
 
       if (savedToday.length > 0) {
@@ -139,6 +138,7 @@ export default function Today() {
                 mealVideoUrl: res.data.mealVideoUrl,
                 mealImageUrl: res.data.mealImageUrl,
                 mealIngredients: res.data.mealIngredients,
+                isOwnMeal: res.data.isOwnMeal,
               }
             : p,
         ),
@@ -335,7 +335,7 @@ export default function Today() {
         )
       )}
 
-      {/* Contribute Teaser */}
+      {/* Custom Meals Teaser */}
       {todayPlans.length > 0 && (
         <div className='today-teaser'>
           <div className='today-teaser-content'>
@@ -343,39 +343,16 @@ export default function Today() {
             <div className='today-teaser-text'>
               <h3>Don't see your favorite dish?</h3>
               <p>
-                Add your own meals and they'll be available in your shuffle
-                rotation.
+                Create your own meals and they'll join your shuffle rotation.
               </p>
             </div>
             <button
               className='today-teaser-btn'
-              onClick={() => setShowContributeModal(true)}
+              onClick={() => navigate('/home/mymeals')}
             >
               <i className='fa-solid fa-plus'></i>
-              Create Your Meal
-              <span className='today-teaser-badge'>Beta</span>
+              Custom Meals
             </button>
-          </div>
-        </div>
-      )}
-
-      {/* Contribute Modal */}
-      {showContributeModal && (
-        <div
-          className='today-modal-backdrop'
-          onClick={() => setShowContributeModal(false)}
-        >
-          <div
-            className='today-modal'
-            onClick={(e) => e.stopPropagation()}
-          >
-            <button
-              className='today-modal-close'
-              onClick={() => setShowContributeModal(false)}
-            >
-              <i className='fa-solid fa-xmark'></i>
-            </button>
-            <ContributeContent />
           </div>
         </div>
       )}
