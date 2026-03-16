@@ -1,6 +1,8 @@
 # MealDice — What Should We Cook Today?
 
-> A full-stack meal planning application that eliminates the daily "what should I eat?" dilemma. Roll the dice, get personalized meals, and generate grocery lists — all in one tap.
+> **Note:** This project is actively undergoing infrastructure upgrades — migrating to Infrastructure as Code (Terraform), improving scalability with multi-instance architecture, and adding Redis caching. The live site may experience occasional downtime during this transition. Thanks for your patience!
+
+> A full-stack meal planning application that eliminates the daily "what should I eat?" dilemma. Roll the dice, get personalized meals, and plan your week — all in one tap.
 
 **Live:** [https://mealdice.com](https://mealdice.com)
 
@@ -12,9 +14,11 @@
 - **Meal Dice (Shuffle)** — Randomize individual meals or your entire day with a single tap
 - **Weekly Meal Plans** — Auto-generate a full 7-day meal plan, adjust any meal, and save
 - **Smart Meal Replacement** — Swap out any meal while respecting your type preferences (breakfast/lunch/dinner)
-- **Saved Plans History** — Browse your saved meal history with visual food cards
-- **Google OAuth + Local Auth** — Sign in with Google or create a traditional account
+- **Custom Meals** — Create and manage your own private meals that appear alongside public ones
+- **Saved Plans History** — Browse your saved meal history with pagination, date range filters, and meal name search
+- **Google OAuth + Email Auth** — Sign in with Google or create an account with email; supports password reset via email
 - **Role-Based Access** — Admin panel for managing meals, ingredients, users, and roles
+- **Feedback** — In-app feedback section for users to share suggestions
 - **Cooking Videos** — Click any meal to watch its cooking tutorial
 - **Responsive Design** — Works on desktop and mobile
 
@@ -63,6 +67,8 @@ graph TB
     style React fill:#61DAFB,color:#000,stroke:none
 ```
 
+> **Note:** This is not the final architecture. Currently working on Infrastructure as Code (Terraform), Redis caching, multi-instance deployment with load balancing, and auto-scaling to eliminate the single point of failure.
+
 ---
 
 ## Data Model
@@ -73,6 +79,7 @@ erDiagram
     users }o--o{ roles : "many-to-many"
     users ||--o{ plans : "has many"
     users ||--o{ logs : "has many"
+    users ||--o{ meals : "creates (custom)"
     meals ||--o{ plans : "used in"
     meals }o--o{ types : "many-to-many"
     meals }o--o{ ingredients : "many-to-many"
@@ -111,6 +118,7 @@ erDiagram
         string name
         string videoUrl
         string imageUrl
+        int creator_id FK "nullable (null = public meal)"
     }
 
     types {
@@ -157,8 +165,10 @@ erDiagram
 | **MySQL 8.0** | Relational database |
 | **Passport.js** | Authentication (JWT + Google OAuth) |
 | **Argon2** | Password hashing |
+| **Nodemailer** | Email service (password reset) |
 | **Winston** | Structured logging |
 | **class-validator** | DTO validation |
+| **Jest + Supertest** | Unit & integration testing |
 
 ### DevOps & Infrastructure
 
@@ -179,7 +189,10 @@ erDiagram
 
 ```mermaid
 flowchart LR
-    A["Push to main"] --> B["Semantic Release"]
+    A["Push to main"] --> T["Test Job"]
+    T --> T1["Unit Tests (77)"]
+    T --> T2["Integration Tests (22)"]
+    T1 & T2 --> B["Semantic Release"]
     B -->|"Analyze commits"| C{"New release?"}
     C -->|"Yes"| D["Create GitHub Release"]
     D --> E["Deploy Job"]
@@ -191,6 +204,7 @@ flowchart LR
     E3 --> E4["docker compose up -d --build"]
 
     style A fill:#FF6B35,color:#fff,stroke:none
+    style T fill:#6f42c1,color:#fff,stroke:none
     style D fill:#238636,color:#fff,stroke:none
     style E4 fill:#2496ED,color:#fff,stroke:none
 ```
@@ -210,9 +224,11 @@ All endpoints are prefixed with `/api/v1`.
 
 | Method | Endpoint | Auth | Description |
 |---|---|---|---|
-| `POST` | `/auth/signup` | Public | Register new user |
+| `POST` | `/auth/signup` | Public | Register new user (with email) |
 | `POST` | `/auth/signin` | Public | Login (returns JWT token) |
 | `GET` | `/auth/me` | JWT | Get current authenticated user |
+| `POST` | `/auth/forgot-password` | Public | Request password reset email |
+| `POST` | `/auth/reset-password` | Public | Reset password with token |
 | `GET` | `/auth/google` | Public | Initiate Google OAuth flow |
 | `GET` | `/auth/google/callback` | Public | Google OAuth callback (redirects with token) |
 
@@ -239,6 +255,10 @@ All endpoints are prefixed with `/api/v1`.
 | `GET` | `/meals/:id` | Admin | Get meal by ID |
 | `PUT` | `/meals/:id` | Admin | Update meal |
 | `DELETE` | `/meals/:id` | Admin | Delete meal |
+| `GET` | `/meals/my` | JWT | List current user's custom meals (paginated) |
+| `POST` | `/meals/my` | JWT | Create a custom meal |
+| `PUT` | `/meals/my/:id` | JWT | Update own custom meal |
+| `DELETE` | `/meals/my/:id` | JWT | Delete own custom meal |
 
 ### Plans (`/plans`)
 
@@ -246,7 +266,7 @@ All endpoints are prefixed with `/api/v1`.
 |---|---|---|---|
 | `GET` | `/plans` | Admin | List all plans |
 | `GET` | `/plans/byUser` | Admin | Get all plans grouped by user |
-| `GET` | `/plans/me` | JWT | Get current user's saved plans |
+| `GET` | `/plans/me` | JWT | Get current user's saved plans (`?from=&to=&sort=&page=&limit=&mealName=`) |
 | `POST` | `/plans` | JWT | Create a single plan |
 | `POST` | `/plans/weekly-preview` | JWT | Generate 7-day draft plan (not persisted) |
 | `POST` | `/plans/replace-meal` | JWT | Get random replacement meal of same type |
@@ -278,6 +298,25 @@ flowchart LR
     style R403 fill:#dc3545,color:#fff,stroke:none
     style OK fill:#238636,color:#fff,stroke:none
 ```
+
+---
+
+## Testing
+
+```bash
+cd packages/backend
+
+npm run test:unit          # 77 unit tests (services layer)
+npm run test:integration   # 22 integration tests (HTTP layer with Supertest)
+npm test                   # all 99 tests
+npm run test:cov           # with coverage report
+```
+
+| Layer | Framework | What's Tested |
+|-------|-----------|---------------|
+| **Unit** | Jest + @nestjs/testing | PlanService, AuthService, MealService, UserService — business logic, validations, edge cases |
+| **Integration** | Jest + Supertest | Auth flow (signup/signin/guards), Plan flow (preview/replace/commit), DTO validation (400s), RBAC (403s) |
+| **CI Gate** | GitHub Actions | All tests must pass before semantic-release and deploy |
 
 ---
 
@@ -330,16 +369,18 @@ whatToEat/
 │   ├── backend/
 │   │   ├── config/             # Environment-specific YAML configs
 │   │   ├── src/
-│   │   │   ├── auth/           # JWT + Google OAuth
+│   │   │   ├── auth/           # JWT + Google OAuth + password reset
 │   │   │   ├── user/           # User management + profiles
-│   │   │   ├── meal/           # Meal CRUD
+│   │   │   ├── meal/           # Meal CRUD + user custom meals
 │   │   │   ├── plan/           # Meal planning logic
 │   │   │   ├── ingredient/     # Ingredient management
 │   │   │   ├── type/           # Meal types (breakfast/lunch/dinner)
 │   │   │   ├── role/           # RBAC roles
+│   │   │   ├── mail/           # Nodemailer email service
 │   │   │   ├── guards/         # JWT, Admin, OwnerOrAdmin guards
 │   │   │   ├── filters/        # Global exception handlers
 │   │   │   └── app.module.ts   # Root module
+│   │   ├── test/               # E2E integration tests
 │   │   └── Dockerfile
 │   └── frontend/
 │       ├── src/

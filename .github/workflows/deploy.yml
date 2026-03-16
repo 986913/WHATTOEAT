@@ -9,8 +9,28 @@ permissions:
   issues: write
 
 jobs:
+  # Step 0: Run tests before release (CI gate)
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install backend dependencies
+        run: npm ci --prefix packages/backend
+
+      - name: Run backend unit tests
+        run: npm run test:unit --prefix packages/backend -- --ci --coverage
+
+      - name: Run backend integration tests
+        run: npm run test:integration --prefix packages/backend -- --ci
+
   # Step 1: semantic-release 分析 commit，自动打 tag + 生成 GitHub Release
   release:
+    needs: test
     runs-on: ubuntu-latest
     outputs:
       new_release_published: ${{ steps.semantic.outputs.new_release_published }}
