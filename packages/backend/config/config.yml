@@ -7,6 +7,10 @@ db:
     sync: true
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
+redis:
+  host: 127.0.0.1
+  port: 6379
+  ttl: 120
 log:
   level: info
   on: true

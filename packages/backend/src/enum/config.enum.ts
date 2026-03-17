@@ -17,6 +17,11 @@ export enum ConfigEnum {
   GOOGLE_CALLBACK_URL = 'google.callbackUrl',
   FRONTEND_URL = 'google.frontendUrl',
 
+  // Redis
+  REDIS_HOST = 'redis.host',
+  REDIS_PORT = 'redis.port',
+  REDIS_TTL = 'redis.ttl',
+
   // Mail (Gmail SMTP)
   MAIL_USER = 'mail.user',
   MAIL_PASS = 'mail.pass',

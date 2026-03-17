@@ -10,12 +10,29 @@ services:
       # username: ming, password: 123
       MYSQL_USER: ming
       MYSQL_PASSWORD: 123
-
       MYSQL_DATABASE: testdb
     ports:
-      - '3307:3306' #左边是我本地电脑的端口，右边永远是容器的3306
+      - '3307:3306'
     volumes:
-      - mysql_data:/var/lib/mysql-eat
+      - mysql_data:/var/lib/mysql # 必须挂载到 /var/lib/mysql 才能保证数据不丢失
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis-eat
+    restart: always
+    command: redis-server --appendonly yes # 增加这行命令开启 Redis 的持久化（AOF模式）
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis_data:/data # 为 Redis 也增加一个数据持久化卷
+
+  redis-insight:
+    image: redis/redisinsight:latest
+    restart: always
+    ports:
+      - '8001:5540'
+    depends_on:
+      - redis
 
   adminer:
     image: adminer
@@ -27,3 +44,4 @@ services:
 
 volumes:
   mysql_data:
+  redis_data: # 定义新的 redis 卷

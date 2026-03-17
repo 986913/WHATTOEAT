@@ -1,9 +1,12 @@
 import {
   Injectable,
+  Inject,
   NotFoundException,
   BadRequestException,
   ConflictException,
 } from '@nestjs/common';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Cache } from 'cache-manager';
 import { Repository, DataSource } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { PlanEntity } from './entities/plan.entity';
@@ -27,7 +30,55 @@ export class PlanService {
     @InjectRepository(UserEntity)
     private userRepo: Repository<UserEntity>,
     private dataSource: DataSource,
+    @Inject(CACHE_MANAGER)
+    private cacheManager: Cache,
   ) {}
+
+  // ================================
+  // Cache helpers
+  // ================================
+  private readonly CACHE_TTL_BASE_MS = 2 * 60 * 1000; // 2 minutes
+
+  /** Add ±20% jitter to prevent cache stampede */
+  private get cacheTtl(): number {
+    const jitter = this.CACHE_TTL_BASE_MS * 0.2 * (Math.random() * 2 - 1);
+    return Math.round(this.CACHE_TTL_BASE_MS + jitter);
+  }
+
+  /** Fetch meals by type for a user, with Redis cache-aside */
+  private async getMealsByTypeForUser(
+    typeId: number,
+    userId: number,
+  ): Promise<MealEntity[]> {
+    const cacheKey = `meals:byType:${typeId}:user:${userId}`;
+    const cached = await this.cacheManager.get<MealEntity[]>(cacheKey);
+    if (cached) return cached;
+
+    const meals = await this.mealRepo
+      .createQueryBuilder('meal')
+      .leftJoin('meal.types', 'type')
+      .leftJoinAndSelect('meal.ingredients', 'ingredients')
+      .where('type.id = :typeId', { typeId })
+      .andWhere('(meal.creator_id IS NULL OR meal.creator_id = :userId)', {
+        userId,
+      })
+      .leftJoin('meal.creator', 'creator')
+      .select([
+        'meal.id',
+        'meal.name',
+        'meal.videoUrl',
+        'meal.imageUrl',
+        'creator.id',
+        'ingredients.id',
+        'ingredients.name',
+      ])
+      .getMany();
+
+    if (meals.length > 0) {
+      await this.cacheManager.set(cacheKey, meals, this.cacheTtl);
+    }
+    return meals;
+  }
 
   private async ensurePlanExists(planId: number): Promise<PlanEntity> {
     const exists = await this.findById(planId);
@@ -242,37 +293,22 @@ export class PlanService {
 
     const dates = this.getNextDays(startDate);
     const mealTypeIds = [1, 2, 3]; // breakfast/lunch/dinner
-    const draftPlans: DraftPlan[] = [];
 
+    // Pre-fetch meals for all 3 types (cached — 0 DB queries on cache hit)
+    const mealsByType = new Map<number, MealEntity[]>();
+    for (const typeId of mealTypeIds) {
+      const meals = await this.getMealsByTypeForUser(typeId, userId);
+      if (meals.length === 0) {
+        throw new BadRequestException(`No meals available for type ${typeId}`);
+      }
+      mealsByType.set(typeId, meals);
+    }
+
+    // Build draft plans using pre-fetched data (0 DB queries)
+    const draftPlans: DraftPlan[] = [];
     for (const date of dates) {
       for (const typeId of mealTypeIds) {
-        // 1. fetch meals allowed for this type (public + user's own)
-        const meals = await this.mealRepo
-          .createQueryBuilder('meal')
-          .leftJoin('meal.types', 'type')
-          .leftJoinAndSelect('meal.ingredients', 'ingredients')
-          .where('type.id = :typeId', { typeId })
-          .andWhere('(meal.creator_id IS NULL OR meal.creator_id = :userId)', {
-            userId,
-          })
-          .leftJoin('meal.creator', 'creator')
-          .select([
-            'meal.id',
-            'meal.name',
-            'meal.videoUrl',
-            'meal.imageUrl',
-            'creator.id',
-            'ingredients.id',
-            'ingredients.name',
-          ])
-          .getMany();
-        if (meals.length === 0) {
-          throw new BadRequestException(
-            `No meals available for type ${typeId}`,
-          );
-        }
-
-        // 2. random pick
+        const meals = mealsByType.get(typeId)!;
         const randomMeal = meals[Math.floor(Math.random() * meals.length)];
         draftPlans.push({
           date,
@@ -305,34 +341,15 @@ export class PlanService {
     excludeMealId?: number,
     userId?: number,
   ): Promise<Omit<DraftPlan, 'date'>> {
-    const queryBuilder = this.mealRepo
-      .createQueryBuilder('meal')
-      .leftJoin('meal.types', 'type')
-      .leftJoinAndSelect('meal.ingredients', 'ingredients')
-      .leftJoin('meal.creator', 'creator')
-      .where('type.id = :typeId', { typeId })
-      .select([
-        'meal.id',
-        'meal.name',
-        'meal.videoUrl',
-        'meal.imageUrl',
-        'creator.id',
-        'ingredients.id',
-        'ingredients.name',
-      ]);
-
-    if (userId) {
-      queryBuilder.andWhere(
-        '(meal.creator_id IS NULL OR meal.creator_id = :userId)',
-        { userId },
-      );
-    }
+    // Use cached meal list, then filter excludeMealId in memory
+    let meals = userId
+      ? await this.getMealsByTypeForUser(typeId, userId)
+      : await this.getMealsByTypeForUser(typeId, 0);
 
     if (excludeMealId) {
-      queryBuilder.andWhere('meal.id != :excludeMealId', { excludeMealId });
+      meals = meals.filter((m) => m.id !== excludeMealId);
     }
 
-    const meals = await queryBuilder.getMany();
     if (meals.length === 0) {
       throw new BadRequestException(
         `No other meals available for type ${typeId}`,

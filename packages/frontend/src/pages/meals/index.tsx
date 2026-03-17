@@ -324,6 +324,7 @@ export default function Meals() {
             <th>URL</th>
             <th>Types</th>
             <th>Ingredients</th>
+            <th>Creator</th>
             <th>Action</th>
           </tr>
         </thead>
@@ -346,6 +347,11 @@ export default function Meals() {
 
               <td>{meal.types?.map((t: any) => t.name).join(', ')}</td>
               <td>{meal.ingredients?.map((i: any) => i.name).join(', ')}</td>
+              <td>
+                {meal.creator
+                  ? <><i className='fa-solid fa-user' style={{ color: '#0d6efd', marginRight: 6 }} />{meal.creator.username}</>
+                  : 'System'}
+              </td>
 
               <td>
                 <Button size='sm' onClick={() => openEditModal(meal)}>

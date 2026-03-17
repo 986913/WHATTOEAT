@@ -1,5 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { ForbiddenException, NotFoundException } from '@nestjs/common';
 import { MealService } from './meal.service';
 import { MealEntity } from './entities/meal.entity';
@@ -16,6 +17,7 @@ function createMockQueryBuilder(resultData: any[] = []) {
     where: jest.fn().mockReturnThis(),
     andWhere: jest.fn().mockReturnThis(),
     select: jest.fn().mockReturnThis(),
+    addSelect: jest.fn().mockReturnThis(),
     take: jest.fn().mockReturnThis(),
     skip: jest.fn().mockReturnThis(),
     getMany: jest.fn().mockResolvedValue(resultData),
@@ -32,6 +34,7 @@ describe('MealService', () => {
   let typeRepo: Record<string, jest.Mock>;
   let ingredientRepo: Record<string, jest.Mock>;
   let userRepo: Record<string, jest.Mock>;
+  let cacheManager: Record<string, jest.Mock>;
 
   beforeEach(async () => {
     mealRepo = {
@@ -53,6 +56,12 @@ describe('MealService', () => {
     userRepo = {
       findOne: jest.fn(),
     };
+    cacheManager = {
+      get: jest.fn().mockResolvedValue(null), // cache miss by default
+      set: jest.fn().mockResolvedValue(undefined),
+      del: jest.fn().mockResolvedValue(undefined),
+      clear: jest.fn().mockResolvedValue(undefined),
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -64,48 +73,11 @@ describe('MealService', () => {
           useValue: ingredientRepo,
         },
         { provide: getRepositoryToken(UserEntity), useValue: userRepo },
+        { provide: CACHE_MANAGER, useValue: cacheManager },
       ],
     }).compile();
 
     service = module.get<MealService>(MealService);
-  });
-
-  // ─────────────────────────────────────────────────
-  // findVisibleMeals
-  // ─────────────────────────────────────────────────
-  describe('findVisibleMeals', () => {
-    it('should filter by userId (public + own meals)', async () => {
-      const qb = createMockQueryBuilder([{ id: 1 }, { id: 2 }]);
-      mealRepo.createQueryBuilder.mockReturnValue(qb);
-
-      const result = await service.findVisibleMeals(1);
-
-      expect(qb.where).toHaveBeenCalledWith(
-        '(meal.creator_id IS NULL OR meal.creator_id = :userId)',
-        { userId: 1 },
-      );
-      expect(result).toHaveLength(2);
-    });
-
-    it('should additionally filter by typeId when provided', async () => {
-      const qb = createMockQueryBuilder([]);
-      mealRepo.createQueryBuilder.mockReturnValue(qb);
-
-      await service.findVisibleMeals(1, 2);
-
-      expect(qb.andWhere).toHaveBeenCalledWith('type.id = :typeId', {
-        typeId: 2,
-      });
-    });
-
-    it('should not filter by typeId when not provided', async () => {
-      const qb = createMockQueryBuilder([]);
-      mealRepo.createQueryBuilder.mockReturnValue(qb);
-
-      await service.findVisibleMeals(1);
-
-      expect(qb.andWhere).not.toHaveBeenCalled();
-    });
   });
 
   // ─────────────────────────────────────────────────
@@ -295,6 +267,60 @@ describe('MealService', () => {
       mealRepo.findOne.mockResolvedValue(null);
 
       await expect(service.remove(999)).rejects.toThrow(NotFoundException);
+    });
+  });
+
+  // ─────────────────────────────────────────────────
+  // Caching behavior
+  // ─────────────────────────────────────────────────
+  describe('caching', () => {
+    it('findOptionsByType should return cached data on cache hit', async () => {
+      const cachedOptions = [{ id: 1, name: 'Option' }];
+      cacheManager.get.mockResolvedValue(cachedOptions);
+
+      const result = await service.findOptionsByType(1);
+
+      expect(result).toEqual(cachedOptions);
+      expect(mealRepo.createQueryBuilder).not.toHaveBeenCalled();
+    });
+
+    it('findOptionsByType should query DB and set cache on miss', async () => {
+      cacheManager.get.mockResolvedValue(null);
+      const dbOptions = [{ id: 1, name: 'Rice Bowl' }];
+      mealRepo.createQueryBuilder.mockReturnValue(createMockQueryBuilder(dbOptions));
+
+      const result = await service.findOptionsByType(1);
+
+      expect(result).toEqual(dbOptions);
+      expect(cacheManager.set).toHaveBeenCalledWith(
+        'meals:options:type:1',
+        dbOptions,
+        expect.any(Number),
+      );
+    });
+
+    it('should invalidate cache on create', async () => {
+      typeRepo.find.mockResolvedValue([{ id: 1, name: MealType.LUNCH }]);
+      ingredientRepo.findBy.mockResolvedValue([]);
+
+      await service.create({
+        name: 'New',
+        videoUrl: '',
+        imageUrl: '',
+        types: [MealType.LUNCH],
+        ingredientIds: [],
+      });
+
+      expect(cacheManager.clear).toHaveBeenCalled();
+    });
+
+    it('should invalidate cache on remove', async () => {
+      const meal = { id: 1, types: [], ingredients: [] } as any;
+      mealRepo.findOne.mockResolvedValue(meal);
+
+      await service.remove(1);
+
+      expect(cacheManager.clear).toHaveBeenCalled();
     });
   });
 });

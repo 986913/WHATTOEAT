@@ -17,6 +17,7 @@ import { IngredientEntity } from './ingredient/entities/ingredient.entity';
 import { PlanEntity } from './plan/entities/plan.entity';
 import { IngredientModule } from './ingredient/ingredient.module';
 import { AuthModule } from './auth/auth.module';
+import { RedisCacheModule } from './cache/redis-cache.module';
 
 @Module({
   imports: [
@@ -63,6 +64,7 @@ import { AuthModule } from './auth/auth.module';
         } as TypeOrmModuleOptions;
       },
     }),
+    RedisCacheModule,
     UserModule,
     MealModule,
     IngredientModule,

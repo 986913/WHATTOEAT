@@ -5,7 +5,7 @@
   height: 80vh;
 }
 
-/* Left Table Panel */
+/* Left Panel */
 .plans-left {
   flex: 2;
   border: 1px solid #ddd;
@@ -14,7 +14,7 @@
   overflow-y: auto;
 }
 
-/* Right Tools Panel */
+/* Right Panel */
 .plans-right {
   flex: 1;
   border: 1px solid #ddd;
@@ -23,7 +23,7 @@
   overflow-y: auto;
 }
 
-/* Table Empty */
+/* Empty / Loading */
 .table-empty {
   text-align: center;
   padding: 20px;
@@ -31,11 +31,123 @@
   font-style: italic;
 }
 
-/* Loading */
 .loading-box {
   margin-top: 15px;
 }
 
+/* ======================== */
+/* Date Card List           */
+/* ======================== */
+.plans-date-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.plans-date-card {
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.plans-date-header {
+  background: #f0f4f8;
+  padding: 8px 14px;
+  font-weight: 600;
+  font-size: 15px;
+  color: #333;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+/* ======================== */
+/* Grid Table (shared)      */
+/* ======================== */
+.plans-grid-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.plans-grid-table th {
+  background: #fafafa;
+  padding: 6px 10px;
+  text-align: left;
+  font-weight: 600;
+  font-size: 13px;
+  color: #555;
+  border-bottom: 1px solid #eee;
+  text-transform: capitalize;
+}
+
+.plans-grid-table td {
+  padding: 6px 10px;
+  border-bottom: 1px solid #f0f0f0;
+  vertical-align: middle;
+}
+
+.plans-grid-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.plans-grid-table tbody tr:hover {
+  background: #f8f9fa;
+}
+
+.plans-grid-table.compact {
+  font-size: 13px;
+}
+
+/* User column */
+.plans-grid-user {
+  font-weight: 600;
+  color: #0d6efd;
+  white-space: nowrap;
+}
+
+/* Meal cell with delete button */
+.plans-meal-cell {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.plans-meal-cell span {
+  flex: 1;
+}
+
+.plans-grid-empty {
+  color: #ccc;
+}
+
+.plans-grid-dash {
+  color: #ccc;
+}
+
+/* Inline delete button */
+.plans-delete-btn {
+  background: none;
+  border: none;
+  color: #ccc;
+  cursor: pointer;
+  padding: 2px 4px;
+  font-size: 12px;
+  border-radius: 4px;
+  line-height: 1;
+  opacity: 0;
+  transition: opacity 0.15s, color 0.15s;
+}
+
+.plans-meal-cell:hover .plans-delete-btn {
+  opacity: 1;
+}
+
+.plans-delete-btn:hover {
+  color: #dc3545;
+  background: #fee;
+}
+
+/* Accordion */
 .debug-box {
   margin-top: 15px;
 }

@@ -1,5 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import {
   BadRequestException,
   ConflictException,
@@ -85,6 +86,7 @@ describe('PlanService', () => {
   let typeRepo: Record<string, jest.Mock>;
   let userRepo: Record<string, jest.Mock>;
   let dataSource: Record<string, jest.Mock>;
+  let cacheManager: Record<string, jest.Mock>;
 
   beforeEach(async () => {
     planRepo = {
@@ -108,6 +110,11 @@ describe('PlanService', () => {
     dataSource = {
       transaction: jest.fn(),
     };
+    cacheManager = {
+      get: jest.fn().mockResolvedValue(null),
+      set: jest.fn().mockResolvedValue(undefined),
+      del: jest.fn().mockResolvedValue(undefined),
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -117,6 +124,7 @@ describe('PlanService', () => {
         { provide: getRepositoryToken(TypeEntity), useValue: typeRepo },
         { provide: getRepositoryToken(UserEntity), useValue: userRepo },
         { provide: DataSource, useValue: dataSource },
+        { provide: CACHE_MANAGER, useValue: cacheManager },
       ],
     }).compile();
 
@@ -231,18 +239,14 @@ describe('PlanService', () => {
       expect(result.mealName).toBe('Salad');
     });
 
-    it('should exclude the specified meal', async () => {
-      const meals = [makeMeal({ id: 10 })];
-      const qb = createMockQueryBuilder(meals);
-      mealRepo.createQueryBuilder.mockReturnValue(qb);
+    it('should exclude the specified meal in memory', async () => {
+      const meals = [makeMeal({ id: 5 }), makeMeal({ id: 10, name: 'Other' })];
+      mealRepo.createQueryBuilder.mockReturnValue(createMockQueryBuilder(meals));
 
-      await service.getRandomReplacementMeal(1, 5);
+      const result = await service.getRandomReplacementMeal(1, 5);
 
-      // verify andWhere was called with excludeMealId
-      expect(qb.andWhere).toHaveBeenCalledWith(
-        'meal.id != :excludeMealId',
-        { excludeMealId: 5 },
-      );
+      // meal id 5 should be excluded, only id 10 remains
+      expect(result.mealId).toBe(10);
     });
 
     it('should filter by userId when provided', async () => {

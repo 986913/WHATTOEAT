@@ -1,8 +1,11 @@
 import {
   Injectable,
+  Inject,
   NotFoundException,
   ForbiddenException,
 } from '@nestjs/common';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Cache } from 'cache-manager';
 import { Repository, In } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { MealEntity } from './entities/meal.entity';
@@ -24,7 +27,26 @@ export class MealService {
     private ingredientRepo: Repository<IngredientEntity>,
     @InjectRepository(UserEntity)
     private userRepo: Repository<UserEntity>,
+    @Inject(CACHE_MANAGER)
+    private cacheManager: Cache,
   ) {}
+
+  // ================================
+  // Cache helpers
+  // ================================
+  private readonly CACHE_PREFIX = 'meals';
+  private readonly CACHE_TTL_BASE_MS = 2 * 60 * 1000; // 2 minutes
+
+  /** Add ±20% jitter to prevent cache stampede */
+  private get cacheTtl(): number {
+    const jitter = this.CACHE_TTL_BASE_MS * 0.2 * (Math.random() * 2 - 1);
+    return Math.round(this.CACHE_TTL_BASE_MS + jitter);
+  }
+
+  /** Invalidate all meal-related caches (called on any write operation) */
+  async invalidateMealCaches(): Promise<void> {
+    await this.cacheManager.clear();
+  }
 
   private async ensureMealExists(mealId: number): Promise<MealEntity> {
     const exists = await this.findById(mealId);
@@ -52,7 +74,9 @@ export class MealService {
     const queryBuilder = this.mealRepo
       .createQueryBuilder('mealsTable')
       .leftJoinAndSelect('mealsTable.types', 'types')
-      .leftJoinAndSelect('mealsTable.ingredients', 'ingredients');
+      .leftJoinAndSelect('mealsTable.ingredients', 'ingredients')
+      .leftJoin('mealsTable.creator', 'creator')
+      .addSelect(['creator.id', 'creator.username']);
     // 后面的.where会替换前面的.where, 所以要用.andWhere
     if (type) {
       queryBuilder.andWhere('types.name = :typeName', { typeName: type });
@@ -71,7 +95,12 @@ export class MealService {
     };
   }
 
+  /** Find meal options by type (cached) */
   async findOptionsByType(typeId?: number): Promise<MealEntity[]> {
+    const cacheKey = `${this.CACHE_PREFIX}:options:type:${typeId ?? 'all'}`;
+    const cached = await this.cacheManager.get<MealEntity[]>(cacheKey);
+    if (cached) return cached;
+
     const queryBuilder = this.mealRepo
       .createQueryBuilder('meal')
       .select(['meal.id', 'meal.name'])
@@ -81,7 +110,9 @@ export class MealService {
       queryBuilder.where('type.id = :typeId', { typeId });
     }
 
-    return queryBuilder.getMany();
+    const result = await queryBuilder.getMany();
+    await this.cacheManager.set(cacheKey, result, this.cacheTtl);
+    return result;
   }
 
   async create(dto: CreateMealDTO) {
@@ -106,7 +137,9 @@ export class MealService {
       ingredients: ingredientEntities,
     });
 
-    return this.mealRepo.save(meal);
+    const saved = await this.mealRepo.save(meal);
+    await this.invalidateMealCaches();
+    return saved;
   }
 
   async update(mealId: number, dto: UpdateMealDTO) {
@@ -135,47 +168,22 @@ export class MealService {
       meal.ingredients = ingredientEntities;
     }
 
-    return this.mealRepo.save(meal);
+    const saved = await this.mealRepo.save(meal);
+    await this.invalidateMealCaches();
+    return saved;
   }
 
   async remove(mealId: number) {
     const foundMeal = await this.ensureMealExists(mealId);
     // 使用 remove 方法（而不是 delete）以触发 TypeORM 的级联逻辑
-    return this.mealRepo.remove(foundMeal);
+    const removed = await this.mealRepo.remove(foundMeal);
+    await this.invalidateMealCaches();
+    return removed;
   }
 
   // ================================
   // User-scoped meal methods
   // ================================
-
-  /** Find meals visible to a user: public meals + user's own private meals */
-  async findVisibleMeals(
-    userId: number,
-    typeId?: number,
-  ): Promise<MealEntity[]> {
-    const qb = this.mealRepo
-      .createQueryBuilder('meal')
-      .leftJoin('meal.types', 'type')
-      .leftJoinAndSelect('meal.ingredients', 'ingredients')
-      .where('(meal.creator_id IS NULL OR meal.creator_id = :userId)', {
-        userId,
-      });
-
-    if (typeId) {
-      qb.andWhere('type.id = :typeId', { typeId });
-    }
-
-    return qb
-      .select([
-        'meal.id',
-        'meal.name',
-        'meal.videoUrl',
-        'meal.imageUrl',
-        'ingredients.id',
-        'ingredients.name',
-      ])
-      .getMany();
-  }
 
   /** Find only the user's own created meals with pagination */
   async findMyMeals(userId: number, query: GetMealsDTO) {
@@ -228,7 +236,9 @@ export class MealService {
       creator: user,
     });
 
-    return this.mealRepo.save(meal);
+    const saved = await this.mealRepo.save(meal);
+    await this.invalidateMealCaches();
+    return saved;
   }
 
   /** Update a meal only if the user owns it */
@@ -258,7 +268,9 @@ export class MealService {
       });
     }
 
-    return this.mealRepo.save(meal);
+    const saved = await this.mealRepo.save(meal);
+    await this.invalidateMealCaches();
+    return saved;
   }
 
   /** Delete a meal only if the user owns it */
@@ -272,6 +284,8 @@ export class MealService {
       throw new ForbiddenException('You can only delete your own meals');
     }
 
-    return this.mealRepo.remove(meal);
+    const removed = await this.mealRepo.remove(meal);
+    await this.invalidateMealCaches();
+    return removed;
   }
 }
