@@ -24,50 +24,56 @@
 
 ---
 
-## Architecture
+#### Architecture
 
 ```mermaid
 graph TB
-    subgraph Client
+    subgraph Edge["Edge / Entry"]
         Browser["Browser / Mobile"]
+        DNS["Route53 / mealdice.com"]
     end
 
-    subgraph Domain
-        DNS["mealdice.com"]
-    end
+    subgraph EC2["AWS EC2 (Docker Compose)"]
+        subgraph NginxLayer["Nginx (Reverse Proxy)"]
+            Nginx["Nginx :443"]
+        end
 
-    subgraph EC2["AWS EC2 Instance"]
-        subgraph Docker["Docker Compose"]
-            subgraph FE["Frontend Container"]
-                Nginx["Nginx :8000"]
-                React["React 19 SPA"]
-            end
-            subgraph BE["Backend Container"]
-                NestJS["NestJS :3001"]
-                JWT["JWT Auth"]
-                Google["Google OAuth"]
-            end
+        subgraph FE["Frontend"]
+            React["React 19 SPA"]
+        end
+
+        subgraph BE["Backend"]
+            NestJS["NestJS API :3001"]
+            Auth["JWT + Google OAuth"]
+        end
+
+        subgraph Cache["Cache"]
+            Redis["Redis"]
         end
     end
 
-    subgraph AWS["AWS RDS"]
-        MySQL[("MySQL 8.0<br/>eatdbprod")]
+    subgraph RDS["AWS RDS"]
+        MySQL[("MySQL 8.0")]
     end
 
-    Browser -->|"HTTPS :443"| DNS
+    Browser -->|"HTTPS"| DNS
     DNS --> Nginx
-    Nginx -->|"Static files"| React
-    Nginx -->|"proxy_pass /api/v1/*"| NestJS
-    NestJS --> MySQL
+
+    Nginx -->|"Static"| React
+    Nginx -->|"/api/v1"| NestJS
+
+    NestJS --> Redis
+    NestJS -->|"Cache Miss"| MySQL
 
     style DNS fill:#FF6B35,color:#fff,stroke:none
     style Nginx fill:#009639,color:#fff,stroke:none
     style NestJS fill:#E0234E,color:#fff,stroke:none
     style MySQL fill:#4479A1,color:#fff,stroke:none
     style React fill:#61DAFB,color:#000,stroke:none
+    style Redis fill:#DC382D,color:#fff,stroke:none
 ```
 
-> **Note:** This is not the final architecture. Currently working on Infrastructure as Code (Terraform), Redis caching, multi-instance deployment with load balancing, and auto-scaling to eliminate the single point of failure.
+> **Note:** This is not the final architecture. Currently working on Infrastructure as Code (Terraform), multi-instance deployment with load balancing, and auto-scaling to eliminate the single point of failure.
 
 ---
 
@@ -145,43 +151,44 @@ erDiagram
 
 ### Frontend
 
-| Technology | Purpose |
-|---|---|
-| **React 19** | UI framework |
-| **TypeScript** | Type safety |
-| **React Router 7** | Client-side routing |
-| **Zustand** | Lightweight state management |
-| **Bootstrap 5 + React-Bootstrap** | UI components |
-| **Axios** | HTTP client |
-| **Nginx** | Static file serving & reverse proxy |
+| Technology                        | Purpose                             |
+| --------------------------------- | ----------------------------------- |
+| **React 19**                      | UI framework                        |
+| **TypeScript**                    | Type safety                         |
+| **React Router 7**                | Client-side routing                 |
+| **Zustand**                       | Lightweight state management        |
+| **Bootstrap 5 + React-Bootstrap** | UI components                       |
+| **Axios**                         | HTTP client                         |
+| **Nginx**                         | Static file serving & reverse proxy |
 
 ### Backend
 
-| Technology | Purpose |
-|---|---|
-| **NestJS 11** | Server framework (Node.js) |
-| **TypeScript 5** | Type safety |
-| **TypeORM** | Database ORM |
-| **MySQL 8.0** | Relational database |
-| **Passport.js** | Authentication (JWT + Google OAuth) |
-| **Argon2** | Password hashing |
-| **Nodemailer** | Email service (password reset) |
-| **Winston** | Structured logging |
-| **class-validator** | DTO validation |
-| **Jest + Supertest** | Unit & integration testing |
+| Technology           | Purpose                                           |
+| -------------------- | ------------------------------------------------- |
+| **NestJS 11**        | Server framework (Node.js)                        |
+| **TypeScript 5**     | Type safety                                       |
+| **TypeORM**          | Database ORM                                      |
+| **MySQL 8.0**        | Relational database                               |
+| **Redis 7**          | Query cache (cache-aside pattern with TTL jitter) |
+| **Passport.js**      | Authentication (JWT + Google OAuth)               |
+| **Argon2**           | Password hashing                                  |
+| **Nodemailer**       | Email service (password reset)                    |
+| **Winston**          | Structured logging                                |
+| **class-validator**  | DTO validation                                    |
+| **Jest + Supertest** | Unit & integration testing                        |
 
 ### DevOps & Infrastructure
 
-| Technology | Purpose |
-|---|---|
-| **Docker & Docker Compose** | Containerization |
-| **AWS EC2** | Application hosting |
-| **AWS RDS** | Managed MySQL database |
-| **Nginx** | Reverse proxy + SSL termination |
-| **Let's Encrypt** | Free SSL/TLS certificates |
-| **GitHub Actions** | CI/CD pipeline |
-| **Semantic Release** | Automated versioning & releases |
-| **Commitlint + Husky** | Conventional commit enforcement |
+| Technology                  | Purpose                         |
+| --------------------------- | ------------------------------- |
+| **Docker & Docker Compose** | Containerization                |
+| **AWS EC2**                 | Application hosting             |
+| **AWS RDS**                 | Managed MySQL database          |
+| **Nginx**                   | Reverse proxy + SSL termination |
+| **Let's Encrypt**           | Free SSL/TLS certificates       |
+| **GitHub Actions**          | CI/CD pipeline                  |
+| **Semantic Release**        | Automated versioning & releases |
+| **Commitlint + Husky**      | Conventional commit enforcement |
 
 ---
 
@@ -210,6 +217,7 @@ flowchart LR
 ```
 
 Versioning follows [Conventional Commits](https://www.conventionalcommits.org/):
+
 - `feat:` → minor version bump
 - `fix:` → patch version bump
 - `feat!:` / `BREAKING CHANGE` → major version bump
@@ -222,65 +230,65 @@ All endpoints are prefixed with `/api/v1`.
 
 ### Auth (`/auth`)
 
-| Method | Endpoint | Auth | Description |
-|---|---|---|---|
-| `POST` | `/auth/signup` | Public | Register new user (with email) |
-| `POST` | `/auth/signin` | Public | Login (returns JWT token) |
-| `GET` | `/auth/me` | JWT | Get current authenticated user |
-| `POST` | `/auth/forgot-password` | Public | Request password reset email |
-| `POST` | `/auth/reset-password` | Public | Reset password with token |
-| `GET` | `/auth/google` | Public | Initiate Google OAuth flow |
-| `GET` | `/auth/google/callback` | Public | Google OAuth callback (redirects with token) |
+| Method | Endpoint                | Auth   | Description                                  |
+| ------ | ----------------------- | ------ | -------------------------------------------- |
+| `POST` | `/auth/signup`          | Public | Register new user (with email)               |
+| `POST` | `/auth/signin`          | Public | Login (returns JWT token)                    |
+| `GET`  | `/auth/me`              | JWT    | Get current authenticated user               |
+| `POST` | `/auth/forgot-password` | Public | Request password reset email                 |
+| `POST` | `/auth/reset-password`  | Public | Reset password with token                    |
+| `GET`  | `/auth/google`          | Public | Initiate Google OAuth flow                   |
+| `GET`  | `/auth/google/callback` | Public | Google OAuth callback (redirects with token) |
 
 ### Users (`/users`)
 
-| Method | Endpoint | Auth | Description |
-|---|---|---|---|
-| `GET` | `/users` | JWT | List all users (filterable by username, role, gender) |
-| `POST` | `/users` | JWT | Create a new user |
-| `GET` | `/users/:id` | JWT | Get user by ID |
-| `PUT` | `/users/:id` | JWT + Owner/Admin | Update user (non-admins cannot modify roles) |
-| `DELETE` | `/users/:id` | JWT + Admin | Delete user |
-| `GET` | `/users/profile` | JWT | Get user profile by query `?id=` |
-| `GET` | `/users/logs` | JWT | Get user activity logs by query `?id=` |
-| `GET` | `/users/logsByGroup` | JWT | Get user logs grouped by result `?id=` |
+| Method   | Endpoint             | Auth              | Description                                           |
+| -------- | -------------------- | ----------------- | ----------------------------------------------------- |
+| `GET`    | `/users`             | JWT               | List all users (filterable by username, role, gender) |
+| `POST`   | `/users`             | JWT               | Create a new user                                     |
+| `GET`    | `/users/:id`         | JWT               | Get user by ID                                        |
+| `PUT`    | `/users/:id`         | JWT + Owner/Admin | Update user (non-admins cannot modify roles)          |
+| `DELETE` | `/users/:id`         | JWT + Admin       | Delete user                                           |
+| `GET`    | `/users/profile`     | JWT               | Get user profile by query`?id=`                       |
+| `GET`    | `/users/logs`        | JWT               | Get user activity logs by query`?id=`                 |
+| `GET`    | `/users/logsByGroup` | JWT               | Get user logs grouped by result`?id=`                 |
 
 ### Meals (`/meals`)
 
-| Method | Endpoint | Auth | Description |
-|---|---|---|---|
-| `GET` | `/meals` | Admin | List meals (paginated, filterable by `?page=&limit=&type=`) |
-| `GET` | `/meals/options` | Admin | Get meals by type `?typeId=` |
-| `POST` | `/meals` | Admin | Create a new meal |
-| `GET` | `/meals/:id` | Admin | Get meal by ID |
-| `PUT` | `/meals/:id` | Admin | Update meal |
-| `DELETE` | `/meals/:id` | Admin | Delete meal |
-| `GET` | `/meals/my` | JWT | List current user's custom meals (paginated) |
-| `POST` | `/meals/my` | JWT | Create a custom meal |
-| `PUT` | `/meals/my/:id` | JWT | Update own custom meal |
-| `DELETE` | `/meals/my/:id` | JWT | Delete own custom meal |
+| Method   | Endpoint         | Auth  | Description                                                |
+| -------- | ---------------- | ----- | ---------------------------------------------------------- |
+| `GET`    | `/meals`         | Admin | List meals (paginated, filterable by`?page=&limit=&type=`) |
+| `GET`    | `/meals/options` | Admin | Get meals by type`?typeId=`                                |
+| `POST`   | `/meals`         | Admin | Create a new meal                                          |
+| `GET`    | `/meals/:id`     | Admin | Get meal by ID                                             |
+| `PUT`    | `/meals/:id`     | Admin | Update meal                                                |
+| `DELETE` | `/meals/:id`     | Admin | Delete meal                                                |
+| `GET`    | `/meals/my`      | JWT   | List current user's custom meals (paginated)               |
+| `POST`   | `/meals/my`      | JWT   | Create a custom meal                                       |
+| `PUT`    | `/meals/my/:id`  | JWT   | Update own custom meal                                     |
+| `DELETE` | `/meals/my/:id`  | JWT   | Delete own custom meal                                     |
 
 ### Plans (`/plans`)
 
-| Method | Endpoint | Auth | Description |
-|---|---|---|---|
-| `GET` | `/plans` | Admin | List all plans |
-| `GET` | `/plans/byUser` | Admin | Get all plans grouped by user |
-| `GET` | `/plans/me` | JWT | Get current user's saved plans (`?from=&to=&sort=&page=&limit=&mealName=`) |
-| `POST` | `/plans` | JWT | Create a single plan |
-| `POST` | `/plans/weekly-preview` | JWT | Generate 7-day draft plan (not persisted) |
-| `POST` | `/plans/replace-meal` | JWT | Get random replacement meal of same type |
-| `POST` | `/plans/weekly-commit` | JWT | Bulk save weekly plans to database |
-| `DELETE` | `/plans/:id` | JWT | Delete a plan |
+| Method   | Endpoint                | Auth  | Description                                                                |
+| -------- | ----------------------- | ----- | -------------------------------------------------------------------------- |
+| `GET`    | `/plans`                | Admin | List all plans                                                             |
+| `GET`    | `/plans/byUser`         | Admin | Get all plans grouped by user                                              |
+| `GET`    | `/plans/me`             | JWT   | Get current user's saved plans (`?from=&to=&sort=&page=&limit=&mealName=`) |
+| `POST`   | `/plans`                | JWT   | Create a single plan                                                       |
+| `POST`   | `/plans/weekly-preview` | JWT   | Generate 7-day draft plan (not persisted)                                  |
+| `POST`   | `/plans/replace-meal`   | JWT   | Get random replacement meal of same type                                   |
+| `POST`   | `/plans/weekly-commit`  | JWT   | Bulk save weekly plans to database                                         |
+| `DELETE` | `/plans/:id`            | JWT   | Delete a plan                                                              |
 
 ### Ingredients (`/ingredients`)
 
-| Method | Endpoint | Auth | Description |
-|---|---|---|---|
-| `GET` | `/ingredients` | Admin | List all ingredients |
-| `POST` | `/ingredients` | Admin | Create ingredient |
-| `PUT` | `/ingredients/:id` | Admin | Update ingredient |
-| `DELETE` | `/ingredients/:id` | Admin | Delete ingredient |
+| Method   | Endpoint           | Auth  | Description          |
+| -------- | ------------------ | ----- | -------------------- |
+| `GET`    | `/ingredients`     | Admin | List all ingredients |
+| `POST`   | `/ingredients`     | Admin | Create ingredient    |
+| `PUT`    | `/ingredients/:id` | Admin | Update ingredient    |
+| `DELETE` | `/ingredients/:id` | Admin | Delete ingredient    |
 
 ### Auth Guards
 
@@ -306,17 +314,17 @@ flowchart LR
 ```bash
 cd packages/backend
 
-npm run test:unit          # 77 unit tests (services layer)
+npm run test:unit          # 78 unit tests (services layer)
 npm run test:integration   # 22 integration tests (HTTP layer with Supertest)
-npm test                   # all 99 tests
+npm test                   # all 100 tests
 npm run test:cov           # with coverage report
 ```
 
-| Layer | Framework | What's Tested |
-|-------|-----------|---------------|
-| **Unit** | Jest + @nestjs/testing | PlanService, AuthService, MealService, UserService — business logic, validations, edge cases |
-| **Integration** | Jest + Supertest | Auth flow (signup/signin/guards), Plan flow (preview/replace/commit), DTO validation (400s), RBAC (403s) |
-| **CI Gate** | GitHub Actions | All tests must pass before semantic-release and deploy |
+| Layer           | Framework              | What's Tested                                                                                            |
+| --------------- | ---------------------- | -------------------------------------------------------------------------------------------------------- |
+| **Unit**        | Jest + @nestjs/testing | PlanService, AuthService, MealService, UserService — business logic, validations, edge cases             |
+| **Integration** | Jest + Supertest       | Auth flow (signup/signin/guards), Plan flow (preview/replace/commit), DTO validation (400s), RBAC (403s) |
+| **CI Gate**     | GitHub Actions         | All tests must pass before semantic-release and deploy                                                   |
 
 ---
 
@@ -338,16 +346,21 @@ cd whatToEat
 # 2. Install dependencies
 npm install
 
-# 3. Start MySQL (Docker)
+# 3. Start MySQL + Redis (Docker)
 docker compose -f docker-compose.db.yml -p whattoeat-local up -d
 
-# 4. Start both frontend & backend
+# 4. Seed the database (first time only)
+cd packages/backend && npm run seed && cd ../..
+
+# 5. Start both frontend & backend
 npm run dev
 ```
 
 - Frontend: `http://localhost:3000`
 - Backend: `http://localhost:3001`
 - MySQL: `localhost:3307`
+- Redis: `localhost:6379`
+- Redis Insight: `http://localhost:8001`
 
 ### Production Deployment
 
@@ -376,9 +389,11 @@ whatToEat/
 │   │   │   ├── ingredient/     # Ingredient management
 │   │   │   ├── type/           # Meal types (breakfast/lunch/dinner)
 │   │   │   ├── role/           # RBAC roles
+│   │   │   ├── cache/          # Redis cache module (global, cache-aside)
 │   │   │   ├── mail/           # Nodemailer email service
 │   │   │   ├── guards/         # JWT, Admin, OwnerOrAdmin guards
 │   │   │   ├── filters/        # Global exception handlers
+│   │   │   ├── seeds/          # DB seed script (roles, types, meals, etc.)
 │   │   │   └── app.module.ts   # Root module
 │   │   ├── test/               # E2E integration tests
 │   │   └── Dockerfile
@@ -397,7 +412,7 @@ whatToEat/
 │       ├── nginx.conf
 │       └── Dockerfile
 ├── docker-compose.yml          # Production containers
-├── docker-compose.db.yml       # Local MySQL
+├── docker-compose.db.yml       # Local MySQL + Redis + Redis Insight
 └── package.json                # Monorepo root
 ```
 
