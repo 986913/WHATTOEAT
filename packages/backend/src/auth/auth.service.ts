@@ -10,6 +10,7 @@ import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { UserService } from 'src/user/user.service';
 import { MailService } from 'src/mail/mail.service';
+import { SlackService } from 'src/slack/slack.service';
 import { ConfigEnum } from 'src/enum/config.enum';
 import { AuthUser } from './auth.strategy';
 import { GoogleAuthUser } from './google.strategy';
@@ -19,6 +20,7 @@ export class AuthService {
   constructor(
     private readonly userService: UserService,
     private readonly mailService: MailService,
+    private readonly slackService: SlackService,
     private readonly configService: ConfigService,
     private jwtService: JwtService,
   ) {}
@@ -72,6 +74,7 @@ export class AuthService {
       password,
       email,
     });
+    this.slackService.notify(`New user signed up, Username is: ${username}`);
     return newUser;
   }
 
@@ -194,6 +197,9 @@ export class AuthService {
           email: googleUser.email,
           profile: googleUser.photo ? { photo: googleUser.photo } : undefined,
         });
+        this.slackService.notify(
+          `New Google user signed up, Username is : ${username}`,
+        );
         // 重新查询以获取 roles 关联
         user = (await this.userService.findById(user.id))!;
       }

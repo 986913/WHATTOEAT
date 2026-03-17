@@ -18,6 +18,7 @@ import { PlanEntity } from './plan/entities/plan.entity';
 import { IngredientModule } from './ingredient/ingredient.module';
 import { AuthModule } from './auth/auth.module';
 import { RedisCacheModule } from './cache/redis-cache.module';
+import { SlackModule } from './slack/slack.module';
 
 @Module({
   imports: [
@@ -65,6 +66,7 @@ import { RedisCacheModule } from './cache/redis-cache.module';
       },
     }),
     RedisCacheModule,
+    SlackModule,
     UserModule,
     MealModule,
     IngredientModule,

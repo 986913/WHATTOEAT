@@ -8,6 +8,7 @@ import { TypeEntity } from 'src/type/entities/type.entity';
 import { IngredientEntity } from 'src/ingredient/entities/ingredient.entity';
 import { UserEntity } from 'src/user/entities/user.entity';
 import { MealType } from 'src/type/entities/type.entity';
+import { SlackService } from 'src/slack/slack.service';
 
 // ── helpers ──────────────────────────────────────────────
 function createMockQueryBuilder(resultData: any[] = []) {
@@ -74,6 +75,7 @@ describe('MealService', () => {
         },
         { provide: getRepositoryToken(UserEntity), useValue: userRepo },
         { provide: CACHE_MANAGER, useValue: cacheManager },
+        { provide: SlackService, useValue: { notify: jest.fn() } },
       ],
     }).compile();
 

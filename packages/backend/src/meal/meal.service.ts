@@ -12,6 +12,7 @@ import { MealEntity } from './entities/meal.entity';
 import { TypeEntity } from 'src/type/entities/type.entity';
 import { IngredientEntity } from 'src/ingredient/entities/ingredient.entity';
 import { UserEntity } from 'src/user/entities/user.entity';
+import { SlackService } from 'src/slack/slack.service';
 import { GetMealsDTO } from './dto/get-meals.dto';
 import { CreateMealDTO } from './dto/create-meal.dto';
 import { UpdateMealDTO } from './dto/update-meal.dto';
@@ -29,6 +30,7 @@ export class MealService {
     private userRepo: Repository<UserEntity>,
     @Inject(CACHE_MANAGER)
     private cacheManager: Cache,
+    private readonly slackService: SlackService,
   ) {}
 
   // ================================
@@ -238,6 +240,9 @@ export class MealService {
 
     const saved = await this.mealRepo.save(meal);
     await this.invalidateMealCaches();
+    this.slackService.notify(
+      `Custom meal created: "${saved.name}" by userId #${userId}, username is ${user?.username}`,
+    );
     return saved;
   }
 

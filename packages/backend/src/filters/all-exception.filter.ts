@@ -7,6 +7,7 @@ import {
 import { HttpAdapterHost } from '@nestjs/core';
 import { ArgumentsHost, Catch } from '@nestjs/common';
 import { Request, Response } from 'express';
+import { SlackService } from 'src/slack/slack.service';
 
 // 自定义Global异常过滤器: 装饰器 @Catch() 指定该过滤器捕获所有异常(兜底)，包括非HTTP异常, HttpException异常, TypeORM异常等等
 @Catch()
@@ -14,6 +15,7 @@ export class AllExceptionFilter implements ExceptionFilter {
   constructor(
     private readonly logger: LoggerService,
     private readonly httpAdapterHost: HttpAdapterHost,
+    private readonly slackService: SlackService,
   ) {}
 
   /* 实现 ExceptionFilter 接口的 catch 方法, 用于捕获异常:
@@ -61,6 +63,14 @@ export class AllExceptionFilter implements ExceptionFilter {
     };
 
     this.logger.error('[Ming Global Filter]', responseBody);
+
+    // 仅 5xx 错误发送 Slack 告警（4xx 是客户端错误，不需要告警）
+    if (httpStatus >= 500) {
+      this.slackService.notify(
+        `[SERVER ERROR] ${request.method} ${request.url}\nStatus: ${httpStatus}\nError: ${String(msg)}`,
+      );
+    }
+
     httpAdapter.reply(response, responseBody, httpStatus);
   }
 }

@@ -27,50 +27,85 @@
 #### Architecture
 
 ```mermaid
-graph TB
-    subgraph Edge["Edge / Entry"]
-        Browser["Browser / Mobile"]
-        DNS["Route53 / mealdice.com"]
+flowchart TB
+    %% --- 🎨 核心主题与样式定义 (ClassDefs) ---
+    classDef default fill:#f8f9fa,stroke:#ced4da,stroke-width:1px,color:#212529;
+    classDef clientLayer fill:#e7f5ff,stroke:#339af0,stroke-width:2px,color:#0b7285,rx:8px,ry:8px;
+    classDef edgeLayer fill:#fff4e6,stroke:#ff922b,stroke-width:2px,color:#d9480f,rx:8px,ry:8px;
+    classDef appFrontend fill:#ebfbee,stroke:#51cf66,stroke-width:2px,color:#2b8a3e,rx:8px,ry:8px;
+    classDef appBackend fill:#f3f0ff,stroke:#845ef7,stroke-width:2px,color:#5c148c,rx:8px,ry:8px;
+    classDef cacheLayer fill:#ffe3e3,stroke:#ff8787,stroke-width:2px,color:#c92a2a,rx:8px,ry:8px;
+    classDef dbLayer fill:#e3fafc,stroke:#3bc9db,stroke-width:2px,color:#0b7285;
+    classDef externalLayer fill:#f1f3f5,stroke:#868e96,stroke-width:2px,color:#343a40,rx:8px,ry:8px;
+
+    %% --- 🔳 容器外框虚线优化 ---
+    style Client fill:none,stroke:#339af0,stroke-width:2px,stroke-dasharray: 5 5,rx:10
+    style Edge fill:none,stroke:#ff922b,stroke-width:2px,stroke-dasharray: 5 5,rx:10
+    style App fill:none,stroke:#845ef7,stroke-width:2px,stroke-dasharray: 5 5,rx:10
+    style FE fill:none,stroke:#51cf66,stroke-width:1px,rx:8
+    style BE fill:none,stroke:#845ef7,stroke-width:1px,rx:8
+    style Cache fill:none,stroke:#ff8787,stroke-width:2px,stroke-dasharray: 5 5,rx:10
+    style Data fill:none,stroke:#3bc9db,stroke-width:2px,stroke-dasharray: 5 5,rx:10
+    style External fill:none,stroke:#868e96,stroke-width:2px,stroke-dasharray: 5 5,rx:10
+
+    %% ========== CLIENT ==========
+    subgraph Client ["📱 Client Layer"]
+        Browser(["Browser / Mobile / Pad"]):::clientLayer
     end
 
-    subgraph EC2["AWS EC2 (Docker Compose)"]
-        subgraph NginxLayer["Nginx (Reverse Proxy)"]
-            Nginx["Nginx :443"]
+    %% ========== EDGE ==========
+    subgraph Edge ["⚡ Edge Layer"]
+        DNS{{"Route53 (mealdice.com)"}}:::edgeLayer
+        Nginx["Nginx (TLS + Reverse Proxy)"]:::edgeLayer
+    end
+
+    %% ========== APPLICATION ==========
+    subgraph App ["⚙️ Application Layer (EC2 - Docker)"]
+        subgraph FE ["Frontend"]
+            React("React 19 SPA"):::appFrontend
         end
 
-        subgraph FE["Frontend"]
-            React["React 19 SPA"]
-        end
-
-        subgraph BE["Backend"]
-            NestJS["NestJS API :3001"]
-            Auth["JWT + Google OAuth"]
-        end
-
-        subgraph Cache["Cache"]
-            Redis["Redis"]
+        subgraph BE ["Backend"]
+            NestJS("NestJS API :3001"):::appBackend
+            Auth(["JWT + Google OAuth"]):::appBackend
         end
     end
 
-    subgraph RDS["AWS RDS"]
-        MySQL[("MySQL 8.0")]
+    %% ========== CACHE ==========
+    subgraph Cache ["🚀 Cache Layer"]
+        Redis[("Redis")]:::cacheLayer
     end
 
-    Browser -->|"HTTPS"| DNS
+    %% ========== DATA ==========
+    subgraph Data ["💾 Data Layer"]
+        MySQL[("AWS RDS MySQL 8.0")]:::dbLayer
+    end
+
+    %% ========== EXTERNAL ==========
+    subgraph External ["🔗 External Services"]
+        Slack[["Slack Webhook"]]:::externalLayer
+    end
+
+    %% ========== FLOW (保持原有逻辑) ==========
+
+    %% 主干流量（加粗线）
+    Browser == "HTTPS Request" ==> DNS
     DNS --> Nginx
 
-    Nginx -->|"Static"| React
-    Nginx -->|"/api/v1"| NestJS
+    %% 静态资源与API分流（区分线型）
+    Nginx -. "Serve Static" .-> React
+    Nginx == "/api/v1" ==> NestJS
 
-    NestJS --> Redis
-    NestJS -->|"Cache Miss"| MySQL
+    %% 内部服务调用
+    NestJS -. "Auth" .-> Auth
 
-    style DNS fill:#FF6B35,color:#fff,stroke:none
-    style Nginx fill:#009639,color:#fff,stroke:none
-    style NestJS fill:#E0234E,color:#fff,stroke:none
-    style MySQL fill:#4479A1,color:#fff,stroke:none
-    style React fill:#61DAFB,color:#000,stroke:none
-    style Redis fill:#DC382D,color:#fff,stroke:none
+    %% 垂直数据链路
+    NestJS == "Cache" ==> Redis
+    Redis -. "Cache Miss" .-> MySQL
+
+    %% 外部异步调用
+    NestJS -. "Async Notification" .-> Slack
+
 ```
 
 > **Note:** This is not the final architecture. Currently working on Infrastructure as Code (Terraform), multi-instance deployment with load balancing, and auto-scaling to eliminate the single point of failure.
@@ -174,6 +209,7 @@ erDiagram
 | **Argon2**           | Password hashing                                  |
 | **Nodemailer**       | Email service (password reset)                    |
 | **Winston**          | Structured logging                                |
+| **Slack Webhook**    | Real-time notifications (Incoming Webhook)        |
 | **class-validator**  | DTO validation                                    |
 | **Jest + Supertest** | Unit & integration testing                        |
 
@@ -196,24 +232,72 @@ erDiagram
 
 ```mermaid
 flowchart LR
-    A["Push to main"] --> T["Test Job"]
-    T --> T1["Unit Tests (77)"]
-    T --> T2["Integration Tests (22)"]
-    T1 & T2 --> B["Semantic Release"]
-    B -->|"Analyze commits"| C{"New release?"}
-    C -->|"Yes"| D["Create GitHub Release"]
-    D --> E["Deploy Job"]
-    C -->|"No"| F["Skip"]
+    %% --- 🎨 自定义样式与色彩 (完美保留你的主题色并增加质感) ---
+    classDef trigger fill:#FF6B35,stroke:#c4491a,stroke-width:2px,color:#fff,rx:20px,ry:20px;
+    classDef test fill:#6f42c1,stroke:#4c2889,stroke-width:2px,color:#fff,rx:8px,ry:8px;
+    classDef release fill:#238636,stroke:#175c22,stroke-width:2px,color:#fff,rx:8px,ry:8px;
+    classDef decision fill:#fff3cd,stroke:#ffe69c,stroke-width:2px,color:#664d03;
+    classDef deploy fill:#f8f9fa,stroke:#adb5bd,stroke-width:2px,color:#343a40,rx:8px,ry:8px;
+    classDef docker fill:#2496ED,stroke:#1668a8,stroke-width:2px,color:#fff,rx:6px,ry:6px;
+    classDef skip fill:#f8f9fa,stroke:#ced4da,stroke-width:2px,color:#adb5bd,stroke-dasharray: 5 5,rx:20px,ry:20px;
 
-    E --> E1["SSH into EC2"]
-    E1 --> E2["rsync codebase"]
-    E2 --> E3["Inject .env secrets"]
-    E3 --> E4["docker compose up -d --build"]
+    %% --- 🔳 阶段分组虚线边框 ---
+    style CIPhase fill:none,stroke:#6f42c1,stroke-width:2px,stroke-dasharray: 5 5,rx:10
+    style ReleasePhase fill:none,stroke:#238636,stroke-width:2px,stroke-dasharray: 5 5,rx:10
+    style CDPhase fill:none,stroke:#2496ED,stroke-width:2px,stroke-dasharray: 5 5,rx:10
 
-    style A fill:#FF6B35,color:#fff,stroke:none
-    style T fill:#6f42c1,color:#fff,stroke:none
-    style D fill:#238636,color:#fff,stroke:none
-    style E4 fill:#2496ED,color:#fff,stroke:none
+    %% ========== 触发点 ==========
+    A(["🚀 Push to main"]):::trigger
+
+    %% ========== CI 阶段 ==========
+    subgraph CIPhase ["🧪 Continuous Integration (CI)"]
+        direction LR
+        T["Test Job"]:::test
+        T1["Unit Tests (77)"]:::test
+        T2["Integration Tests (22)"]:::test
+    end
+
+    %% ========== Release 阶段 ==========
+    subgraph ReleasePhase ["📦 Release Management"]
+        direction LR
+        B["Semantic Release"]:::release
+        C{"New release?"}:::decision
+        D["Create GitHub Release"]:::release
+        F(["Skip"]):::skip
+    end
+
+    %% ========== CD 阶段 ==========
+    subgraph CDPhase ["🚢 Deployment (CD)"]
+        direction LR
+        E["Deploy Job"]:::deploy
+        E1["SSH into EC2"]:::deploy
+        E2["rsync codebase"]:::deploy
+        E3["Inject .env secrets"]:::deploy
+        E4["🐳 docker compose up -d --build"]:::docker
+    end
+
+    %% ========== 链路逻辑 (严格保持原有逻辑) ==========
+
+    %% 主链路使用加粗箭头 (==>) 突出 Happy Path
+    A ==> T
+    T --> T1
+    T --> T2
+
+    %% 测试汇聚到发布
+    T1 & T2 ==> B
+
+    B -- "Analyze commits" --> C
+
+    %% 判断分支
+    C == "Yes" ==> D
+    C -. "No" .-> F
+
+    %% 部署链路
+    D ==> E
+    E ==> E1
+    E1 --> E2
+    E2 --> E3
+    E3 ==> E4
 ```
 
 Versioning follows [Conventional Commits](https://www.conventionalcommits.org/):
@@ -309,6 +393,42 @@ flowchart LR
 
 ---
 
+## Slack Webhook Notifications
+
+Real-time event notifications via [Slack Incoming Webhooks](https://api.slack.com/messaging/webhooks) — a lightweight, fire-and-forget integration that pushes server-side events to a Slack channel without polling.
+
+**How it works:**
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant NestJS
+    participant Slack as Slack Webhook
+
+    User->>NestJS: POST /auth/signup
+    NestJS->>NestJS: Create user in DB
+    NestJS-->>Slack: POST { text: "New user: alice" }
+    NestJS->>User: 201 Created
+    Note over NestJS,Slack: Fire-and-forget (non-blocking)
+```
+
+**Events notified:**
+
+| Event               | Trigger                                | Example message                                                  |
+| ------------------- | -------------------------------------- | ---------------------------------------------------------------- |
+| New user signup     | `POST /auth/signup`                    | `New user signed up: alice`                                      |
+| Google OAuth signup | `GET /auth/google/callback` (new user) | `New Google user signed up: alice`                               |
+| Custom meal created | `POST /meals/my`                       | `Custom meal created: "Pasta" by user #5`                        |
+| Server error (5xx)  | Any unhandled exception                | `[SERVER ERROR] GET /api/v1/plans — 500 — Internal Server Error` |
+
+**Design decisions:**
+
+- **Fire-and-forget** — notifications are non-blocking; failures are logged but never affect the API response
+- **5xx only** — only server errors trigger alerts; 4xx client errors (bad input, auth failures) are intentionally excluded to avoid noise
+- **Graceful degradation** — if `SLACK_WEBHOOK_URL` is not configured, the service logs a warning at startup and skips all notifications silently
+
+---
+
 ## Testing
 
 ```bash
@@ -390,6 +510,7 @@ whatToEat/
 │   │   │   ├── type/           # Meal types (breakfast/lunch/dinner)
 │   │   │   ├── role/           # RBAC roles
 │   │   │   ├── cache/          # Redis cache module (global, cache-aside)
+│   │   │   ├── slack/          # Slack webhook notifications (fire-and-forget)
 │   │   │   ├── mail/           # Nodemailer email service
 │   │   │   ├── guards/         # JWT, Admin, OwnerOrAdmin guards
 │   │   │   ├── filters/        # Global exception handlers

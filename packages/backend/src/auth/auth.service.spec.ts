@@ -10,6 +10,7 @@ import * as argon2 from 'argon2';
 import { AuthService } from './auth.service';
 import { UserService } from 'src/user/user.service';
 import { MailService } from 'src/mail/mail.service';
+import { SlackService } from 'src/slack/slack.service';
 
 // ── helpers ──────────────────────────────────────────────
 function makeUser(overrides: Record<string, any> = {}) {
@@ -69,6 +70,7 @@ describe('AuthService', () => {
         AuthService,
         { provide: UserService, useValue: userService },
         { provide: MailService, useValue: mailService },
+        { provide: SlackService, useValue: { notify: jest.fn() } },
         { provide: JwtService, useValue: jwtService },
         { provide: ConfigService, useValue: configService },
       ],

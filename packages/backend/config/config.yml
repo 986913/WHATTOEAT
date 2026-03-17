@@ -22,3 +22,5 @@ google:
 mail:
   user: ${MAIL_USER}
   pass: ${MAIL_PASS}
+slack:
+  webhookUrl: ${SLACK_WEBHOOK_URL}

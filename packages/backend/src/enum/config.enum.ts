@@ -25,6 +25,9 @@ export enum ConfigEnum {
   // Mail (Gmail SMTP)
   MAIL_USER = 'mail.user',
   MAIL_PASS = 'mail.pass',
+
+  // Slack
+  SLACK_WEBHOOK_URL = 'slack.webhookUrl',
 }
 
 export enum LogEnum {
