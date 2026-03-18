@@ -1,7 +1,31 @@
-import { Card } from 'react-bootstrap';
+import { useState } from 'react';
+import { Card, Form, Button } from 'react-bootstrap';
+import axios from '../../utils/axios';
+import { useToast } from '../../hooks/useToast';
+import AppToast from '../../components/AppToast';
 import '../../styles/pages/feedback.css';
 
 export default function Feedback() {
+  const [message, setMessage] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const { toast, success, error } = useToast();
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!message.trim()) return;
+
+    setSubmitting(true);
+    try {
+      await axios.post('/feedback', { message: message.trim() });
+      success('Thank you for your feedback!');
+      setMessage('');
+    } catch (err) {
+      error(err);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   return (
     <div className='feedback-page'>
       <Card className='feedback-card'>
@@ -13,43 +37,48 @@ export default function Feedback() {
             </p>
           </div>
 
-          <div className='feedback-options'>
-            <a
-              href='mailto:merylliu1994@gmail.com?subject=MealDice Feedback'
-              className='feedback-option'
-            >
-              <div className='feedback-option-icon'>
-                <i className='fa-regular fa-envelope'></i>
+          <Form onSubmit={handleSubmit}>
+            <Form.Group className='mb-3'>
+              <Form.Control
+                as='textarea'
+                rows={5}
+                placeholder='Tell me what you think...'
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                maxLength={1000}
+                className='feedback-textarea'
+              />
+              <div className='feedback-char-count'>
+                {message.length} / 1000
               </div>
-              <div className='feedback-option-content'>
-                <h4>Email</h4>
-                <p>merylliu1994@gmail.com</p>
-              </div>
-              <i className='fa-solid fa-arrow-right feedback-arrow'></i>
-            </a>
+            </Form.Group>
 
-            <a
-              href='https://www.linkedin.com/in/mingyue-liu-22b37612a/'
-              target='_blank'
-              rel='noopener noreferrer'
-              className='feedback-option'
+            <Button
+              type='submit'
+              className='feedback-submit-btn'
+              disabled={submitting || !message.trim()}
             >
-              <div className='feedback-option-icon'>
-                <i className='fa-brands fa-linkedin'></i>
-              </div>
-              <div className='feedback-option-content'>
-                <h4>LinkedIn</h4>
-                <p>Connect with me</p>
-              </div>
-              <i className='fa-solid fa-arrow-right feedback-arrow'></i>
-            </a>
-          </div>
+              {submitting ? 'Sending...' : 'Send Feedback'}
+            </Button>
+          </Form>
 
           <div className='feedback-footer'>
-            <p>Thank you for helping make MealDice better!</p>
+            <p>
+              Or reach out directly at{' '}
+              <a href='mailto:merylliu1994@gmail.com'>merylliu1994@gmail.com</a>
+              {' / '}
+              <a
+                href='https://www.linkedin.com/in/mingyue-liu-22b37612a/'
+                target='_blank'
+                rel='noopener noreferrer'
+              >
+                LinkedIn
+              </a>
+            </p>
           </div>
         </Card.Body>
       </Card>
+      <AppToast {...toast} />
     </div>
   );
 }

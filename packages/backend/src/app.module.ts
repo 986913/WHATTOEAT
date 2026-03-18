@@ -19,6 +19,7 @@ import { IngredientModule } from './ingredient/ingredient.module';
 import { AuthModule } from './auth/auth.module';
 import { RedisCacheModule } from './cache/redis-cache.module';
 import { SlackModule } from './slack/slack.module';
+import { FeedbackModule } from './feedback/feedback.module';
 
 @Module({
   imports: [
@@ -72,7 +73,8 @@ import { SlackModule } from './slack/slack.module';
     IngredientModule,
     PlanModule,
     LogModule,
-    AuthModule, // 引入 LogModule 来注册 Winston logger(单例)
+    AuthModule,
+    FeedbackModule, // Slack webhook-based feedback (no DB)
   ],
   controllers: [],
   providers: [],

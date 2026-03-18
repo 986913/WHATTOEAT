@@ -365,6 +365,12 @@ All endpoints are prefixed with `/api/v1`.
 | `POST`   | `/plans/weekly-commit`  | JWT   | Bulk save weekly plans to database                                         |
 | `DELETE` | `/plans/:id`            | JWT   | Delete a plan                                                              |
 
+### Feedback (`/feedback`)
+
+| Method | Endpoint    | Auth | Description                                     |
+| ------ | ----------- | ---- | ----------------------------------------------- |
+| `POST` | `/feedback` | JWT  | Submit feedback (sent to Slack via webhook, no DB) |
+
 ### Ingredients (`/ingredients`)
 
 | Method   | Endpoint           | Auth  | Description          |
@@ -419,6 +425,7 @@ sequenceDiagram
 | New user signup     | `POST /auth/signup`                    | `New user signed up: alice`                                      |
 | Google OAuth signup | `GET /auth/google/callback` (new user) | `New Google user signed up: alice`                               |
 | Custom meal created | `POST /meals/my`                       | `Custom meal created: "Pasta" by user #5`                        |
+| User feedback       | `POST /feedback`                       | `[FEEDBACK] from alice: "Love the app!"`                         |
 | Server error (5xx)  | Any unhandled exception                | `[SERVER ERROR] GET /api/v1/plans — 500 — Internal Server Error` |
 
 **Design decisions:**
@@ -510,6 +517,7 @@ whatToEat/
 │   │   │   ├── type/           # Meal types (breakfast/lunch/dinner)
 │   │   │   ├── role/           # RBAC roles
 │   │   │   ├── cache/          # Redis cache module (global, cache-aside)
+│   │   │   ├── feedback/       # User feedback (webhook-only, no DB)
 │   │   │   ├── slack/          # Slack webhook notifications (fire-and-forget)
 │   │   │   ├── mail/           # Nodemailer email service
 │   │   │   ├── guards/         # JWT, Admin, OwnerOrAdmin guards
