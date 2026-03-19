@@ -1,10 +1,12 @@
 # MealDice — What Should We Cook Today?
 
-> **Note:** This project is actively undergoing infrastructure upgrades — migrating to Infrastructure as Code (Terraform), improving scalability with multi-instance architecture, and adding Redis caching. The live site may experience occasional downtime during this transition. Thanks for your patience!
-
-> A full-stack meal planning application that eliminates the daily "what should I eat?" dilemma. Roll the dice, get personalized meals, and plan your week — all in one tap.
+> **Note:** This project is actively working on eliminating single points of failure — migrating to ECS Fargate, adding ALB load balancing, separating Redis to ElastiCache, enabling RDS Multi-AZ, and moving frontend to S3 + CloudFront. The live site may experience occasional downtime during this transition. Thanks for your patience!
 
 **Live:** [https://mealdice.com](https://mealdice.com)
+
+### Description
+
+A full-stack meal planning application that eliminates the daily "what should I eat?" dilemma. Roll the dice, get personalized meals, and plan your week — all in one tap.
 
 ---
 
@@ -108,7 +110,7 @@ flowchart TB
 
 ```
 
-> **Note:** This is not the final architecture. Currently working on Infrastructure as Code (Terraform), multi-instance deployment with load balancing, and auto-scaling to eliminate the single point of failure.
+> **Note:** This is not the final architecture. Currently migrating to ECS Fargate with ALB, ElastiCache, RDS Multi-AZ, and S3 + CloudFront to eliminate the single point of failure. IaC (Terraform/CDK) will follow once the target architecture is validated.
 
 ---
 
