@@ -1,6 +1,12 @@
 # MealDice — What Should We Cook Today?
 
-> **Note:** This project is actively working on eliminating single points of failure — migrating to ECS Fargate, adding ALB load balancing, separating Redis to ElastiCache, enabling RDS Multi-AZ, and moving frontend to S3 + CloudFront. The live site may experience occasional downtime during this transition. Thanks for your patience!
+> **Roadmap:**
+>
+> | Phase | Focus | Status |
+> |-------|-------|--------|
+> | **1 — High Availability** | Eliminate single points of failure — ALB, ECS Fargate, ElastiCache, RDS Multi-AZ, S3 + CloudFront | **In Progress** |
+> | **2 — AI-Powered Meal Planning** | LLM-driven weekly plan generation with streaming UI (SSE), smart caching to reduce token cost, and async task queue | Up Next |
+> | **3 — Infrastructure as Code** | Codify the entire architecture with Terraform / CDK | Planned |
 
 **Live:** [https://mealdice.com](https://mealdice.com)
 
