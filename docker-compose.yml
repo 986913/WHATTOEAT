@@ -1,6 +1,7 @@
 # 生产环境 docker-compose
 # 启动命令：docker compose -p whattoeat-prod up -d --build
 # 包含两个服务：backend (NestJS API) + nginx (前端静态文件 + 反向代理)
+# Redis 已迁移至 AWS ElastiCache，不再需要本地 Redis 容器
 # 环境变量从项目根目录的 .env 文件读取（由 CI/CD 部署时写入）
 
 services:
@@ -18,16 +19,7 @@ services:
       MAIL_PASS: ${MAIL_PASS}
       SLACK_WEBHOOK_URL: ${SLACK_WEBHOOK_URL}
     restart: unless-stopped
-    depends_on:
-      - redis
     # 注意：backend 没有 ports 映射，不对外暴露，只通过 Docker 内部网络被 nginx 访问
-
-  redis:
-    image: redis:7-alpine
-    container_name: redis-eat
-    restart: unless-stopped
-    command: redis-server --maxmemory 128mb --maxmemory-policy allkeys-lru
-    # 不对外暴露端口，只通过 Docker 内部网络被 backend 访问
 
   nginx:
     build: ./packages/frontend # 使用 packages/frontend/Dockerfile 构建镜像（多阶段：先 build React，再用 nginx 托管）

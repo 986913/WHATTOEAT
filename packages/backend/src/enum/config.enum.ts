@@ -21,6 +21,7 @@ export enum ConfigEnum {
   REDIS_HOST = 'redis.host',
   REDIS_PORT = 'redis.port',
   REDIS_TTL = 'redis.ttl',
+  REDIS_TLS = 'redis.tls',
 
   // Mail (Gmail SMTP)
   MAIL_USER = 'mail.user',

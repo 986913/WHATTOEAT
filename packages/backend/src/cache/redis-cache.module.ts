@@ -16,9 +16,11 @@ import { ConfigEnum } from 'src/enum/config.enum';
         const port = cfgService.get<number>(ConfigEnum.REDIS_PORT) || 6379;
         const ttl =
           (cfgService.get<number>(ConfigEnum.REDIS_TTL) || 120) * 1000;
+        const tls = cfgService.get<boolean>(ConfigEnum.REDIS_TLS) || false;
+        const protocol = tls ? 'rediss' : 'redis';
 
         return {
-          stores: [new KeyvRedis(`redis://${host}:${port}`)],
+          stores: [new KeyvRedis(`${protocol}://${host}:${port}`)],
           ttl,
         };
       },

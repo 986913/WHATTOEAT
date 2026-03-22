@@ -8,8 +8,9 @@ db:
     port: 3310
     # sync: true
 redis:
-  host: redis
+  host: master.mealdice-redis.tytogv.use2.cache.amazonaws.com
   port: 6379
+  tls: true
 google:
   callbackUrl: https://mealdice.com/api/v1/auth/google/callback
   frontendUrl: https://mealdice.com

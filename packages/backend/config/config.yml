@@ -11,6 +11,7 @@ redis:
   host: 127.0.0.1
   port: 6379
   ttl: 120
+  tls: false
 log:
   level: info
   on: true
