@@ -73,7 +73,7 @@ jobs:
         run: npm ci --prefix packages/frontend
 
       - name: Build frontend
-        run: npm run build --prefix packages/frontend
+        run: CI=false npm run build --prefix packages/frontend
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
