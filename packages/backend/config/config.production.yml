@@ -12,5 +12,5 @@ redis:
   port: 6379
   tls: true
 google:
-  callbackUrl: https://mealdice.com/api/v1/auth/google/callback
+  callbackUrl: https://api.mealdice.com/api/v1/auth/google/callback
   frontendUrl: https://mealdice.com
