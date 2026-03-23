@@ -20,6 +20,7 @@ import { AuthModule } from './auth/auth.module';
 import { RedisCacheModule } from './cache/redis-cache.module';
 import { SlackModule } from './slack/slack.module';
 import { FeedbackModule } from './feedback/feedback.module';
+import { HealthController } from './health/health.controller';
 
 @Module({
   imports: [
@@ -76,7 +77,7 @@ import { FeedbackModule } from './feedback/feedback.module';
     AuthModule,
     FeedbackModule, // Slack webhook-based feedback (no DB)
   ],
-  controllers: [],
+  controllers: [HealthController],
   providers: [],
 })
 export class AppModule {}

@@ -130,6 +130,18 @@ Before horizontal scaling, verify the backend is stateless:
 **Effort**: Medium (biggest architectural change)
 **Code changes**: Minimal backend changes; Nginx removal; deployment pipeline update
 
+**域名分离策略**：
+
+迁移后前端和后端通过不同域名独立部署：
+
+| | 域名 | 指向 | 说明 |
+|---|---|---|---|
+| 前端 | `mealdice.com` | → CloudFront (S3) | 用户浏览器访问此域名，加载 React 页面 |
+| 后端 API | `api.mealdice.com` | → ALB (EC2) | 前端代码请求此域名，获取 API 数据 |
+
+> **为什么需要子域名？** `mealdice.com` 不能同时指向 CloudFront 和 ALB。
+> 分开后互不干扰，也是业界前后端分离部署的标准做法。
+
 #### 4a. Frontend → S3 + CloudFront
 
 **What to do**:
