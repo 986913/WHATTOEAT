@@ -15,6 +15,12 @@ async function bootstrap() {
   // Global 使用同一 winston logger 实例, 替换掉 Nest默认的Logger
   app.useLogger(logger);
 
+  // CORS: 允许前端域名跨域请求 API
+  app.enableCors({
+    origin: ['https://mealdice.com', 'https://www.mealdice.com'],
+    credentials: true,
+  });
+
   // 设置Global的 API prefix
   app.setGlobalPrefix('api/v1');
 
