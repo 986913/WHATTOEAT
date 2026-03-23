@@ -1,7 +1,8 @@
 # 生产环境 docker-compose
 # 启动命令：docker compose -p whattoeat-prod up -d --build
-# 包含两个服务：backend (NestJS API) + nginx (前端静态文件 + 反向代理)
-# Redis 已迁移至 AWS ElastiCache，不再需要本地 Redis 容器
+# 只包含 backend 服务（NestJS API）
+# 前端已迁移至 S3 + CloudFront，Nginx 已移除，ALB 处理 HTTPS 和负载均衡
+# Redis 已迁移至 AWS ElastiCache
 # 环境变量从项目根目录的 .env 文件读取（由 CI/CD 部署时写入）
 
 services:
@@ -21,19 +22,3 @@ services:
     ports:
       - '3001:3001' # 暴露给 ALB，ALB 通过 EC2:3001 访问后端
     restart: unless-stopped
-
-  nginx:
-    build: ./packages/frontend # 使用 packages/frontend/Dockerfile 构建镜像（多阶段：先 build React，再用 nginx 托管）
-    container_name: nginx-eat
-    ports:
-      - '80:80' # HTTP（自动跳转到 HTTPS）
-      - '443:443' # HTTPS
-    volumes:
-      - /etc/letsencrypt/live/mealdice.com/fullchain.pem:/etc/nginx/ssl/fullchain.pem:ro
-      - /etc/letsencrypt/live/mealdice.com/privkey.pem:/etc/nginx/ssl/privkey.pem:ro
-      - /etc/letsencrypt/archive/mealdice.com:/etc/letsencrypt/archive/mealdice.com:ro
-    depends_on:
-      - backend # 确保 backend 先启动，因为 nginx 要反向代理到 backend:3001
-
-volumes:
-  mysql_data:

@@ -56,8 +56,40 @@ jobs:
         if: steps.semantic.outputs.new_release_published == 'true'
         run: echo "🚀 Released v${{ steps.semantic.outputs.new_release_version }}"
 
-  # Step 2: 有新版本发布时，自动部署到 EC2
-  deploy:
+  # Step 2a: 前端部署到 S3 + CloudFront
+  deploy-frontend:
+    needs: release
+    if: needs.release.outputs.new_release_published == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install frontend dependencies
+        run: npm ci --prefix packages/frontend
+
+      - name: Build frontend
+        run: npm run build --prefix packages/frontend
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-2
+
+      - name: Upload to S3
+        run: aws s3 sync packages/frontend/build/ s3://mealdice-frontend/ --delete
+
+      - name: Invalidate CloudFront cache
+        run: aws cloudfront create-invalidation --distribution-id E22MA8FD1ZLL3G --paths "/*"
+
+  # Step 2b: 后端部署到 EC2
+  deploy-backend:
     needs: release
     if: needs.release.outputs.new_release_published == 'true'
     runs-on: ubuntu-latest
@@ -84,12 +116,12 @@ jobs:
             -e "ssh" \
             . ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:~/app
 
-      - name: Build frontend and deploy on EC2
+      - name: Deploy backend on EC2
         run: |
           ssh ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << ENDSSH
             cd ~/app
 
-            # 写入 .env 文件供 docker-compose 使用（替代 bashrc）
+            # 写入 .env 文件供 docker-compose 使用
             cat > .env << 'ENVEOF'
           JWT_SECRET=${{ secrets.JWT_SECRET }}
           GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
@@ -101,7 +133,7 @@ jobs:
           SLACK_WEBHOOK_URL=${{ secrets.SLACK_WEBHOOK_URL }}
           ENVEOF
 
-            # 确保 Docker Compose v2 已安装（修复 v1 的 ContainerConfig 错误）
+            # 确保 Docker Compose v2 已安装
             if ! docker compose version &>/dev/null; then
               echo "Installing Docker Compose v2 plugin..."
               sudo mkdir -p /usr/lib/docker/cli-plugins
@@ -110,7 +142,7 @@ jobs:
               sudo chmod +x /usr/lib/docker/cli-plugins/docker-compose
             fi
 
-            # 停掉所有旧容器并重新 build 启动（后端在 Docker 内 build）
+            # 重新 build 启动后端
             echo "Restart docker containers"
             docker compose -p whattoeat-prod down 2>/dev/null || true
             docker compose -f docker-compose.yml -p whattoeat-prod up -d --build
