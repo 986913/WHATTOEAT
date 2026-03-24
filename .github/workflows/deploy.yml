@@ -88,64 +88,47 @@ jobs:
       - name: Invalidate CloudFront cache
         run: aws cloudfront create-invalidation --distribution-id E22MA8FD1ZLL3G --paths "/*"
 
-  # Step 2b: 后端部署到 EC2
+  # Step 2b: 后端部署到 ECS Fargate
+  # 流程：Build Docker image → Push to ECR → 触发 ECS rolling deployment
   deploy-backend:
     needs: release
     if: needs.release.outputs.new_release_published == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    env:
+      AWS_REGION: us-east-2
+      ECR_REPOSITORY: mealdice-backend
+      ECS_CLUSTER: mealdice-backend-cluster
+      ECS_SERVICE: mealdice-backend-service
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup SSH key
-        uses: webfactory/ssh-agent@v0.9.0
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
         with:
-          ssh-private-key: ${{ secrets.EC2_SSH_KEY }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
 
-      - name: Add EC2 to known hosts
-        run: ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
 
-      - name: Sync code to EC2
+      - name: Build, tag, and push image to ECR
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ needs.release.outputs.new_release_version }}
         run: |
-          rsync -avz --delete \
-            --exclude 'node_modules' \
-            --exclude '.git' \
-            --exclude 'packages/backend/node_modules' \
-            --exclude 'packages/frontend/node_modules' \
-            --exclude 'packages/frontend/build' \
-            -e "ssh" \
-            . ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:~/app
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG \
+                        -t $ECR_REGISTRY/$ECR_REPOSITORY:latest \
+                        ./packages/backend
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
 
-      - name: Deploy backend on EC2
+      - name: Deploy to ECS (rolling update)
         run: |
-          ssh ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << ENDSSH
-            cd ~/app
-
-            # 写入 .env 文件供 docker-compose 使用
-            cat > .env << 'ENVEOF'
-          JWT_SECRET=${{ secrets.JWT_SECRET }}
-          GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
-          GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}
-          DB_USERNAME=${{ secrets.DB_USERNAME }}
-          DB_PASSWORD=${{ secrets.DB_PASSWORD }}
-          MAIL_USER=${{ secrets.MAIL_USER }}
-          MAIL_PASS=${{ secrets.MAIL_PASS }}
-          SLACK_WEBHOOK_URL=${{ secrets.SLACK_WEBHOOK_URL }}
-          ENVEOF
-
-            # 确保 Docker Compose v2 已安装
-            if ! docker compose version &>/dev/null; then
-              echo "Installing Docker Compose v2 plugin..."
-              sudo mkdir -p /usr/lib/docker/cli-plugins
-              sudo curl -SL "https://github.com/docker/compose/releases/latest/download/docker-compose-linux-$(uname -m)" \
-                -o /usr/lib/docker/cli-plugins/docker-compose
-              sudo chmod +x /usr/lib/docker/cli-plugins/docker-compose
-            fi
-
-            # 重新 build 启动后端
-            echo "Restart docker containers"
-            docker compose -p whattoeat-prod down 2>/dev/null || true
-            docker compose -f docker-compose.yml -p whattoeat-prod up -d --build
-
-            echo "✅ Deployed v${{ needs.release.outputs.new_release_version }}"
-          ENDSSH
+          aws ecs update-service \
+            --cluster $ECS_CLUSTER \
+            --service $ECS_SERVICE \
+            --force-new-deployment
+          echo "✅ Deployed v${{ needs.release.outputs.new_release_version }} to ECS Fargate"

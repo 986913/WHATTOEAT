@@ -13,7 +13,7 @@ RUN npm ci
 COPY . .
 RUN npm run build
 
-# 声明容器监听 3001（实际不对外暴露，只在 Docker 内部网络被 nginx 反向代理访问）
+# 声明容器监听 3001，ALB 通过 target group 将流量转发到此端口
 EXPOSE 3001
 # 运行编译后的 NestJS 入口文件
 CMD ["node", "dist/src/main"]

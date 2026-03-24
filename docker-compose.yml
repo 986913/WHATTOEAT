@@ -1,24 +1,56 @@
-# 生产环境 docker-compose
-# 启动命令：docker compose -p whattoeat-prod up -d --build
-# 只包含 backend 服务（NestJS API）
-# 前端已迁移至 S3 + CloudFront，Nginx 已移除，ALB 处理 HTTPS 和负载均衡
-# Redis 已迁移至 AWS ElastiCache
-# 环境变量从项目根目录的 .env 文件读取（由 CI/CD 部署时写入）
+# ============================================================================
+# 📦 docker-compose.yml — 架构演变历史存档
+# ============================================================================
+#
+# ⚠️ 状态：此文件已废弃
+# 生产部署已全面迁移至 AWS ECS Fargate，本地开发请使用 docker-compose.db.yml
+# 保留此配置文件仅供参考，用于记录迁移前的生产环境部署方式。
+#
+# ----------------------------------------------------------------------------
+# 🏗️ 【迁移前】单机 EC2 容器部署架构
+# ----------------------------------------------------------------------------
+# 服务划分：
+#   - nginx:   反向代理 (处理 HTTPS，转发 /api 至 backend，其余至前端静态文件)
+#   - backend: NestJS API 服务 (端口 3001)
+#   - redis:   缓存服务 (端口 6379)
+#
+# 流量路径：
+#   用户 → EC2 公网 IP → Nginx (:443) → Backend (:3001) → Redis (:6379)
+#
+# 部署方式：
+#   CI (rsync 代码至 EC2) → docker compose up --build
+#
+# ----------------------------------------------------------------------------
+# ☁️ 【迁移后】AWS 云原生托管架构
+# ----------------------------------------------------------------------------
+# 服务演进：
+#   - Nginx    → 移除，由 ALB (HTTPS 终止 + 负载均衡) + CloudFront (前端 CDN) 替代
+#   - Redis    → 迁移至 AWS ElastiCache (托管型 Redis，支持 TLS，自动 Failover)
+#   - Backend  → 迁移至 AWS ECS Fargate (Serverless 容器，免除 EC2 节点运维)
+#   - Frontend → 迁移至 S3 (静态文件存储) + CloudFront (全球 CDN 加速)
+#
+# 流量路径：
+#   用户 → CloudFront (前端) / ALB (API) → Fargate Tasks → ElastiCache / RDS
+#
+# 部署方式：
+#   CI (构建镜像) → 推送至 ECR → ECS 触发滚动更新 (Rolling Deployment)
+# ============================================================================
 
-services:
-  backend:
-    build: ./packages/backend # 使用 packages/backend/Dockerfile 构建镜像
-    container_name: backend-eat
-    environment: # 传入容器的环境变量，供 NestJS ConfigService 读取
-      NODE_ENV: production
-      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
-      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
-      DB_USERNAME: ${DB_USERNAME}
-      DB_PASSWORD: ${DB_PASSWORD}
-      JWT_SECRET: ${JWT_SECRET}
-      MAIL_USER: ${MAIL_USER}
-      MAIL_PASS: ${MAIL_PASS}
-      SLACK_WEBHOOK_URL: ${SLACK_WEBHOOK_URL}
-    ports:
-      - '3001:3001' # 暴露给 ALB，ALB 通过 EC2:3001 访问后端
-    restart: unless-stopped
+# 历史配置存档：
+# services:
+#   backend:
+#     build: ./packages/backend
+#     container_name: backend-eat
+#     environment:
+#       NODE_ENV: production
+#       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+#       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+#       DB_USERNAME: ${DB_USERNAME}
+#       DB_PASSWORD: ${DB_PASSWORD}
+#       JWT_SECRET: ${JWT_SECRET}
+#       MAIL_USER: ${MAIL_USER}
+#       MAIL_PASS: ${MAIL_PASS}
+#       SLACK_WEBHOOK_URL: ${SLACK_WEBHOOK_URL}
+#     ports:
+#       - '3001:3001'
+#     restart: unless-stopped
