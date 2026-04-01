@@ -17,7 +17,11 @@ async function bootstrap() {
 
   // CORS: 允许前端域名跨域请求 API
   app.enableCors({
-    origin: ['https://mealdice.com', 'https://www.mealdice.com'],
+    origin: [
+      'https://mealdice.com',
+      'https://www.mealdice.com',
+      'http://localhost:3000',
+    ], // 允许的前端域名列表
     credentials: true,
   });
 

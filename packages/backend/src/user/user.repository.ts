@@ -1,6 +1,6 @@
 import * as argon2 from 'argon2';
 import { Injectable } from '@nestjs/common';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource, In, Repository } from 'typeorm';
 import { UserEntity } from './entities/user.entity';
 import { RoleEntity } from 'src/role/entities/role.entity';
 import { ProfileEntity } from './entities/profile.entity';
@@ -118,7 +118,7 @@ export class UserRepository {
     // 1️⃣ 处理 roles（2 | 3 -> RoleEntity[]
     let roleEntities: RoleEntity[] = [];
     if (roles && roles.length > 0) {
-      roleEntities = await this.roleRepo.findByIds(roles);
+      roleEntities = await this.roleRepo.find({ where: { id: In(roles) } });
     } else {
       // 如果没有传 roles，默认给read-only角色（id=3）
       const defaultRole = await this.roleRepo.findOne({ where: { id: 3 } });
@@ -211,7 +211,7 @@ export class UserRepository {
       const roleIds = updateUser.roles.filter((id) => !isNaN(id));
 
       if (roleIds.length > 0) {
-        const roles = await this.roleRepo.findByIds(roleIds);
+        const roles = await this.roleRepo.find({ where: { id: In(roleIds) } });
         if (roles.length !== roleIds.length) {
           throw new NotFoundException(
             'Some roles not found: ' + roleIds.join(', '),
