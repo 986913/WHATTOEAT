@@ -11,6 +11,8 @@ import MealCard, { type MealCardPlan } from '../../components/MealCard';
 import GroceryListModal from '../../components/GroceryListModal';
 import PlanBanner from '../../components/PlanBanner';
 import dayjs from 'dayjs';
+import AiGenerateModal from '../../components/AiGenerateModal';
+import { useAiMealPlan, type AiDay } from '../../hooks/useAiMealPlan';
 
 type DraftPlan = MealCardPlan;
 
@@ -62,6 +64,10 @@ export default function WeekPlans() {
   const [showGroceryList, setShowGroceryList] = useState(false);
   const [saveReady, setSaveReady] = useState(true);
   const saveReadyTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [streamState, setStreamState] = useState<'idle' | 'generating' | 'ai-draft'>('idle');
+  const [daysReady, setDaysReady] = useState(0);
+  const [currentPreference, setCurrentPreference] = useState('');
+  const [showAiModal, setShowAiModal] = useState(false);
 
   const tomorrow = dayjs().add(1, 'day').format('YYYY-MM-DD');
 
@@ -195,6 +201,63 @@ export default function WeekPlans() {
     }
   };
 
+  const buildSkeletonPlans = (startDate: string): DraftPlan[] =>
+    Array.from({ length: 7 }, (_, i) =>
+      dayjs(startDate).add(i, 'day').format('YYYY-MM-DD'),
+    ).flatMap((date) =>
+      [1, 2, 3].map((typeId) => ({
+        date,
+        typeId,
+        mealId: null,
+        isSkeleton: true,
+      })),
+    );
+
+  const { startGeneration, isConnecting } = useAiMealPlan({
+    onDay: (day: AiDay) => {
+      setDaysReady((prev) => prev + 1);
+      setDraftPlans((prev) => {
+        const withoutThisDay = prev.filter((p) => p.date !== day.date);
+        const newMeals: DraftPlan[] = day.meals.map((m) => ({
+          date: day.date,
+          typeId: m.typeId,
+          mealId: m.mealId,
+          mealName: m.mealId === null ? m.suggestion?.name : m.mealName,
+          mealImageUrl: m.mealImageUrl ?? undefined,
+          mealVideoUrl: m.mealVideoUrl ?? undefined,
+          mealIngredients: m.mealIngredients,
+          isOwnMeal: m.isOwnMeal,
+          isAiSuggestion: m.mealId === null,
+          reason: m.reason,
+          suggestionIngredients: m.suggestion?.ingredients,
+        }));
+        return [...withoutThisDay, ...newMeals].sort((a, b) =>
+          a.date !== b.date
+            ? a.date.localeCompare(b.date)
+            : a.typeId - b.typeId,
+        );
+      });
+    },
+    onDone: () => {
+      setStreamState('ai-draft');
+      setIsSaved(false);
+    },
+    onError: (msg: string) => {
+      setStreamState('idle');
+      error(msg);
+    },
+  });
+
+  const handleAiGenerate = async (preference: string) => {
+    setShowAiModal(false);
+    setCurrentPreference(preference);
+    setStreamState('generating');
+    setDaysReady(0);
+    setIsSaved(false);
+    setDraftPlans(buildSkeletonPlans(tomorrow));
+    await startGeneration(preference, tomorrow);
+  };
+
   const grouped = groupPlansByDate(draftPlans);
 
   if (loadingPreview && draftPlans.length === 0) {
@@ -230,7 +293,21 @@ export default function WeekPlans() {
       </div>
 
       {/* State Banner */}
-      {isSaved ? (
+      {streamState === 'generating' ? (
+        <div className='plan-banner-generating'>
+          <div className='plan-banner-generating-left'>
+            <div className='plan-banner-generating-dot' />
+            <div>
+              <div className='plan-banner-generating-text'>
+                AI is planning your week…
+              </div>
+              <div className='plan-banner-generating-sub'>
+                {daysReady} of 7 days ready · "{currentPreference}"
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : isSaved ? (
         <PlanBanner
           variant='saved'
           title='Saved Plan'
@@ -250,17 +327,24 @@ export default function WeekPlans() {
               >
                 <i className='fa-solid fa-arrows-rotate'></i> Regenerate
               </button>
+              <button className='plan-banner-btn' onClick={() => setShowAiModal(true)}>
+                ✨ AI Generate
+              </button>
             </>
           }
         />
       ) : (
         <PlanBanner
           variant='draft'
-          title='Draft Preview'
-          description="These meals were randomly generated. Shuffle what you don't like, then save."
+          title={streamState === 'ai-draft' ? `AI Draft — "${currentPreference}"` : 'Draft Preview'}
+          description={
+            streamState === 'ai-draft'
+              ? 'AI-generated plan ready. Shuffle what you want to change, then save.'
+              : "These meals were randomly generated. Shuffle what you don't like, then save."
+          }
           actions={
             <>
-              {hasSavedPlan.current && (
+              {hasSavedPlan.current && streamState !== 'ai-draft' && (
                 <button className='plan-banner-btn' onClick={loadWeek}>
                   <i className='fa-solid fa-rotate-left'></i> Back to Saved
                 </button>
@@ -290,6 +374,12 @@ export default function WeekPlans() {
                 disabled={loadingPreview}
               >
                 <i className='fa-solid fa-arrows-rotate'></i>
+              </button>
+              <button
+                className='plan-banner-btn'
+                onClick={() => setShowAiModal(true)}
+              >
+                ✨ AI Generate
               </button>
             </>
           }
@@ -404,6 +494,13 @@ export default function WeekPlans() {
         />
       )}
       <VideoPreviewModal url={videoUrl} onClose={() => setVideoUrl(null)} />
+      {showAiModal && (
+        <AiGenerateModal
+          isLoading={isConnecting}
+          onGenerate={(pref) => { void handleAiGenerate(pref); }}
+          onClose={() => setShowAiModal(false)}
+        />
+      )}
       <AppToast {...toast} />
     </div>
   );
