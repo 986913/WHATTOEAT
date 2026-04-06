@@ -21,6 +21,7 @@ function buildGroups(plans: MealCardPlan[]): GroceryGroup[] {
 
   for (const p of plans) {
     if (!p.mealIngredients?.length) continue;
+    if (p.mealId === null) continue;
 
     const existing = indexByMealId.get(p.mealId);
     if (existing !== undefined) {

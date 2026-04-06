@@ -327,7 +327,7 @@ export default function WeekPlans() {
                         isFlipped={isFlipped}
                         onFlip={() => setFlippedKey(isFlipped ? null : key)}
                         onShuffle={() =>
-                          handleReplaceMeal(p.date, p.typeId, p.mealId)
+                          handleReplaceMeal(p.date, p.typeId, p.mealId ?? 0)
                         }
                         onVideo={(url) => setVideoUrl(url)}
                       />

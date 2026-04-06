@@ -273,7 +273,7 @@ export default function Today() {
                   onFlip={() =>
                     setFlippedType(isFlipped ? null : type.id)
                   }
-                  onShuffle={() => handleShuffle(type.id, plan.mealId)}
+                  onShuffle={() => handleShuffle(type.id, plan.mealId ?? 0)}
                   onVideo={(url) => setVideoUrl(url)}
                 />
               );
