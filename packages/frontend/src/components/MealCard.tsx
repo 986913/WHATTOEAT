@@ -6,12 +6,17 @@ export type Ingredient = { id: number; name: string };
 export type MealCardPlan = {
   date: string;
   typeId: number;
-  mealId: number;
+  mealId: number | null;           // null = AI-suggested new meal
   mealName?: string;
   mealVideoUrl?: string;
   mealImageUrl?: string;
   mealIngredients?: Ingredient[];
   isOwnMeal?: boolean;
+  // AI fields
+  isAiSuggestion?: boolean;        // true = new meal not in library (Option C card)
+  reason?: string;                 // AI's reason for picking this meal
+  suggestionIngredients?: string[]; // ingredient names for new AI meals
+  isSkeleton?: boolean;            // true = placeholder during streaming
 };
 
 const PLACEHOLDER_IMG =
