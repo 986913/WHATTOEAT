@@ -48,6 +48,55 @@ export default function MealCard({
   onVideo,
   compact,
 }: MealCardProps) {
+  // ── Skeleton variant ──────────────────────────────
+  if (plan.isSkeleton) {
+    return (
+      <div className={`mc-card mc-card-skeleton${compact ? ' mc-card-compact' : ''}`}>
+        <div className='mc-label'>
+          <span className='mc-label-icon'>{typeIcon}</span>
+          {typeLabel}
+        </div>
+        <div className='mc-skeleton-image' />
+        <div className='mc-body'>
+          <div className='mc-skeleton-line' />
+          <div className='mc-skeleton-line mc-skeleton-line-short' />
+        </div>
+      </div>
+    );
+  }
+
+  // ── AI Suggestion variant (new meal, not in library) ──
+  if (plan.isAiSuggestion) {
+    return (
+      <div className={`mc-card mc-card-ai-suggestion${compact ? ' mc-card-compact' : ''}`}>
+        <div className='mc-label'>
+          <span className='mc-label-icon'>{typeIcon}</span>
+          {typeLabel}
+        </div>
+        <div className='mc-ai-image-area'>
+          🤖
+          <span className='mc-ai-badge'>✨ AI New</span>
+        </div>
+        <div className='mc-body'>
+          <div className='mc-name'>{plan.mealName}</div>
+          {plan.reason && <div className='mc-reason'>"{plan.reason}"</div>}
+          {plan.suggestionIngredients && plan.suggestionIngredients.length > 0 && (
+            <div className='mc-suggestion-ingredients'>
+              {plan.suggestionIngredients.slice(0, 4).map((ing) => (
+                <span key={ing} className='mc-suggestion-ingredient'>{ing}</span>
+              ))}
+            </div>
+          )}
+          <div className='mc-actions'>
+            <button className='mc-btn-save-to-library'>
+              + Save to Library
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   let cardClass = 'mc-card';
   if (compact) cardClass += ' mc-card-compact';
   if (isShuffling) cardClass += ' mc-card-shuffling';
@@ -98,7 +147,11 @@ export default function MealCard({
           {plan.isOwnMeal && (
             <span className='mc-own-badge'>My Meal</span>
           )}
+          {plan.reason && !plan.isOwnMeal && (
+            <span className='mc-ai-pick-badge'>✨ AI Pick</span>
+          )}
         </div>
+        {plan.reason && <div className='mc-reason'>"{plan.reason}"</div>}
 
         <div className='mc-actions'>
           {plan.mealVideoUrl && onVideo && (
