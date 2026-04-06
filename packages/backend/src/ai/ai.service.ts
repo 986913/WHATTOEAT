@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import Anthropic from '@anthropic-ai/sdk';
 import { v4 as uuidv4 } from 'uuid';
 import * as dayjs from 'dayjs';
+import { MealEntity } from 'src/meal/entities/meal.entity';
 import { PlanService } from 'src/plan/plan.service';
 import { RedisPubSubService } from './redis-pubsub.service';
 import { ConfigEnum } from 'src/enum/config.enum';
@@ -19,6 +20,43 @@ export class AiService {
     this.anthropic = new Anthropic({
       apiKey: this.configService.get<string>(ConfigEnum.ANTHROPIC_API_KEY),
     });
+  }
+
+  private enrichDay(
+    day: {
+      date: string;
+      meals: {
+        typeId: number;
+        mealId: number | null;
+        reason: string;
+        suggestion?: { name: string; ingredients: string[] };
+      }[];
+    },
+    fullMealsByType: Map<number, MealEntity[]>,
+  ): typeof day & { meals: unknown[] } {
+    const enrichedMeals = day.meals.map((m) => {
+      if (m.mealId !== null) {
+        const poolMeals = fullMealsByType.get(m.typeId) ?? [];
+        const found = poolMeals.find((p) => p.id === m.mealId);
+        if (found) {
+          return {
+            ...m,
+            mealName: found.name,
+            mealImageUrl: found.imageUrl ?? null,
+            mealVideoUrl: found.videoUrl ?? null,
+            mealIngredients:
+              found.ingredients?.map((i) => ({ id: i.id, name: i.name })) ?? [],
+            isOwnMeal: !!found.creator,
+          };
+        }
+        // If not found in pool, log so we can spot hallucinated IDs in CloudWatch
+        console.warn(
+          `[AiService] mealId ${m.mealId} not found in pool for typeId ${m.typeId}`,
+        );
+      }
+      return m;
+    });
+    return { ...day, meals: enrichedMeals };
   }
 
   async startGeneration(
@@ -65,10 +103,7 @@ export class AiService {
       };
 
       const mealPoolLines: string[] = [];
-      const fullMealsByType = new Map<
-        number,
-        import('src/meal/entities/meal.entity').MealEntity[]
-      >();
+      const fullMealsByType = new Map<number, MealEntity[]>();
 
       for (const typeId of typeIds) {
         const meals = await this.planService.getMealsByTypeForUser(
@@ -81,6 +116,9 @@ export class AiService {
       }
 
       // 2. Build 7 dates starting from startDate (or today)
+      if (startDate && !dayjs(startDate).isValid()) {
+        throw new BadRequestException('Invalid startDate format');
+      }
       const start = startDate ? dayjs(startDate) : dayjs();
       const dates = Array.from({ length: 7 }, (_, i) =>
         start.add(i, 'day').format('YYYY-MM-DD'),
@@ -137,36 +175,10 @@ OUTPUT FORMAT (strictly one JSON object per line):
                   suggestion?: { name: string; ingredients: string[] };
                 }[];
               };
-
-              // Enrich library meals with full data
-              const enrichedMeals = day.meals.map((m) => {
-                if (m.mealId !== null) {
-                  const poolMeals = fullMealsByType.get(m.typeId) ?? [];
-                  const found = poolMeals.find((p) => p.id === m.mealId);
-                  if (found) {
-                    return {
-                      ...m,
-                      mealName: found.name,
-                      mealImageUrl: found.imageUrl ?? null,
-                      mealVideoUrl: found.videoUrl ?? null,
-                      mealIngredients:
-                        found.ingredients?.map((i) => ({
-                          id: i.id,
-                          name: i.name,
-                        })) ?? [],
-                      isOwnMeal: !!found.creator,
-                    };
-                  }
-                }
-                return m; // null mealId = AI suggestion, no enrichment needed
-              });
-
+              const enriched = this.enrichDay(day, fullMealsByType);
               await this.redisPubSub.publish(
                 channel,
-                JSON.stringify({
-                  type: 'day',
-                  data: { ...day, meals: enrichedMeals },
-                }),
+                JSON.stringify({ type: 'day', data: enriched }),
               );
             } catch {
               // Skip malformed lines (e.g. Claude adds an unexpected comment)
@@ -187,36 +199,10 @@ OUTPUT FORMAT (strictly one JSON object per line):
               suggestion?: { name: string; ingredients: string[] };
             }[];
           };
-
-          // Enrich library meals with full data
-          const enrichedMeals = day.meals.map((m) => {
-            if (m.mealId !== null) {
-              const poolMeals = fullMealsByType.get(m.typeId) ?? [];
-              const found = poolMeals.find((p) => p.id === m.mealId);
-              if (found) {
-                return {
-                  ...m,
-                  mealName: found.name,
-                  mealImageUrl: found.imageUrl ?? null,
-                  mealVideoUrl: found.videoUrl ?? null,
-                  mealIngredients:
-                    found.ingredients?.map((i) => ({
-                      id: i.id,
-                      name: i.name,
-                    })) ?? [],
-                  isOwnMeal: !!found.creator,
-                };
-              }
-            }
-            return m; // null mealId = AI suggestion, no enrichment needed
-          });
-
+          const enriched = this.enrichDay(day, fullMealsByType);
           await this.redisPubSub.publish(
             channel,
-            JSON.stringify({
-              type: 'day',
-              data: { ...day, meals: enrichedMeals },
-            }),
+            JSON.stringify({ type: 'day', data: enriched }),
           );
         } catch {
           // skip
