@@ -278,6 +278,45 @@ export class MealService {
     return saved;
   }
 
+  /** Save an AI-suggested meal to the user's library (find-or-create ingredients by name) */
+  async saveAiSuggestion(
+    userId: number,
+    typeId: number,
+    name: string,
+    ingredientNames: string[],
+  ) {
+    const user = await this.userRepo.findOne({ where: { id: userId } });
+    if (!user) throw new NotFoundException('User not found');
+
+    const typeEntity = await this.typeRepo.findOne({ where: { id: typeId } });
+
+    // Find-or-create each ingredient by name (name is unique)
+    const ingredientEntities: IngredientEntity[] = await Promise.all(
+      ingredientNames.map(async (n) => {
+        const existing = await this.ingredientRepo.findOne({
+          where: { name: n },
+        });
+        if (existing) return existing;
+        return this.ingredientRepo.save(
+          this.ingredientRepo.create({ name: n }),
+        );
+      }),
+    );
+
+    const meal = this.mealRepo.create({
+      name,
+      videoUrl: '',
+      imageUrl: '',
+      types: typeEntity ? [typeEntity] : [],
+      ingredients: ingredientEntities,
+      creator: user,
+    });
+
+    const saved = await this.mealRepo.save(meal);
+    await this.invalidateMealCaches();
+    return { id: saved.id, name: saved.name };
+  }
+
   /** Delete a meal only if the user owns it */
   async removeUserMeal(userId: number, mealId: number) {
     const meal = await this.mealRepo.findOne({

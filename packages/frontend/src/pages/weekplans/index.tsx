@@ -47,7 +47,7 @@ function groupPlansByDate(plans: DraftPlan[]) {
 }
 
 export default function WeekPlans() {
-  const { toast, error } = useToast();
+  const { toast, success, error } = useToast();
   const currentUser = useCurrentUserStore((s) => s.currentUser);
   const navigate = useNavigate();
   const initialized = useRef(false);
@@ -248,6 +248,36 @@ export default function WeekPlans() {
     },
   });
 
+  const handleSaveToLibrary = async (p: DraftPlan) => {
+    if (!p.mealName) return;
+    try {
+      const res = await axios.post<{ id: number; name: string }>(
+        '/meals/me/save-ai',
+        {
+          typeId: p.typeId,
+          name: p.mealName,
+          ingredientNames: p.suggestionIngredients ?? [],
+        },
+      );
+      // Transition card from AI suggestion → My Meal
+      setDraftPlans((prev) =>
+        prev.map((d) =>
+          d.date === p.date && d.typeId === p.typeId
+            ? {
+                ...d,
+                mealId: res.data.id,
+                isAiSuggestion: false,
+                isOwnMeal: true,
+              }
+            : d,
+        ),
+      );
+      success('Saved to your library!');
+    } catch {
+      error('Failed to save meal');
+    }
+  };
+
   const handleAiGenerate = async (preference: string) => {
     setShowAiModal(false);
     setCurrentPreference(preference);
@@ -420,6 +450,11 @@ export default function WeekPlans() {
                           handleReplaceMeal(p.date, p.typeId, p.mealId ?? 0)
                         }
                         onVideo={(url) => setVideoUrl(url)}
+                        onSaveToLibrary={
+                          p.isAiSuggestion
+                            ? () => { void handleSaveToLibrary(p); }
+                            : undefined
+                        }
                       />
                     );
                   })}

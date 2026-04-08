@@ -32,6 +32,7 @@ interface MealCardProps {
   onFlip?: () => void;
   onShuffle?: () => void;
   onVideo?: (url: string) => void;
+  onSaveToLibrary?: () => void;
   /** compact mode for week plan cards */
   compact?: boolean;
 }
@@ -46,6 +47,7 @@ export default function MealCard({
   onFlip,
   onShuffle,
   onVideo,
+  onSaveToLibrary,
   compact,
 }: MealCardProps) {
   // ── Skeleton variant ──────────────────────────────
@@ -88,7 +90,11 @@ export default function MealCard({
             </div>
           )}
           <div className='mc-actions'>
-            <button className='mc-btn-save-to-library'>
+            <button
+              className='mc-btn-save-to-library'
+              onClick={onSaveToLibrary}
+              disabled={!onSaveToLibrary}
+            >
               + Save to Library
             </button>
           </div>
@@ -145,10 +151,7 @@ export default function MealCard({
         <div className='mc-name'>
           {plan.mealName}
           {plan.isOwnMeal && (
-            <span className='mc-own-badge'>My Meal</span>
-          )}
-          {plan.reason && !plan.isOwnMeal && (
-            <span className='mc-ai-pick-badge'>✨ AI Pick</span>
+            <span className='mc-own-badge'>⭐ My Meal</span>
           )}
         </div>
         {plan.reason && <div className='mc-reason'>"{plan.reason}"</div>}

@@ -48,6 +48,19 @@ export class UserMealController {
     return this.mealService.createUserMeal(req.user.userID, dto);
   }
 
+  @Post('save-ai')
+  saveAiSuggestion(
+    @Req() req: AuthRequest,
+    @Body() body: { typeId: number; name: string; ingredientNames: string[] },
+  ) {
+    return this.mealService.saveAiSuggestion(
+      req.user.userID,
+      body.typeId,
+      body.name,
+      body.ingredientNames ?? [],
+    );
+  }
+
   @Put('/:id')
   updateMyMeal(
     @Req() req: AuthRequest,
