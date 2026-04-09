@@ -32,7 +32,7 @@ export class RedisPubSubService implements OnModuleDestroy {
     console.log(`[Redis] publish channel=${channel} type=${parsed.type}`);
     await Promise.all([
       this.pub.publish(channel, message),
-      this.pub.rpush(bufferKey, message),
+      this.pub.rpush(bufferKey, message), //Right PUSH，从list右边追加元素
       this.pub.expire(bufferKey, 600),
     ]);
   }
@@ -48,15 +48,19 @@ export class RedisPubSubService implements OnModuleDestroy {
     onMessage: (message: string) => void,
   ): () => void {
     const bufferKey = `${channel}:buf`;
-    const sub = new Redis(this.buildRedisOptions());
+    const sub = new Redis(this.buildRedisOptions()); // 建一个专用连接
 
     // Replay buffered messages, then subscribe for live ones
+    // List RANGE，读取列表从索引 0 到 -1（-1 表示最后一个）的所有元素，相当于读整个list
     void this.pub.lrange(bufferKey, 0, -1).then((buffered) => {
-      console.log(`[Redis] subscriber replay channel=${channel} buffered=${buffered.length} msgs`);
+      console.log(
+        `[Redis] subscriber replay channel=${channel} buffered=${buffered.length} msgs`,
+      );
       buffered.forEach((msg) => onMessage(msg));
-      void sub.subscribe(channel);
+      void sub.subscribe(channel); // ← 这才是真正的 SUBSCRIBE 命令
     });
 
+    //收到消息时回调
     sub.on('message', (ch, msg) => {
       if (ch === channel) onMessage(msg);
     });
@@ -77,9 +81,10 @@ export class RedisPubSubService implements OnModuleDestroy {
 
   async acquireUserLock(userId: number, taskId: string): Promise<boolean> {
     const key = `ai:user:${userId}:generating`;
-    // NX = only set if not exists, EX = TTL in seconds
+    // 这是分布式锁(Distributed Lock)的最简实现，防止同一用户同时发起多个 AI generate任务
+    // NX = Not eXists，只有 key 不存在时才写入。两个进程同时抢，Redis 保证只有一个能得到 OK。EX 120 是超时自动释放，防止进程崩溃后锁永远不释放。
     const result = await this.pub.set(key, taskId, 'EX', 120, 'NX');
-    return result === 'OK';
+    return result === 'OK'; // OK=抢到锁，null=已被占用
   }
 
   async releaseUserLock(userId: number): Promise<void> {

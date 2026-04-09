@@ -138,7 +138,9 @@ export class AiService {
     startDate?: string,
   ): Promise<void> {
     const channel = `ai:task:${taskId}`;
-    console.log(`[AiService] runGeneration start — taskId=${taskId} channel=${channel}`);
+    console.log(
+      `[AiService] runGeneration start — taskId=${taskId} channel=${channel}`,
+    );
 
     try {
       // 1. Fetch meal pool — reuses PlanService's Redis cache-aside (no extra DB hit if cached)
