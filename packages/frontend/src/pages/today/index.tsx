@@ -245,7 +245,7 @@ export default function Today() {
               actions={
                 hasSavedPlan.current ? (
                   <button className='plan-banner-btn' onClick={loadToday}>
-                    <i className='fa-solid fa-rotate-left'></i> Back to Saved
+                    <i className='fa-solid fa-rotate-left'></i> Restore Saved Plan
                   </button>
                 ) : undefined
               }
@@ -315,12 +315,27 @@ export default function Today() {
               </button>
             )}
             <button
+              className='today-btn-ai'
+              onClick={() => navigate('/home/wkplans?ai=true')}
+            >
+              <i className='fa-solid fa-wand-magic-sparkles'></i> AI Plan My Week
+            </button>
+            <button
               className='today-btn-secondary'
               onClick={() => navigate('/home/wkplans')}
             >
-              Plan Your Week <i className='fa-solid fa-arrow-right'></i>
+              See full week <i className='fa-solid fa-arrow-right'></i>
             </button>
           </div>
+          <p className='today-custom-hint'>
+            Missing a dish?{' '}
+            <button
+              className='today-custom-hint-link'
+              onClick={() => navigate('/home/mymeals')}
+            >
+              Add custom meals <i className='fa-solid fa-arrow-right'></i>
+            </button>
+          </p>
         </>
       ) : (
         !loading && (
@@ -335,27 +350,6 @@ export default function Today() {
         )
       )}
 
-      {/* Custom Meals Teaser */}
-      {todayPlans.length > 0 && (
-        <div className='today-teaser'>
-          <div className='today-teaser-content'>
-            <div className='today-teaser-icon'>🍳</div>
-            <div className='today-teaser-text'>
-              <h3>Don't see your favorite dish?</h3>
-              <p>
-                Create your own meals and they'll join your shuffle rotation.
-              </p>
-            </div>
-            <button
-              className='today-teaser-btn'
-              onClick={() => navigate('/home/mymeals')}
-            >
-              <i className='fa-solid fa-plus'></i>
-              Custom Meals
-            </button>
-          </div>
-        </div>
-      )}
 
       {showGroceryList && (
         <GroceryListModal

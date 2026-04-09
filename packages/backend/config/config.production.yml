@@ -6,7 +6,7 @@ db:
     host: database-2.cn40g8yicfus.us-east-2.rds.amazonaws.com
     name: eatdbprod
     port: 3310
-    # sync: true
+    sync: false
 redis:
   host: master.mealdice-redis.tytogv.use2.cache.amazonaws.com
   port: 6379

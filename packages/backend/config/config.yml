@@ -25,3 +25,7 @@ mail:
   pass: ${MAIL_PASS}
 slack:
   webhookUrl: ${SLACK_WEBHOOK_URL}
+anthropic:
+  apiKey: ${ANTHROPIC_API_KEY}
+unsplash:
+  accessKey: ${UNSPLASH_ACCESS_KEY}

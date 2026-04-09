@@ -12,12 +12,8 @@ export default function SidebarNav() {
     role = RoleForUI.ADMIN;
   }
 
-  const userMenus = menus.filter(
-    (m) => m.roles.includes(role) && m.id < 10,
-  );
-  const adminMenus = menus.filter(
-    (m) => m.roles.includes(role) && m.id >= 10,
-  );
+  const userMenus = menus.filter((m) => m.roles.includes(role) && m.id < 10);
+  const adminMenus = menus.filter((m) => m.roles.includes(role) && m.id >= 10);
 
   return (
     <div className='sidebar'>
@@ -49,7 +45,7 @@ export default function SidebarNav() {
           <span className='sidebar-link-icon'>
             <i className='fa-solid fa-bowl-food'></i>
           </span>
-          <span className='sidebar-link-text'>Custom Meals <span style={{ fontSize: 9, fontWeight: 700, background: '#FF6B35', color: '#fff', padding: '1px 5px', borderRadius: 6, marginLeft: 4, verticalAlign: 'middle' }}>Beta</span></span>
+          <span className='sidebar-link-text'>My Dishes</span>
         </Nav.Link>
         <Nav.Link as={NavLink} to='/home/feedback' className='sidebar-link'>
           <span className='sidebar-link-icon'>

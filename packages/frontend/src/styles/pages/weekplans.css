@@ -126,7 +126,7 @@
 }
 
 .wk-bottom-link:hover {
-  color: #FF6B35;
+  color: #ff6b35;
 }
 
 .wk-bottom-link i {
@@ -150,8 +150,12 @@
 }
 
 @keyframes wkFadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 .wk-saved-modal {
@@ -225,7 +229,7 @@
   border-radius: 999px;
   font-size: 15px;
   font-weight: 700;
-  background: #FF6B35;
+  background: #ff6b35;
   color: white;
   border: none;
   cursor: pointer;
@@ -259,8 +263,8 @@
 }
 
 .wk-saved-btn-outline:hover {
-  border-color: #FF6B35;
-  color: #FF6B35;
+  border-color: #ff6b35;
+  color: #ff6b35;
 }
 
 .wk-saved-btn-text {
@@ -274,7 +278,7 @@
 }
 
 .wk-saved-btn-text:hover {
-  color: #FF6B35;
+  color: #ff6b35;
 }
 
 /* ===========================
@@ -371,47 +375,298 @@
   }
 }
 
-/* ── AI Generating Banner ──────────────────────────── */
-.plan-banner-generating {
-  background: #fff8f5;
-  border: 1.5px solid #FF6B35;
-  border-radius: 12px;
-  padding: 14px 18px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+/* ── Sticky Banner Wrapper ───────────────────────── */
+.wk-sticky-header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  padding: 10px 0 2px;
+  padding-left: 24px;
+  padding-right: 24px;
+  /* 毛玻璃效果 */
+  background: color-mix(in srgb, var(--bg-main, #faf9f7) 40%, transparent);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.1);
+  border-radius: 16px;
   margin-bottom: 20px;
-  gap: 12px;
 }
 
-.plan-banner-generating-left {
+/* ══════════════════════════════════════════════
+   Week Plan State Banners
+══════════════════════════════════════════════ */
+
+.wk-banner {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 16px;
+  padding: 16px 20px;
+  border-radius: 16px;
+  margin-bottom: 12px;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid transparent;
 }
 
-.plan-banner-generating-dot {
+/* Colored left accent stripe */
+.wk-banner::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+}
+
+/* ── Saved ── */
+.wk-banner--saved {
+  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+  border-color: #bbf7d0;
+}
+.wk-banner--saved::before {
+  background: #22c55e;
+}
+.wk-banner--saved .wk-banner-icon {
+  color: #16a34a;
+}
+.wk-banner--saved .wk-banner-eyebrow {
+  color: #16a34a;
+}
+
+/* ── Draft ── */
+.wk-banner--draft {
+  background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+  border-color: #fde68a;
+}
+.wk-banner--draft::before {
+  background: #f59e0b;
+}
+.wk-banner--draft .wk-banner-icon {
+  color: #d97706;
+}
+.wk-banner--draft .wk-banner-eyebrow {
+  color: #b45309;
+}
+
+/* ── AI Draft ── */
+.wk-banner--ai {
+  background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%);
+  border-color: #e9d5ff;
+}
+.wk-banner--ai::before {
+  background: linear-gradient(to bottom, #a855f7, #ff6b35);
+}
+.wk-banner--ai .wk-banner-icon {
+  font-size: 22px;
+}
+.wk-banner--ai .wk-banner-eyebrow {
+  color: #9333ea;
+}
+
+/* ── Generating ── */
+.wk-banner--generating {
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  border-color: #bfdbfe;
+  gap: 14px;
+}
+.wk-banner--generating::before {
+  background: linear-gradient(to bottom, #3b82f6, #a855f7);
+  animation: generatingStripe 1.5s ease-in-out infinite alternate;
+}
+@keyframes generatingStripe {
+  from {
+    opacity: 0.6;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Banner content */
+.wk-banner-icon {
+  font-size: 24px;
+  flex-shrink: 0;
+  width: 32px;
+  text-align: center;
+}
+
+.wk-banner-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.wk-banner-eyebrow {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: #888;
+  margin-bottom: 2px;
+}
+
+.wk-banner-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.wk-banner-meta {
+  font-size: 12px;
+  color: #888;
+  line-height: 1.4;
+}
+
+.wk-banner-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+/* Generating dot */
+.wk-banner-generating-dot {
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  background: #FF6B35;
+  background: #3b82f6;
   flex-shrink: 0;
   animation: generatingPulse 1.2s ease-in-out infinite;
 }
 
 @keyframes generatingPulse {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50%       { opacity: 0.4; transform: scale(0.85); }
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.4;
+    transform: scale(0.85);
+  }
 }
 
-.plan-banner-generating-text {
-  font-size: 14px;
-  font-weight: 600;
-  color: #1a1a1a;
+/* ── Save Week CTA ───────────────────────────────── */
+.wk-save-cta {
+  margin-bottom: 10px;
 }
 
-.plan-banner-generating-sub {
-  font-size: 12px;
+.wk-save-cta-btn {
+  width: 100%;
+  padding: 14px 24px;
+  background: #ff6b35;
+  color: white;
+  border: none;
+  border-radius: 14px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 4px 16px rgba(255, 107, 53, 0.3);
+  transition: all 0.2s ease;
+}
+
+.wk-save-cta-btn:hover:not(:disabled) {
+  background: #e55a28;
+  box-shadow: 0 6px 20px rgba(255, 107, 53, 0.4);
+  transform: translateY(-1px);
+}
+
+.wk-save-cta-btn:disabled {
+  background: #e0e0e0;
   color: #999;
-  margin-top: 1px;
+  box-shadow: none;
+  cursor: default;
+  transform: none;
+}
+
+@media (max-width: 768px) {
+  .wk-banner {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .wk-banner-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+}
+
+/* ── AI Stream Panel ─────────────────────────── */
+.ai-stream-panel {
+  margin: 8px 0 16px;
+  background: #0d1117;
+  border: 1px solid #30363d;
+  border-radius: 10px;
+  overflow: hidden;
+  font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+}
+
+.ai-stream-panel-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  background: #161b22;
+  border-bottom: 1px solid #30363d;
+}
+
+.ai-stream-panel-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #3fb950;
+  animation: streamDotPulse 1.2s ease-in-out infinite;
+  flex-shrink: 0;
+}
+
+@keyframes streamDotPulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
+  }
+}
+
+.ai-stream-panel-label {
+  font-size: 11px;
+  color: #8b949e;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.ai-stream-panel-text {
+  margin: 0;
+  padding: 12px 14px;
+  font-size: 11.5px;
+  line-height: 1.6;
+  color: #e6edf3;
+  max-height: 140px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.ai-stream-cursor {
+  color: #58a6ff;
+  animation: cursorBlink 0.8s step-end infinite;
+}
+
+@keyframes cursorBlink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
 }

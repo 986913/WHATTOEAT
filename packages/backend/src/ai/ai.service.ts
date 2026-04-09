@@ -7,6 +7,7 @@ import { MealEntity } from 'src/meal/entities/meal.entity';
 import { PlanService } from 'src/plan/plan.service';
 import { RedisPubSubService } from './redis-pubsub.service';
 import { ConfigEnum } from 'src/enum/config.enum';
+import { fetchFoodImage } from 'src/utils/unsplash';
 
 @Injectable()
 export class AiService {
@@ -22,7 +23,42 @@ export class AiService {
     });
   }
 
-  private enrichDay(
+  /**
+   * Extract and parse a JSON object from a line that may contain surrounding text.
+   * Finds the first '{' and last '}' to handle preamble text, inline comments, etc.
+   * Returns null if no valid JSON object is found.
+   */
+  private extractDayJson(line: string): {
+    date: string;
+    meals: {
+      typeId: number;
+      mealId: number | null;
+      reason: string;
+      suggestion?: { name: string; ingredients: string[] };
+    }[];
+  } | null {
+    const start = line.indexOf('{');
+    const end = line.lastIndexOf('}');
+    if (start === -1 || end <= start) return null;
+    try {
+      const candidate = line.slice(start, end + 1);
+      const parsed = JSON.parse(candidate) as {
+        date: string;
+        meals: {
+          typeId: number;
+          mealId: number | null;
+          reason: string;
+          suggestion?: { name: string; ingredients: string[] };
+        }[];
+      };
+      if (!parsed.date || !Array.isArray(parsed.meals)) return null;
+      return parsed;
+    } catch {
+      return null;
+    }
+  }
+
+  private async enrichDay(
     day: {
       date: string;
       meals: {
@@ -33,29 +69,39 @@ export class AiService {
       }[];
     },
     fullMealsByType: Map<number, MealEntity[]>,
-  ): typeof day & { meals: unknown[] } {
-    const enrichedMeals = day.meals.map((m) => {
-      if (m.mealId !== null) {
-        const poolMeals = fullMealsByType.get(m.typeId) ?? [];
-        const found = poolMeals.find((p) => p.id === m.mealId);
-        if (found) {
-          return {
-            ...m,
-            mealName: found.name,
-            mealImageUrl: found.imageUrl ?? null,
-            mealVideoUrl: found.videoUrl ?? null,
-            mealIngredients:
-              found.ingredients?.map((i) => ({ id: i.id, name: i.name })) ?? [],
-            isOwnMeal: !!found.creator,
-          };
+  ): Promise<typeof day & { meals: unknown[] }> {
+    const unsplashKey =
+      this.configService.get<string>(ConfigEnum.UNSPLASH_ACCESS_KEY) ?? '';
+
+    const enrichedMeals = await Promise.all(
+      day.meals.map(async (m) => {
+        if (m.mealId !== null) {
+          const poolMeals = fullMealsByType.get(m.typeId) ?? [];
+          const found = poolMeals.find((p) => p.id === m.mealId);
+          if (found) {
+            return {
+              ...m,
+              mealName: found.name,
+              mealImageUrl: found.imageUrl ?? null,
+              mealVideoUrl: found.videoUrl ?? null,
+              mealIngredients:
+                found.ingredients?.map((i) => ({ id: i.id, name: i.name })) ??
+                [],
+              isOwnMeal: !!found.creator,
+            };
+          }
+          console.warn(
+            `[AiService] mealId ${m.mealId} not found in pool for typeId ${m.typeId}`,
+          );
         }
-        // If not found in pool, log so we can spot hallucinated IDs in CloudWatch
-        console.warn(
-          `[AiService] mealId ${m.mealId} not found in pool for typeId ${m.typeId}`,
-        );
-      }
-      return m;
-    });
+        // AI suggestion — fetch a food image from Unsplash
+        const suggestionName = m.suggestion?.name ?? '';
+        const imageUrl = suggestionName
+          ? await fetchFoodImage(suggestionName, unsplashKey)
+          : '';
+        return { ...m, mealImageUrl: imageUrl || null };
+      }),
+    );
     return { ...day, meals: enrichedMeals };
   }
 
@@ -92,6 +138,7 @@ export class AiService {
     startDate?: string,
   ): Promise<void> {
     const channel = `ai:task:${taskId}`;
+    console.log(`[AiService] runGeneration start — taskId=${taskId} channel=${channel}`);
 
     try {
       // 1. Fetch meal pool — reuses PlanService's Redis cache-aside (no extra DB hit if cached)
@@ -143,75 +190,62 @@ OUTPUT FORMAT (strictly one JSON object per line):
       const userPrompt = `Plan for dates: ${dates.join(', ')}\n\nUSER PREFERENCE: ${preference}`;
 
       // 4. Stream Claude response
+      // Prefilling forces Claude to start with '{', suppressing any preamble text
       const stream = this.anthropic.messages.stream({
-        model: 'claude-opus-4-5',
+        model: 'claude-haiku-4-5-20251001',
         max_tokens: 4096,
         system: systemPrompt,
-        messages: [{ role: 'user', content: userPrompt }],
+        messages: [
+          { role: 'user', content: userPrompt },
+          { role: 'assistant', content: '{' },
+        ],
       });
 
-      let buffer = '';
+      // Bracket-depth parsing: accumulate chars, emit a complete object when depth hits 0.
+      // Works regardless of whether Claude outputs compact or pretty-printed JSON.
+      // Prefilling injected '{' so we start buffer with it and depth=1.
+      let buffer = '{';
+      let depth = 1;
+
       for await (const event of stream) {
         if (
           event.type === 'content_block_delta' &&
           event.delta.type === 'text_delta'
         ) {
-          buffer += event.delta.text;
+          const chunk = event.delta.text;
+          // Stream raw text to frontend for "thinking" display
+          await this.redisPubSub.publish(
+            channel,
+            JSON.stringify({ type: 'chunk', text: chunk }),
+          );
 
-          // Each complete line is one day's JSONL object
-          const lines = buffer.split('\n');
-          buffer = lines.pop()!; // keep the incomplete trailing chunk in buffer
+          for (const ch of chunk) {
+            if (ch === '{') depth++;
+            else if (ch === '}') depth--;
+            buffer += ch;
 
-          for (const line of lines) {
-            const trimmed = line.trim();
-            if (!trimmed) continue;
-            try {
-              const day = JSON.parse(trimmed) as {
-                date: string;
-                meals: {
-                  typeId: number;
-                  mealId: number | null;
-                  reason: string;
-                  suggestion?: { name: string; ingredients: string[] };
-                }[];
-              };
-              const enriched = this.enrichDay(day, fullMealsByType);
-              await this.redisPubSub.publish(
-                channel,
-                JSON.stringify({ type: 'day', data: enriched }),
-              );
-            } catch {
-              // Skip malformed lines (e.g. Claude adds an unexpected comment)
+            if (depth === 0) {
+              // Complete top-level object assembled
+              const day = this.extractDayJson(buffer);
+              if (day) {
+                const enriched = await this.enrichDay(day, fullMealsByType);
+                await this.redisPubSub.publish(
+                  channel,
+                  JSON.stringify({ type: 'day', data: enriched }),
+                );
+              }
+              buffer = '';
+              depth = 0;
             }
           }
         }
       }
 
-      // Flush any remaining content in buffer (last line may not end with \n)
-      if (buffer.trim()) {
-        try {
-          const day = JSON.parse(buffer.trim()) as {
-            date: string;
-            meals: {
-              typeId: number;
-              mealId: number | null;
-              reason: string;
-              suggestion?: { name: string; ingredients: string[] };
-            }[];
-          };
-          const enriched = this.enrichDay(day, fullMealsByType);
-          await this.redisPubSub.publish(
-            channel,
-            JSON.stringify({ type: 'day', data: enriched }),
-          );
-        } catch {
-          // skip
-        }
-      }
-
+      console.log(`[AiService] runGeneration done — taskId=${taskId}`);
       await this.redisPubSub.publish(channel, JSON.stringify({ type: 'done' }));
       await this.redisPubSub.setTaskStatus(taskId, 'done');
     } catch (err) {
+      console.error(`[AiService] runGeneration error — taskId=${taskId}`, err);
       await this.redisPubSub.publish(
         channel,
         JSON.stringify({

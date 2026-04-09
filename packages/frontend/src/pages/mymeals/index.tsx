@@ -43,7 +43,9 @@ export default function MyMeals() {
   const [mealVideoUrl, setMealVideoUrl] = useState('');
   const [mealImageUrl, setMealImageUrl] = useState('');
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
-  const [selectedIngredientIds, setSelectedIngredientIds] = useState<number[]>([]);
+  const [selectedIngredientIds, setSelectedIngredientIds] = useState<number[]>(
+    [],
+  );
   const [ingredientSearch, setIngredientSearch] = useState('');
   const [creatingIngredient, setCreatingIngredient] = useState(false);
 
@@ -73,7 +75,9 @@ export default function MyMeals() {
     if (!editingMeal) return false;
     const origTypes = (editingMeal.types?.map((t: any) => t.name) || []).sort();
     const currTypes = [...editTypes].sort();
-    const origIngs = (editingMeal.ingredients?.map((i: any) => i.id) || []).sort();
+    const origIngs = (
+      editingMeal.ingredients?.map((i: any) => i.id) || []
+    ).sort();
     const currIngs = [...editIngredientIds].sort();
     return (
       editMealName !== (editingMeal.name || '') ||
@@ -82,7 +86,14 @@ export default function MyMeals() {
       JSON.stringify(origTypes) !== JSON.stringify(currTypes) ||
       JSON.stringify(origIngs) !== JSON.stringify(currIngs)
     );
-  }, [editingMeal, editMealName, editMealVideoUrl, editMealImageUrl, editTypes, editIngredientIds]);
+  }, [
+    editingMeal,
+    editMealName,
+    editMealVideoUrl,
+    editMealImageUrl,
+    editTypes,
+    editIngredientIds,
+  ]);
 
   // Delete modal
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -100,7 +111,8 @@ export default function MyMeals() {
       if (!type) setTotalUnfiltered(res.data.mealsTotalCount || 0);
       setHasEverLoaded(true);
     } catch (err: any) {
-      const msg = err.response?.data?.mysqlErrMsg || err?.response?.data?.errorMessage;
+      const msg =
+        err.response?.data?.mysqlErrMsg || err?.response?.data?.errorMessage;
       if (isAxiosError(err)) error(`Fetch meals failed: ${msg}`);
       else error('Unexpected error');
       setMeals([]);
@@ -118,44 +130,64 @@ export default function MyMeals() {
     }
   };
 
-  useEffect(() => { fetchMeals(currentPage, typeInputVal); }, [currentPage]); // eslint-disable-line
-  useEffect(() => { fetchIngredients(); }, []);
+  useEffect(() => {
+    fetchMeals(currentPage, typeInputVal);
+  }, [currentPage]); // eslint-disable-line
+  useEffect(() => {
+    fetchIngredients();
+  }, []);
 
   const handleCreateIngredient = async () => {
     if (!ingredientSearch.trim()) return;
     try {
       setCreatingIngredient(true);
-      const res = await axios.post('/ingredients', { name: ingredientSearch.trim() });
+      const res = await axios.post('/ingredients', {
+        name: ingredientSearch.trim(),
+      });
       setIngredientOptions((prev) => [...prev, res.data]);
       setSelectedIngredientIds((prev) => [...prev, res.data.id]);
       setIngredientSearch('');
-    } finally { setCreatingIngredient(false); }
+    } finally {
+      setCreatingIngredient(false);
+    }
   };
 
   const handleCreateIngredientInEdit = async () => {
     if (!editIngredientSearch.trim()) return;
     try {
       setCreatingEditIngredient(true);
-      const res = await axios.post('/ingredients', { name: editIngredientSearch.trim() });
+      const res = await axios.post('/ingredients', {
+        name: editIngredientSearch.trim(),
+      });
       setIngredientOptions((prev) => [...prev, res.data]);
       setEditIngredientIds((prev) => [...prev, res.data.id]);
       setEditIngredientSearch('');
-    } finally { setCreatingEditIngredient(false); }
+    } finally {
+      setCreatingEditIngredient(false);
+    }
   };
 
   const handleCreateMeal = async () => {
     try {
       await axios.post(API_BASE, {
-        name: mealName, videoUrl: mealVideoUrl, imageUrl: mealImageUrl,
-        types: selectedTypes, ingredientIds: selectedIngredientIds,
+        name: mealName,
+        videoUrl: mealVideoUrl,
+        imageUrl: mealImageUrl,
+        types: selectedTypes,
+        ingredientIds: selectedIngredientIds,
       });
       setShowModal(false);
       success('Meal created successfully');
-      setMealName(''); setMealVideoUrl(''); setMealImageUrl('');
-      setSelectedTypes([]); setSelectedIngredientIds([]); setIngredientSearch('');
+      setMealName('');
+      setMealVideoUrl('');
+      setMealImageUrl('');
+      setSelectedTypes([]);
+      setSelectedIngredientIds([]);
+      setIngredientSearch('');
       fetchMeals(1);
     } catch (err: any) {
-      const msg = err.response?.data?.mysqlErrMsg || err?.response?.data?.errorMessage;
+      const msg =
+        err.response?.data?.mysqlErrMsg || err?.response?.data?.errorMessage;
       if (isAxiosError(err)) error(`Create meal failed: ${msg}`);
       else error('Unexpected error');
     }
@@ -175,14 +207,18 @@ export default function MyMeals() {
   const handleUpdateMeal = async () => {
     try {
       await axios.put(`${API_BASE}/${editingMeal.id}`, {
-        name: editMealName, videoUrl: editMealVideoUrl, imageUrl: editMealImageUrl,
-        types: editTypes, ingredientIds: editIngredientIds,
+        name: editMealName,
+        videoUrl: editMealVideoUrl,
+        imageUrl: editMealImageUrl,
+        types: editTypes,
+        ingredientIds: editIngredientIds,
       });
       setShowEditModal(false);
       success('Meal updated successfully');
       fetchMeals(currentPage);
     } catch (err: any) {
-      const msg = err.response?.data?.mysqlErrMsg || err?.response?.data?.errorMessage;
+      const msg =
+        err.response?.data?.mysqlErrMsg || err?.response?.data?.errorMessage;
       if (isAxiosError(err)) error(`Update meal failed: ${msg}`);
       else error('Unexpected error');
     }
@@ -201,22 +237,25 @@ export default function MyMeals() {
       success('Meal deleted successfully');
       fetchMeals(currentPage);
     } catch (err: any) {
-      const msg = err.response?.data?.mysqlErrMsg || err?.response?.data?.errorMessage;
+      const msg =
+        err.response?.data?.mysqlErrMsg || err?.response?.data?.errorMessage;
       if (isAxiosError(err)) error(`Delete meal failed: ${msg}`);
       else error('Unexpected error');
     }
   };
 
-  const PLACEHOLDER_IMG = 'https://thetac.tech/wp-content/uploads/2024/09/placeholder-288.png';
+  const PLACEHOLDER_IMG =
+    'https://thetac.tech/wp-content/uploads/2024/09/placeholder-288.png';
 
   return (
     <div className='page custom-meals-page'>
       {/* Header */}
       <div className='cm-header'>
         <div>
-          <h1 className='cm-title'>Custom Meals <span className='cm-beta-badge'>Beta</span></h1>
+          <h1 className='cm-title'>Custom Meals</h1>
           <p className='cm-subtitle'>
-            Create and manage your own meals. They'll join the shuffle rotation just for you.
+            Create and manage your own meals. They'll join the shuffle rotation
+            just for you.
           </p>
         </div>
         {/* Fix #5: only show header button when user already has meals */}
@@ -261,7 +300,9 @@ export default function MyMeals() {
         <div className='cm-empty'>
           <div className='cm-empty-icon'>🍽️</div>
           <h3>No custom meals yet</h3>
-          <p>Create your first meal and it will appear in your shuffle rotation.</p>
+          <p>
+            Create your first meal and it will appear in your shuffle rotation.
+          </p>
           <Button className='cm-create-btn' onClick={() => setShowModal(true)}>
             <i className='fa-solid fa-plus' /> Create Your First Meal
           </Button>
@@ -306,7 +347,9 @@ export default function MyMeals() {
 
                 <div className='cm-card-ingredients'>
                   {meal.ingredients?.slice(0, 5).map((i: any) => (
-                    <span key={i.id} className='cm-ing-tag'>{i.name}</span>
+                    <span key={i.id} className='cm-ing-tag'>
+                      {i.name}
+                    </span>
                   ))}
                   {meal.ingredients?.length > 5 && (
                     <span className='cm-ing-tag cm-ing-more'>
@@ -316,12 +359,18 @@ export default function MyMeals() {
                 </div>
 
                 <div className='cm-card-actions'>
-                  <button className='cm-action-btn cm-action-edit' onClick={() => openEditModal(meal)}>
+                  <button
+                    className='cm-action-btn cm-action-edit'
+                    onClick={() => openEditModal(meal)}
+                  >
                     <i className='fa-solid fa-pen' /> Edit
                   </button>
                   <button
                     className='cm-action-btn cm-action-delete'
-                    onClick={() => { setSelectedMeal(meal); setShowDeleteModal(true); }}
+                    onClick={() => {
+                      setSelectedMeal(meal);
+                      setShowDeleteModal(true);
+                    }}
                   >
                     <i className='fa-solid fa-trash' /> Delete
                   </button>
@@ -333,44 +382,70 @@ export default function MyMeals() {
       )}
 
       {totalPages > 1 && (
-        <AppPagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
+        <AppPagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+        />
       )}
 
       {/* Create Modal */}
       <MealFormModal
-        show={showModal} title='Create Meal' submitText='Create'
+        show={showModal}
+        title='Create Meal'
+        submitText='Create'
         isSubmitDisabled={!isCreateFormValid}
-        onHide={() => setShowModal(false)} onSubmit={handleCreateMeal}
-        name={mealName} setName={setMealName}
-        videoUrl={mealVideoUrl} setVideoUrl={setMealVideoUrl}
-        imageUrl={mealImageUrl} setImageUrl={setMealImageUrl}
-        selectedTypes={selectedTypes} setSelectedTypes={setSelectedTypes}
+        onHide={() => setShowModal(false)}
+        onSubmit={handleCreateMeal}
+        name={mealName}
+        setName={setMealName}
+        videoUrl={mealVideoUrl}
+        setVideoUrl={setMealVideoUrl}
+        imageUrl={mealImageUrl}
+        setImageUrl={setMealImageUrl}
+        selectedTypes={selectedTypes}
+        setSelectedTypes={setSelectedTypes}
         ingredientOptions={ingredientOptions}
-        selectedIngredientIds={selectedIngredientIds} setSelectedIngredientIds={setSelectedIngredientIds}
-        ingredientSearch={ingredientSearch} setIngredientSearch={setIngredientSearch}
-        creating={creatingIngredient} onCreateIngredient={handleCreateIngredient}
+        selectedIngredientIds={selectedIngredientIds}
+        setSelectedIngredientIds={setSelectedIngredientIds}
+        ingredientSearch={ingredientSearch}
+        setIngredientSearch={setIngredientSearch}
+        creating={creatingIngredient}
+        onCreateIngredient={handleCreateIngredient}
       />
 
       {/* Edit Modal — Fix #4: disabled when not dirty */}
       <MealFormModal
-        show={showEditModal} title='Edit Meal' submitText='Save Changes'
+        show={showEditModal}
+        title='Edit Meal'
+        submitText='Save Changes'
         isSubmitDisabled={!isEditFormValid || !isEditDirty}
-        onHide={() => setShowEditModal(false)} onSubmit={handleUpdateMeal}
-        name={editMealName} setName={setEditMealName}
-        videoUrl={editMealVideoUrl} setVideoUrl={setEditMealVideoUrl}
-        imageUrl={editMealImageUrl} setImageUrl={setEditMealImageUrl}
-        selectedTypes={editTypes} setSelectedTypes={setEditTypes}
+        onHide={() => setShowEditModal(false)}
+        onSubmit={handleUpdateMeal}
+        name={editMealName}
+        setName={setEditMealName}
+        videoUrl={editMealVideoUrl}
+        setVideoUrl={setEditMealVideoUrl}
+        imageUrl={editMealImageUrl}
+        setImageUrl={setEditMealImageUrl}
+        selectedTypes={editTypes}
+        setSelectedTypes={setEditTypes}
         ingredientOptions={ingredientOptions}
-        selectedIngredientIds={editIngredientIds} setSelectedIngredientIds={setEditIngredientIds}
-        ingredientSearch={editIngredientSearch} setIngredientSearch={setEditIngredientSearch}
-        creating={creatingEditIngredient} onCreateIngredient={handleCreateIngredientInEdit}
+        selectedIngredientIds={editIngredientIds}
+        setSelectedIngredientIds={setEditIngredientIds}
+        ingredientSearch={editIngredientSearch}
+        setIngredientSearch={setEditIngredientSearch}
+        creating={creatingEditIngredient}
+        onCreateIngredient={handleCreateIngredientInEdit}
       />
 
       {/* Delete Modal — Fix #2 & #3: proper cancel handler */}
       <ConfirmModal
-        show={showDeleteModal} title='Delete Meal'
+        show={showDeleteModal}
+        title='Delete Meal'
         message='Are you sure you want to delete this meal? It will be removed from future shuffles.'
-        onCancel={closeDeleteModal} onConfirm={handleDeleteMeal}
+        onCancel={closeDeleteModal}
+        onConfirm={handleDeleteMeal}
       />
 
       <AppToast {...toast} />

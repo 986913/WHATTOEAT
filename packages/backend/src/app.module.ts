@@ -21,6 +21,7 @@ import { RedisCacheModule } from './cache/redis-cache.module';
 import { SlackModule } from './slack/slack.module';
 import { FeedbackModule } from './feedback/feedback.module';
 import { HealthController } from './health/health.controller';
+import { AiModule } from './ai/ai.module';
 
 @Module({
   imports: [
@@ -76,6 +77,7 @@ import { HealthController } from './health/health.controller';
     LogModule,
     AuthModule,
     FeedbackModule, // Slack webhook-based feedback (no DB)
+    AiModule,
   ],
   controllers: [HealthController],
   providers: [],

@@ -17,7 +17,7 @@ export default function PlanBanner({
   const icon =
     variant === 'saved'
       ? 'fa-solid fa-circle-check'
-      : 'fa-solid fa-wand-magic-sparkles';
+      : 'fa-solid fa-dice';
 
   return (
     <div className={`plan-banner plan-banner-${variant}`}>

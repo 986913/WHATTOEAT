@@ -21,10 +21,10 @@ export class MealEntity {
   @Column()
   name: string;
 
-  @Column()
+  @Column({ type: 'text' })
   videoUrl: string; // for cooking instruction
 
-  @Column()
+  @Column({ type: 'text' })
   imageUrl: string; // for preview
 
   // null = public/system meal, set = private user-created meal

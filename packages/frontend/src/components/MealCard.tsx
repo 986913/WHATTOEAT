@@ -1,4 +1,5 @@
 import '../styles/components/MealCard.css';
+import { useState } from 'react';
 import { Spinner } from 'react-bootstrap';
 
 export type Ingredient = { id: number; name: string };
@@ -6,17 +7,17 @@ export type Ingredient = { id: number; name: string };
 export type MealCardPlan = {
   date: string;
   typeId: number;
-  mealId: number | null;           // null = AI-suggested new meal
+  mealId: number | null; // null = AI-suggested new meal
   mealName?: string;
   mealVideoUrl?: string;
   mealImageUrl?: string;
   mealIngredients?: Ingredient[];
   isOwnMeal?: boolean;
   // AI fields
-  isAiSuggestion?: boolean;        // true = new meal not in library (Option C card)
-  reason?: string;                 // AI's reason for picking this meal
+  isAiSuggestion?: boolean; // true = new meal not in library (Option C card)
+  reason?: string; // AI's reason for picking this meal
   suggestionIngredients?: string[]; // ingredient names for new AI meals
-  isSkeleton?: boolean;            // true = placeholder during streaming
+  isSkeleton?: boolean; // true = placeholder during streaming
 };
 
 const PLACEHOLDER_IMG =
@@ -50,10 +51,14 @@ export default function MealCard({
   onSaveToLibrary,
   compact,
 }: MealCardProps) {
+  const [saving, setSaving] = useState(false);
+
   // ── Skeleton variant ──────────────────────────────
   if (plan.isSkeleton) {
     return (
-      <div className={`mc-card mc-card-skeleton${compact ? ' mc-card-compact' : ''}`}>
+      <div
+        className={`mc-card mc-card-skeleton${compact ? ' mc-card-compact' : ''}`}
+      >
         <div className='mc-label'>
           <span className='mc-label-icon'>{typeIcon}</span>
           {typeLabel}
@@ -70,32 +75,67 @@ export default function MealCard({
   // ── AI Suggestion variant (new meal, not in library) ──
   if (plan.isAiSuggestion) {
     return (
-      <div className={`mc-card mc-card-ai-suggestion${compact ? ' mc-card-compact' : ''}`}>
+      <div
+        className={`mc-card mc-card-ai-suggestion${compact ? ' mc-card-compact' : ''}`}
+      >
         <div className='mc-label'>
           <span className='mc-label-icon'>{typeIcon}</span>
           {typeLabel}
         </div>
-        <div className='mc-ai-image-area'>
-          🤖
-          <span className='mc-ai-badge'>✨ AI New</span>
-        </div>
+        {plan.mealImageUrl ? (
+          <div style={{ position: 'relative' }}>
+            <img
+              className='mc-image'
+              src={plan.mealImageUrl}
+              alt={plan.mealName}
+            />
+            <span className='mc-ai-badge'>✨ AI Generated</span>
+          </div>
+        ) : (
+          <div className='mc-ai-image-area'>
+            🤖
+            <span className='mc-ai-badge'>✨ AI Generated</span>
+          </div>
+        )}
         <div className='mc-body'>
           <div className='mc-name'>{plan.mealName}</div>
           {plan.reason && <div className='mc-reason'>"{plan.reason}"</div>}
-          {plan.suggestionIngredients && plan.suggestionIngredients.length > 0 && (
-            <div className='mc-suggestion-ingredients'>
-              {plan.suggestionIngredients.slice(0, 4).map((ing) => (
-                <span key={ing} className='mc-suggestion-ingredient'>{ing}</span>
-              ))}
-            </div>
-          )}
+          {plan.suggestionIngredients &&
+            plan.suggestionIngredients.length > 0 && (
+              <div className='mc-suggestion-ingredients'>
+                {plan.suggestionIngredients.slice(0, 4).map((ing) => (
+                  <span key={ing} className='mc-suggestion-ingredient'>
+                    {ing}
+                  </span>
+                ))}
+              </div>
+            )}
           <div className='mc-actions'>
+            <a
+              className='mc-btn mc-btn-video'
+              href={`https://www.youtube.com/results?search_query=how+to+cook+${encodeURIComponent(plan.mealName ?? '')}`}
+              target='_blank'
+              rel='noreferrer'
+            >
+              <i className='fa-solid fa-play'></i> Recipe
+            </a>
             <button
               className='mc-btn-save-to-library'
-              onClick={onSaveToLibrary}
-              disabled={!onSaveToLibrary}
+              disabled={!onSaveToLibrary || saving}
+              onClick={async () => {
+                if (!onSaveToLibrary) return;
+                setSaving(true);
+                await Promise.resolve(onSaveToLibrary());
+                setSaving(false);
+              }}
             >
-              + Save to Library
+              {saving ? (
+                <>
+                  <Spinner animation='border' size='sm' /> Saving…
+                </>
+              ) : (
+                <>⭐ Add to My Meals</>
+              )}
             </button>
           </div>
         </div>
@@ -150,9 +190,7 @@ export default function MealCard({
       <div className='mc-body'>
         <div className='mc-name'>
           {plan.mealName}
-          {plan.isOwnMeal && (
-            <span className='mc-own-badge'>⭐ My Meal</span>
-          )}
+          {plan.isOwnMeal && <span className='mc-own-badge'> My Meal</span>}
         </div>
         {plan.reason && <div className='mc-reason'>"{plan.reason}"</div>}
 

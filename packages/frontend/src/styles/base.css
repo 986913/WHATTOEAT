@@ -54,7 +54,7 @@
 
 .sidebar-link.active {
   background: #fff3ed !important;
-  color: #FF6B35 !important;
+  color: #ff6b35 !important;
   font-weight: 600;
 }
 
@@ -142,7 +142,7 @@
   padding: 6px 14px;
   border-radius: 6px;
   border: none;
-  background: #FF6B35;
+  background: #ff6b35;
   color: white;
 }
 
@@ -191,7 +191,7 @@
 
 .app-content {
   flex: 1;
-  padding: 24px 32px;
+  padding: 0 32px 24px 32px;
   overflow-y: auto;
   min-height: 0;
 }
@@ -348,7 +348,7 @@
   }
 
   .app-content {
-    padding: 16px 16px;
+    padding: 0 16px 16px 16px;
   }
 
   .app-footer {

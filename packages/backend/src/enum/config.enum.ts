@@ -29,6 +29,12 @@ export enum ConfigEnum {
 
   // Slack
   SLACK_WEBHOOK_URL = 'slack.webhookUrl',
+
+  // Anthropic
+  ANTHROPIC_API_KEY = 'anthropic.apiKey',
+
+  // Unsplash
+  UNSPLASH_ACCESS_KEY = 'unsplash.accessKey',
 }
 
 export enum LogEnum {

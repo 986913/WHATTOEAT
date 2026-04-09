@@ -24,6 +24,7 @@ type Callbacks = {
   onDay: (day: AiDay) => void;
   onDone: () => void;
   onError: (msg: string) => void;
+  onChunk?: (text: string) => void;
 };
 
 export function useAiMealPlan(callbacks: Callbacks) {
@@ -51,9 +52,12 @@ export function useAiMealPlan(callbacks: Callbacks) {
           type: string;
           data?: AiDay;
           message?: string;
+          text?: string;
         };
 
-        if (data.type === 'day' && data.data) {
+        if (data.type === 'chunk' && data.text) {
+          callbacks.onChunk?.(data.text);
+        } else if (data.type === 'day' && data.data) {
           callbacks.onDay(data.data);
         } else if (data.type === 'done') {
           es.close();

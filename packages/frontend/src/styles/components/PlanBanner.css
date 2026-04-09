@@ -7,20 +7,35 @@
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  padding: 14px 18px;
+  padding: 16px 20px;
   border-radius: 16px;
-  margin-bottom: 28px;
+  margin-bottom: 24px;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid transparent;
+}
+
+/* Left accent stripe */
+.plan-banner::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 4px;
 }
 
 .plan-banner-saved {
-  background: #f0faf0;
-  border: 1.5px solid #c8e6c9;
+  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+  border-color: #bbf7d0;
 }
+.plan-banner-saved::before { background: #22c55e; }
+.plan-banner-saved .plan-banner-left > i { color: #16a34a; }
 
 .plan-banner-draft {
-  background: #fff8f3;
-  border: 1.5px solid #ffdcc8;
+  background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+  border-color: #fde68a;
 }
+.plan-banner-draft::before { background: #f59e0b; }
+.plan-banner-draft .plan-banner-left > i { color: #d97706; }
 
 .plan-banner-left {
   display: flex;
@@ -33,19 +48,11 @@
   flex-shrink: 0;
 }
 
-.plan-banner-saved .plan-banner-left > i {
-  color: #2e7d32;
-}
-
-.plan-banner-draft .plan-banner-left > i {
-  color: #FF6B35;
-}
-
 .plan-banner-title {
   font-size: 14px;
   font-weight: 700;
   color: #1a1a1a;
-  margin-bottom: 1px;
+  margin-bottom: 2px;
 }
 
 .plan-banner-desc {
@@ -126,6 +133,42 @@
 
 .plan-banner-btn-save-hidden:disabled {
   opacity: 1;
+}
+
+/* AI Generate — highlighted CTA button */
+.plan-banner-btn-ai {
+  padding: 8px 18px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  background: linear-gradient(135deg, #a855f7, #FF6B35);
+  color: white;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  box-shadow: 0 2px 12px rgba(168, 85, 247, 0.35);
+  animation: aiBtnPulse 2.8s ease-in-out infinite;
+  transition: opacity 0.2s ease;
+}
+
+.plan-banner-btn-ai:hover {
+  opacity: 0.88;
+  animation: none;
+}
+
+.plan-banner-btn-ai:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  animation: none;
+}
+
+@keyframes aiBtnPulse {
+  0%, 100% { box-shadow: 0 2px 12px rgba(168, 85, 247, 0.35); }
+  50%       { box-shadow: 0 2px 20px rgba(168, 85, 247, 0.65); }
 }
 
 /* ===========================

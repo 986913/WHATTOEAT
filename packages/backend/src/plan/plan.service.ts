@@ -46,7 +46,7 @@ export class PlanService {
   }
 
   /** Fetch meals by type for a user, with Redis cache-aside */
-  private async getMealsByTypeForUser(
+  public async getMealsByTypeForUser(
     typeId: number,
     userId: number,
   ): Promise<MealEntity[]> {

@@ -12,10 +12,13 @@ import { MealEntity } from './entities/meal.entity';
 import { TypeEntity } from 'src/type/entities/type.entity';
 import { IngredientEntity } from 'src/ingredient/entities/ingredient.entity';
 import { UserEntity } from 'src/user/entities/user.entity';
+import { ConfigService } from '@nestjs/config';
 import { SlackService } from 'src/slack/slack.service';
 import { GetMealsDTO } from './dto/get-meals.dto';
 import { CreateMealDTO } from './dto/create-meal.dto';
 import { UpdateMealDTO } from './dto/update-meal.dto';
+import { ConfigEnum } from 'src/enum/config.enum';
+import { fetchFoodImage } from 'src/utils/unsplash';
 
 @Injectable()
 export class MealService {
@@ -31,6 +34,7 @@ export class MealService {
     @Inject(CACHE_MANAGER)
     private cacheManager: Cache,
     private readonly slackService: SlackService,
+    private readonly configService: ConfigService,
   ) {}
 
   // ================================
@@ -303,10 +307,16 @@ export class MealService {
       }),
     );
 
+    const youtubeSearchUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(`how to cook ${name}`)}`;
+    const imageUrl = await fetchFoodImage(
+      name,
+      this.configService.get<string>(ConfigEnum.UNSPLASH_ACCESS_KEY) ?? '',
+    );
+
     const meal = this.mealRepo.create({
       name,
-      videoUrl: '',
-      imageUrl: '',
+      videoUrl: youtubeSearchUrl,
+      imageUrl,
       types: typeEntity ? [typeEntity] : [],
       ingredients: ingredientEntities,
       creator: user,
@@ -314,7 +324,7 @@ export class MealService {
 
     const saved = await this.mealRepo.save(meal);
     await this.invalidateMealCaches();
-    return { id: saved.id, name: saved.name };
+    return { id: saved.id, name: saved.name, imageUrl };
   }
 
   /** Delete a meal only if the user owns it */
