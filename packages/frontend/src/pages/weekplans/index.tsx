@@ -12,38 +12,15 @@ import GroceryListModal from '../../components/GroceryListModal';
 import dayjs from 'dayjs';
 import AiGenerateModal from '../../components/AiGenerateModal';
 import { useAiMealPlan, type AiDay } from '../../hooks/useAiMealPlan';
+import {
+  TYPE_NAME_TO_ID,
+  getMealType,
+  formatDayHeader,
+  groupPlansByDate,
+  buildSkeletonPlans,
+} from '../../utils/mealPlan';
 
 type DraftPlan = MealCardPlan;
-
-const TYPE_NAME_TO_ID: Record<string, number> = {
-  breakfast: 1,
-  lunch: 2,
-  dinner: 3,
-};
-
-function getMealType(typeId: number) {
-  if (typeId === 1) return { label: 'Breakfast', icon: '🍳' };
-  if (typeId === 2) return { label: 'Lunch', icon: '🥗' };
-  if (typeId === 3) return { label: 'Dinner', icon: '🍝' };
-  return { label: 'Unknown', icon: '❓' };
-}
-
-function formatDayHeader(dateStr: string) {
-  const d = new Date(dateStr + 'T00:00:00');
-  return {
-    weekday: d.toLocaleDateString('en-US', { weekday: 'long' }),
-    date: d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-  };
-}
-
-function groupPlansByDate(plans: DraftPlan[]) {
-  const grouped: Record<string, DraftPlan[]> = {};
-  plans.forEach((p) => {
-    if (!grouped[p.date]) grouped[p.date] = [];
-    grouped[p.date].push(p);
-  });
-  return grouped;
-}
 
 export default function WeekPlans() {
   const { toast, success, error } = useToast();
@@ -69,9 +46,11 @@ export default function WeekPlans() {
   const [currentPreference, setCurrentPreference] = useState('');
   const [showAiModal, setShowAiModal] = useState(false);
   const [streamText, setStreamText] = useState('');
+  const [attentionKeys, setAttentionKeys] = useState<Set<string>>(new Set());
   const streamTextRef = useRef<HTMLPreElement>(null);
   const stickyHeaderRef = useRef<HTMLDivElement>(null);
   const sentinelRef = useRef<HTMLDivElement>(null);
+  const attentionCardRefs = useRef<Map<string, HTMLDivElement>>(new Map());
 
   const tomorrow = dayjs().add(1, 'day').format('YYYY-MM-DD');
 
@@ -151,6 +130,7 @@ export default function WeekPlans() {
 
   const generateFresh = async () => {
     if (!currentUser?.id) return;
+    setAttentionKeys(new Set());
     try {
       setLoadingPreview(true);
       setSaveReady(false);
@@ -171,13 +151,27 @@ export default function WeekPlans() {
     }
   };
 
+  const clearAttentionKey = (date: string, typeId: number) => {
+    const key = `${date}-${typeId}`;
+    setAttentionKeys((prev) => {
+      if (!prev.has(key)) return prev;
+      const next = new Set(prev);
+      next.delete(key);
+      return next;
+    });
+  };
+
   const handleSaveWeek = async () => {
     if (!currentUser?.id || !draftPlans.length) return;
-    const hasUnsaved = draftPlans.some((p) => p.isAiSuggestion && p.mealId === null);
-    if (hasUnsaved) {
-      error('Save or shuffle all AI suggestions before saving the week');
+    const unsaved = draftPlans.filter((p) => p.isAiSuggestion && p.mealId === null);
+    if (unsaved.length > 0) {
+      const keys = new Set(unsaved.map((p) => `${p.date}-${p.typeId}`));
+      setAttentionKeys(keys);
+      const firstKey = `${unsaved[0].date}-${unsaved[0].typeId}`;
+      attentionCardRefs.current.get(firstKey)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
       return;
     }
+    setAttentionKeys(new Set());
     try {
       setLoadingCommit(true);
       await axios.post('/plans/weekly-commit', {
@@ -229,6 +223,7 @@ export default function WeekPlans() {
         ),
       );
       setIsSaved(false);
+      clearAttentionKey(date, typeId);
       // Reset from ai-draft so "Back to Saved" becomes visible again
       setStreamState((prev) => (prev === 'ai-draft' ? 'idle' : prev));
     } catch {
@@ -237,18 +232,6 @@ export default function WeekPlans() {
       setReplacingKey(null);
     }
   };
-
-  const buildSkeletonPlans = (startDate: string): DraftPlan[] =>
-    Array.from({ length: 7 }, (_, i) =>
-      dayjs(startDate).add(i, 'day').format('YYYY-MM-DD'),
-    ).flatMap((date) =>
-      [1, 2, 3].map((typeId) => ({
-        date,
-        typeId,
-        mealId: null,
-        isSkeleton: true,
-      })),
-    );
 
   const handleChunk = useCallback((text: string) => {
     setStreamText((prev) => {
@@ -329,14 +312,56 @@ export default function WeekPlans() {
             : d,
         ),
       );
+      clearAttentionKey(p.date, p.typeId);
       success('Saved to your library!');
     } catch {
       error('Failed to save meal');
     }
   };
 
+  const handleAiRegenerateMeal = async (date: string, typeId: number) => {
+    const key = `${date}-${typeId}`;
+    try {
+      setReplacingKey(key);
+      const res = await axios.post('/ai/regenerate-meal', {
+        typeId,
+        date,
+        preference: currentPreference,
+      });
+      setDraftPlans((prev) =>
+        prev.map((p) =>
+          p.date === date && p.typeId === typeId
+            ? {
+                ...p,
+                mealId: res.data.mealId,
+                mealName: res.data.mealName,
+                mealImageUrl: res.data.mealImageUrl,
+                mealVideoUrl: res.data.mealVideoUrl,
+                mealIngredients: res.data.mealIngredients,
+                isOwnMeal: res.data.isOwnMeal,
+                isAiSuggestion: res.data.isAiSuggestion ?? true,
+                reason: res.data.reason,
+                suggestionIngredients: res.data.suggestion?.ingredients,
+              }
+            : p,
+        ),
+      );
+      // If Claude picked a library meal, the card is now resolved
+      if (!res.data.isAiSuggestion) {
+        clearAttentionKey(date, typeId);
+      }
+      setIsSaved(false);
+      setStreamState((prev) => (prev === 'ai-draft' ? 'idle' : prev));
+    } catch {
+      error('Failed to regenerate meal');
+    } finally {
+      setReplacingKey(null);
+    }
+  };
+
   const handleAiGenerate = async (preference: string) => {
     setShowAiModal(false);
+    setAttentionKeys(new Set());
     setCurrentPreference(preference);
     setStreamState('generating');
     setDaysReady(0);
@@ -476,12 +501,14 @@ export default function WeekPlans() {
       {!isSaved && streamState !== 'generating' && (
         <div className='wk-save-cta'>
           <button
-            className='wk-save-cta-btn'
-            onClick={handleSaveWeek}
+            className={`wk-save-cta-btn${attentionKeys.size > 0 ? ' wk-save-cta-btn--attention' : ''}`}
+            onClick={() => { void handleSaveWeek(); }}
             disabled={loadingCommit || !draftPlans.length || !saveReady}
           >
             {loadingCommit ? (
               <><Spinner animation='border' size='sm' /> Saving…</>
+            ) : attentionKeys.size > 0 ? (
+              <><i className='fa-solid fa-circle-exclamation'></i> Shuffle or save {attentionKeys.size} AI suggestion{attentionKeys.size > 1 ? 's' : ''} before saving ↑</>
             ) : !saveReady ? (
               <><i className='fa-solid fa-eye'></i> Review your meals first…</>
             ) : (
@@ -513,25 +540,35 @@ export default function WeekPlans() {
                     const isFlipped = flippedKey === key;
 
                     return (
-                      <MealCard
+                      <div
                         key={key}
-                        plan={p}
-                        typeLabel={t.label}
-                        typeIcon={t.icon}
-                        compact
-                        isShuffling={isReplacing}
-                        isFlipped={isFlipped}
-                        onFlip={() => setFlippedKey(isFlipped ? null : key)}
-                        onShuffle={() =>
-                          handleReplaceMeal(p.date, p.typeId, p.mealId ?? 0)
-                        }
-                        onVideo={(url) => setVideoUrl(url)}
-                        onSaveToLibrary={
-                          p.isAiSuggestion
-                            ? () => { void handleSaveToLibrary(p); }
-                            : undefined
-                        }
-                      />
+                        ref={(el) => {
+                          if (el) attentionCardRefs.current.set(key, el);
+                          else attentionCardRefs.current.delete(key);
+                        }}
+                      >
+                        <MealCard
+                          plan={p}
+                          typeLabel={t.label}
+                          typeIcon={t.icon}
+                          compact
+                          isShuffling={isReplacing}
+                          isFlipped={isFlipped}
+                          isAttention={attentionKeys.has(key)}
+                          onFlip={() => setFlippedKey(isFlipped ? null : key)}
+                          onShuffle={
+                            p.isAiSuggestion
+                              ? () => { void handleAiRegenerateMeal(p.date, p.typeId); }
+                              : () => { void handleReplaceMeal(p.date, p.typeId, p.mealId ?? 0); }
+                          }
+                          onVideo={(url) => setVideoUrl(url)}
+                          onSaveToLibrary={
+                            p.isAiSuggestion
+                              ? () => { void handleSaveToLibrary(p); }
+                              : undefined
+                          }
+                        />
+                      </div>
                     );
                   })}
               </div>
@@ -552,8 +589,11 @@ export default function WeekPlans() {
 
       {/* Save Success Overlay */}
       {saved && (
-        <div className='wk-saved-backdrop'>
-          <div className='wk-saved-modal'>
+        <div className='wk-saved-backdrop' onClick={() => setSaved(false)}>
+          <div className='wk-saved-modal' onClick={(e) => e.stopPropagation()}>
+            <button className='wk-saved-close' onClick={() => setSaved(false)} aria-label='Close'>
+              <i className='fa-solid fa-xmark' />
+            </button>
             <div className='wk-saved-check'>
               <i className='fa-solid fa-check'></i>
             </div>

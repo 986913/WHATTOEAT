@@ -36,6 +36,8 @@ interface MealCardProps {
   onSaveToLibrary?: () => void;
   /** compact mode for week plan cards */
   compact?: boolean;
+  /** highlights AI suggestion cards that need an action before saving */
+  isAttention?: boolean;
 }
 
 export default function MealCard({
@@ -50,8 +52,10 @@ export default function MealCard({
   onVideo,
   onSaveToLibrary,
   compact,
+  isAttention,
 }: MealCardProps) {
   const [saving, setSaving] = useState(false);
+  const [imgLoaded, setImgLoaded] = useState(false);
 
   // ── Skeleton variant ──────────────────────────────
   if (plan.isSkeleton) {
@@ -76,18 +80,22 @@ export default function MealCard({
   if (plan.isAiSuggestion) {
     return (
       <div
-        className={`mc-card mc-card-ai-suggestion${compact ? ' mc-card-compact' : ''}`}
+        className={`mc-card mc-card-ai-suggestion${compact ? ' mc-card-compact' : ''}${isAttention ? ' mc-card-attention' : ''}`}
       >
         <div className='mc-label'>
           <span className='mc-label-icon'>{typeIcon}</span>
           {typeLabel}
         </div>
         {plan.mealImageUrl ? (
-          <div style={{ position: 'relative' }}>
+          <div className='mc-img-wrapper'>
+            {!imgLoaded && <div className='mc-img-placeholder' />}
             <img
               className='mc-image'
               src={plan.mealImageUrl}
               alt={plan.mealName}
+              loading='lazy'
+              decoding='async'
+              onLoad={() => setImgLoaded(true)}
             />
             <span className='mc-ai-badge'>✨ AI Generated</span>
           </div>
@@ -110,6 +118,12 @@ export default function MealCard({
                 ))}
               </div>
             )}
+          {isAttention && (
+            <div className='mc-attention-chip'>
+              <i className='fa-solid fa-circle-exclamation' />
+              Save to library or swap meal to include in plan
+            </div>
+          )}
           <div className='mc-actions'>
             <a
               className='mc-btn mc-btn-video'
@@ -119,6 +133,19 @@ export default function MealCard({
             >
               <i className='fa-solid fa-play'></i> Recipe
             </a>
+            {onShuffle && (
+              <button
+                className='mc-btn mc-btn-shuffle'
+                disabled={isShuffling}
+                onClick={onShuffle}
+              >
+                {isShuffling ? (
+                  <Spinner animation='border' size='sm' />
+                ) : (
+                  <><i className='fa-solid fa-wand-magic-sparkles'></i> Regenerate</>
+                )}
+              </button>
+            )}
             <button
               className='mc-btn-save-to-library'
               disabled={!onSaveToLibrary || saving}
@@ -143,6 +170,7 @@ export default function MealCard({
     );
   }
 
+  // ── Regular card ──────────────────────────────────
   let cardClass = 'mc-card';
   if (compact) cardClass += ' mc-card-compact';
   if (isShuffling) cardClass += ' mc-card-shuffling';
@@ -159,10 +187,14 @@ export default function MealCard({
       <div className='mc-flipper' onClick={onFlip}>
         {/* Front — image */}
         <div className='mc-front'>
+          {!imgLoaded && <div className='mc-img-placeholder' />}
           <img
             className='mc-image'
             src={plan.mealImageUrl || PLACEHOLDER_IMG}
             alt={plan.mealName}
+            loading='lazy'
+            decoding='async'
+            onLoad={() => setImgLoaded(true)}
           />
           <div className='mc-flip-hint'>
             <i className='fa-solid fa-list'></i> Ingredients

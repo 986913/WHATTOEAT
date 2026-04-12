@@ -75,10 +75,6 @@ export class RedisPubSubService implements OnModuleDestroy {
     await this.pub.set(`ai:task:${taskId}:status`, status, 'EX', 600);
   }
 
-  async getTaskStatus(taskId: string): Promise<string | null> {
-    return this.pub.get(`ai:task:${taskId}:status`);
-  }
-
   async acquireUserLock(userId: number, taskId: string): Promise<boolean> {
     const key = `ai:user:${userId}:generating`;
     // 这是分布式锁(Distributed Lock)的最简实现，防止同一用户同时发起多个 AI generate任务

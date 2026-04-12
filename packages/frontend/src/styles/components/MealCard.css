@@ -516,6 +516,91 @@
   }
 }
 
+/* ── Image lazy-load placeholder ──────────────────── */
+
+/* Used inside .mc-front (fills the flip area via absolute positioning) */
+.mc-front .mc-img-placeholder {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: mcShimmer 1.4s infinite;
+}
+
+/* Wrapper for AI suggestion card image — needs explicit height for shimmer */
+.mc-img-wrapper {
+  position: relative;
+  min-height: 140px;
+  overflow: hidden;
+}
+
+.mc-card-compact .mc-img-wrapper {
+  min-height: 100px;
+}
+
+/* Placeholder inside AI suggestion image wrapper */
+.mc-img-wrapper .mc-img-placeholder {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: mcShimmer 1.4s infinite;
+}
+
+/* ── Attention state (needs action before save) ────── */
+.mc-card-attention {
+  border-color: #f59e0b !important;
+  box-shadow:
+    0 0 0 4px rgba(245, 158, 11, 0.15),
+    0 4px 16px rgba(245, 158, 11, 0.2) !important;
+  animation:
+    mcAttentionShake 0.45s cubic-bezier(0.36, 0.07, 0.19, 0.97),
+    mcAttentionRing 2s ease-in-out 0.45s infinite !important;
+}
+
+@keyframes mcAttentionShake {
+  0%, 100% { transform: translateX(0); }
+  15%       { transform: translateX(-7px); }
+  30%       { transform: translateX(6px); }
+  45%       { transform: translateX(-5px); }
+  60%       { transform: translateX(4px); }
+  75%       { transform: translateX(-2px); }
+}
+
+@keyframes mcAttentionRing {
+  0%, 100% {
+    box-shadow:
+      0 0 0 3px rgba(245, 158, 11, 0.25),
+      0 4px 16px rgba(245, 158, 11, 0.15);
+  }
+  50% {
+    box-shadow:
+      0 0 0 6px rgba(245, 158, 11, 0.45),
+      0 8px 24px rgba(245, 158, 11, 0.3);
+  }
+}
+
+.mc-attention-chip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin: 6px 0 10px;
+  padding: 6px 12px;
+  background: #fffbeb;
+  border: 1.5px solid #f59e0b;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #92400e;
+}
+
+.mc-attention-chip i {
+  color: #f59e0b;
+  font-size: 12px;
+}
+
 /* ── AI Suggestion Card (Option C) ────────────────── */
 .mc-card-ai-suggestion {
   border: 2px solid #a855f7 !important;

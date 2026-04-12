@@ -26,6 +26,24 @@ export class AiController {
     private redisPubSub: RedisPubSubService,
   ) {}
 
+  @Post('regenerate-meal')
+  @UseGuards(JwtAuthenticationGuard)
+  async regenerateMeal(
+    @Body() body: { typeId: number; date: string; preference: string },
+    @Req() req: AuthRequest,
+  ) {
+    const userId: number = req.user.userID;
+    if (!body.typeId || !body.date) {
+      throw new BadRequestException('typeId and date are required');
+    }
+    return this.aiService.regenerateMeal(
+      userId,
+      body.typeId,
+      body.date,
+      body.preference ?? '',
+    );
+  }
+
   // JWT 验证通过后，触发后台生成任务，立即返回 taskId（不等 AI 完成）
   // 前端拿到 taskId 后，再用 GET /ai/stream 建 SSE 连接订阅结果
   @Post('generate')

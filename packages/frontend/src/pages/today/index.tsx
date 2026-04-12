@@ -11,6 +11,7 @@ import MealCard, { type MealCardPlan } from '../../components/MealCard';
 import GroceryListModal from '../../components/GroceryListModal';
 import PlanBanner from '../../components/PlanBanner';
 import dayjs from 'dayjs';
+import { TYPE_NAME_TO_ID } from '../../utils/mealPlan';
 
 type DraftPlan = MealCardPlan;
 
@@ -19,12 +20,6 @@ const MEAL_TYPES = [
   { id: 2, label: 'Lunch', icon: '🥗' },
   { id: 3, label: 'Dinner', icon: '🍝' },
 ];
-
-const TYPE_NAME_TO_ID: Record<string, number> = {
-  breakfast: 1,
-  lunch: 2,
-  dinner: 3,
-};
 
 export default function Today() {
   const { toast, success, error } = useToast();
@@ -270,9 +265,7 @@ export default function Today() {
                   isShuffling={isShuffling}
                   isRevealing={isRevealing}
                   isFlipped={isFlipped}
-                  onFlip={() =>
-                    setFlippedType(isFlipped ? null : type.id)
-                  }
+                  onFlip={() => setFlippedType(isFlipped ? null : type.id)}
                   onShuffle={() => handleShuffle(type.id, plan.mealId ?? 0)}
                   onVideo={(url) => setVideoUrl(url)}
                 />
