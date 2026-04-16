@@ -4,14 +4,21 @@
 
 ---
 
-## Table of Contents
+## Status
 
-1. [Architecture Overview](#architecture-overview)
-2. [Prerequisites & Learning Path](#prerequisites--learning-path)
-3. [Implementation Roadmap](#implementation-roadmap)
-4. [Technical Deep Dives](#technical-deep-dives)
-5. [Cost & Performance Considerations](#cost--performance-considerations)
-6. [Testing Strategy](#testing-strategy)
+| Step | Description | Status |
+|------|-------------|--------|
+| Step 0 | Redis infrastructure (ElastiCache + ioredis Pub/Sub) | ✅ Done |
+| Step 1 | Backend AI Service (AiModule + Claude streaming + SSE endpoint) | ✅ Done |
+| Step 2 | SSE Streaming Pipeline (taskId pattern + heartbeat + buffer replay) | ✅ Done |
+| Step 3 | Frontend Streaming UI (progressive day rendering + AI suggestion badge) | ✅ Done |
+| Step 4 | Native Tool Use refactor (replace JSON mode + bracket-depth parsing) | ⬜ Not started |
+| Step 5 | Meal Planning Chatbot with Memory | ⬜ Not started |
+| Step 6 | Prompt Caching + Model Tier Routing + CloudWatch cost telemetry | ⬜ Not started |
+| Step 7 | Save AI Suggestions to Library (needs TD1.2 DB migrations first) | ⬜ Blocked |
+| Step 8 | Observability & Guardrails (熔断 + Event Loop 监控) | ⬜ Not started |
+
+**Implementation plans for Steps 4–6:** See [docs/superpowers/plans/](superpowers/plans/)
 
 ---
 
@@ -21,448 +28,149 @@
 User Input (natural language)
         │
         ▼
-┌─────────────────┐     SSE stream      ┌──────────────────────┐
-│  React Frontend │◄────────────────────│  NestJS Backend       │
-│  (streaming UI) │                      │                       │
-└─────────────────┘                      │  POST /plans/ai-gen   │
-                                         │       │               │
-                                         │       ▼               │
-                                         │  ┌─────────────┐     │
-                                         │  │ AI Service   │     │
-                                         │  │ (prompt +    │     │
-                                         │  │  meal pool)  │     │
-                                         │  └──────┬──────┘     │
-                                         │         │             │
-                                         │         ▼             │
-                                         │  Claude / OpenAI API  │
-                                         │  (streaming response) │
-                                         └──────────────────────┘
+┌─────────────────┐     SSE stream      ┌──────────────────────────────────┐
+│  React Frontend │◄────────────────────│  NestJS Backend                   │
+│  (streaming UI) │                      │                                   │
+└─────────────────┘                      │  POST /ai/generate → {taskId}    │
+                                         │  GET  /ai/stream?taskId=xxx       │
+                                         │       │                           │
+                                         │       ▼                           │
+                                         │  AiService                        │
+                                         │  ├── buildMealPool (DB)           │
+                                         │  ├── runGeneration (Claude API)   │
+                                         │  └── enrichDay (Unsplash)        │
+                                         │       │                           │
+                                         │       ▼                           │
+                                         │  Redis Pub/Sub                    │
+                                         │  (taskId channel)                 │
+                                         └──────────────────────────────────┘
+                                                  │
+                                                  ▼
+                                         Claude Haiku / Sonnet API
+                                         (tool_use streaming — Step 4)
 ```
 
-**Core flow:**
-1. User types preference in natural language (e.g., "这周想吃清淡的，周三朋友来做硬菜")
-2. Backend fetches user's available meal pool (public + custom meals, from cache)
-3. Backend constructs a prompt: system instructions + meal pool + user preference
-4. Streams Claude API response back to frontend via SSE
-5. Frontend renders meals progressively (day by day, typing effect)
-6. User can tweak individual meals (existing shuffle) and save (existing commit)
+**Current flow (Steps 0–3 complete):**
+1. User types preference → `POST /ai/generate` returns `taskId`
+2. Backend fetches meal pool (DB), streams Claude via `messages.stream()`
+3. Bracket-depth parser extracts each day JSON → enriches with Unsplash images → publishes to Redis channel
+4. Frontend SSE client (`useAiMealPlan`) receives `day` events and renders progressively
+5. `regenerateMeal` handles individual meal refresh
 
-**Key design decision — Hybrid approach:**
-- AI picks from **existing meal pool** when possible (so meals have images, videos, ingredients)
-- AI can **suggest new meals** not in the pool (rendered differently, no image/video, user can save to library)
-- This gives the best of both worlds: rich existing data + creative AI suggestions
+**After Step 4:** Bracket-depth parsing replaced by native `tool_use` blocks. Cleaner, typed, no string hacking.
 
 ---
 
-## Prerequisites & Learning Path
+## What's Built (Steps 0–3)
 
-### 1. Claude API / Anthropic SDK (Priority: HIGH)
+### Backend (`packages/backend/src/ai/`)
 
-**What to learn:**
-- Anthropic SDK for Node.js (`@anthropic-ai/sdk`)
-- Streaming responses (`stream: true` / `client.messages.stream()`)
-- Prompt engineering: system prompt, user prompt, structured output (JSON mode)
-- Token counting & cost estimation
+| File | Responsibility |
+|------|---------------|
+| `ai.module.ts` | Module wiring: AiService, AiController, RedisPubSubService |
+| `ai.service.ts` | Claude API client, meal pool building, streaming, enrichment |
+| `ai.controller.ts` | `POST /ai/generate`, `GET /ai/stream` SSE, `POST /ai/regenerate-meal` |
+| `ai.prompts.ts` | `buildSystemPrompt`, `buildUserPrompt` (→ tool schemas in Step 4) |
+| `redis-pubsub.service.ts` | Publish/subscribe, buffer replay, user lock, task status |
 
-**Resources:**
-- [Anthropic API docs](https://docs.anthropic.com/en/docs)
-- [Anthropic SDK for TypeScript](https://github.com/anthropics/anthropic-sdk-typescript)
-- [Streaming Messages](https://docs.anthropic.com/en/api/messages-streaming)
-- [Prompt engineering guide](https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering)
+### Frontend (`packages/frontend/src/`)
 
-**Hands-on exercise:**
-```typescript
-// Quick start — run this standalone to verify API access
-import Anthropic from '@anthropic-ai/sdk';
+| File | Responsibility |
+|------|---------------|
+| `hooks/useAiMealPlan.ts` | SSE client: POST generate → GET stream, handles `chunk/day/done/error` events |
+| `components/AiGenerateModal.tsx` | Preference input modal |
+| `pages/weekplans/index.tsx` | Progressive render, skeleton states, AI badge, regenerate per meal |
 
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+### Key Design Decisions
 
-const stream = client.messages.stream({
-  model: 'claude-sonnet-4-20250514',
-  max_tokens: 1024,
-  messages: [{ role: 'user', content: 'Suggest 3 dinner ideas with ingredients' }],
-});
+**Why Redis Pub/Sub (not in-memory)?**
+ECS can run multiple Fargate instances. If the `POST /ai/generate` hits instance A and `GET /ai/stream` hits instance B, in-memory state doesn't work. Redis channels are shared across instances.
 
-for await (const event of stream) {
-  if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
-    process.stdout.write(event.delta.text);
-  }
-}
-```
+**Why buffer replay?**
+`LRANGE` on the channel buffer handles the race condition where Claude starts publishing before the SSE client connects. Late subscribers replay all buffered events.
 
-### 2. Server-Sent Events (SSE) in NestJS (Priority: HIGH)
-
-**What to learn:**
-- NestJS `@Sse()` decorator — returns `Observable<MessageEvent>`
-- RxJS basics: `Observable`, `Subject`, `map`, `finalize`
-- How SSE differs from WebSocket (unidirectional, auto-reconnect, HTTP-based)
-
-**Resources:**
-- [NestJS SSE docs](https://docs.nestjs.com/techniques/server-sent-events)
-- [RxJS Observable basics](https://rxjs.dev/guide/observable)
-
-**Key NestJS pattern:**
-```typescript
-@Sse('ai-stream')
-generateWithAI(@Query('taskId') taskId: string): Observable<MessageEvent> {
-  // Return an Observable that emits MessageEvent objects
-  // NestJS handles the SSE protocol (Content-Type, keep-alive, etc.)
-}
-```
-
-### 3. Frontend Streaming Consumption (Priority: HIGH)
-
-**What to learn:**
-- `EventSource` API or `fetch` + `ReadableStream` for SSE
-- Incremental React state updates (append, not replace)
-- Typing/streaming UI animation patterns
-
-**Key pattern:**
-```typescript
-// Using native EventSource
-const eventSource = new EventSource('/api/v1/plans/ai-stream?taskId=xxx');
-eventSource.onmessage = (event) => {
-  const data = JSON.parse(event.data);
-  setPlans(prev => mergePlan(prev, data)); // incremental update
-};
-eventSource.onerror = () => eventSource.close();
-```
-
-### 4. ALB / Fargate Long Connection Handling (Priority: MEDIUM)
-
-**What to learn:**
-- ALB idle timeout (default 60s) — needs to be increased for SSE
-- ECS Fargate keep-alive behavior
-- How to send SSE heartbeat/ping to keep connection alive
-
-**Key config:**
-- ALB idle timeout: increase to **120–300 seconds** via AWS Console or CLI
-- Backend: send periodic `:ping\n\n` comments in the SSE stream to prevent timeout
-- Alternative: use a request-response pattern with polling (simpler but worse UX)
-
-### 5. Prompt Engineering for Structured Output (Priority: MEDIUM)
-
-**What to learn:**
-- How to make LLMs return consistent JSON
-- Few-shot examples in prompts
-- Handling edge cases (AI ignoring instructions, malformed JSON)
-- Token optimization (what to include/exclude from meal pool data)
-
-**Key insight for this project:**
-```
-You only need to send meal names + IDs + types + ingredient names to the AI.
-Do NOT send imageUrl/videoUrl — wastes tokens, AI doesn't need them.
-The backend maps AI's chosen meal IDs back to full meal objects.
-```
+**Why bracket-depth parsing (→ replaced in Step 4)?**
+Claude was asked for JSONL output. We accumulated characters and emitted a complete JSON object whenever depth hit 0. This works but is fragile — `tool_use` blocks are cleaner.
 
 ---
 
-## Implementation Roadmap
+## What's Next (Steps 4–6)
 
-### Step 1: Backend AI Service Foundation
-**Estimated scope: ~2-3 files, 1 new module**
+### Step 4: Native Tool Use
+**Plan:** [2026-04-15-step4-native-tool-use.md](superpowers/plans/2026-04-15-step4-native-tool-use.md)
 
-```
-packages/backend/src/ai/
-├── ai.module.ts            # Module registration
-├── ai.service.ts           # Claude API client, prompt construction, streaming
-└── ai.controller.ts        # SSE endpoint
-```
+Define `record_day_plan` and `suggest_meal` tool schemas. Switch from bracket-depth parsing to accumulating `input_json_delta` events per block index. No frontend changes needed — the `day` events emitted by the backend stay identical.
 
-**Tasks:**
-- [ ] Install `@anthropic-ai/sdk`
-- [ ] Create `AiModule` with `AiService`
-- [ ] Add `ANTHROPIC_API_KEY` to environment config
-- [ ] Implement `generateMealPlan(userId, preference)`:
-  1. Fetch user's meal pool (reuse `getMealsByTypeForUser` from PlanService)
-  2. Build prompt with meal pool + user preference
-  3. Stream Claude response
-  4. Parse streaming JSON into `DraftPlan[]` format
-- [ ] Create SSE endpoint `GET /plans/ai-generate`
+**Why this matters for interviews:** Tool use is the single most-asked Claude API question. "How does it differ from JSON mode?" — tool_use has a typed schema, Claude is forced to conform, you get structured input not a raw string.
 
-**Prompt structure:**
-```
-System: You are a meal planning assistant. Given a list of available meals
-and user preferences, create a 7-day meal plan (breakfast, lunch, dinner).
+### Step 5: Chatbot with Memory
+**Plan:** [2026-04-15-step5-chatbot-with-memory.md](superpowers/plans/2026-04-15-step5-chatbot-with-memory.md)
 
-AVAILABLE MEALS:
-Breakfast: [Oatmeal (id:1), Eggs Benedict (id:5), ...]
-Lunch: [Caesar Salad (id:12), Ramen (id:15), ...]
-Dinner: [Grilled Salmon (id:20), Pasta Carbonara (id:23), ...]
+New `ChatModule` with two memory layers:
+- **Session memory:** Redis List `chat:session:{userId}` — last 20 messages, TTL 24h. Sent as context window on each turn.
+- **Long-term memory:** `ProfileEntity.dietaryPreferences` (text column). Extracted from each conversation turn via a fast Haiku call, merged into the user's profile.
 
-RULES:
-- Prefer meals from the available list (reference by ID)
-- You may suggest NEW meals if nothing fits the preference
-- For new meals, provide: name, type, ingredients[]
-- Output format: JSON array, one object per day
-- Avoid repeating the same meal within 3 days
+**Why two memory types?** Session memory is fast but ephemeral. Long-term memory persists across sessions and primes the system prompt ("known about this user: prefers low-carb, dislikes fish"). This is the standard pattern used in production AI assistants.
 
-USER PREFERENCE: {userInput}
-```
+### Step 6: Prompt Caching + Model Routing + Cost Telemetry
+**Plan:** [2026-04-15-step6-prompt-caching-routing.md](superpowers/plans/2026-04-15-step6-prompt-caching-routing.md)
 
-**Output format (streamed as JSON chunks):**
-```json
-{
-  "days": [
-    {
-      "date": "2025-03-26",
-      "meals": [
-        { "typeId": 1, "mealId": 5, "reason": "高蛋白早餐" },
-        { "typeId": 2, "mealId": 15, "reason": "清淡午餐" },
-        { "typeId": 3, "mealId": null, "suggestion": { "name": "清蒸鲈鱼", "ingredients": ["鲈鱼", "姜", "葱", "蒸鱼豉油"] }, "reason": "朋友来访的硬菜" }
-      ]
-    }
-  ]
-}
-```
+Three changes to `AiService`:
+1. **Prompt caching:** System prompt (meal pool) marked with `cache_control: {type: "ephemeral"}`. Cache hit = 90% discount on those input tokens. TTL = 5 minutes.
+2. **Model routing:** `selectModel(preference)` returns Haiku for short/simple preferences, Sonnet for long/multi-constraint ones. Based on word count and dietary keyword matching.
+3. **CloudWatch telemetry:** After each call, `PutMetricData` to `MealDice/AI` namespace with `InputTokens`, `CacheReadTokens`, `OutputTokens`, `EstimatedCostUSD`. Alarm triggers at $10/day.
 
-### Step 2: SSE Streaming Pipeline
-**Estimated scope: controller + service method**
-
-**Tasks:**
-- [ ] Implement `@Sse()` endpoint that:
-  1. Accepts a task ID (generated by a prior `POST` that kicks off generation)
-  2. Returns `Observable<MessageEvent>` from an RxJS Subject
-  3. Emits events: `{ type: 'day', data: {...} }` as each day is generated
-  4. Emits `{ type: 'done' }` when complete
-  5. Emits `{ type: 'error', data: {...} }` on failure
-  6. Sends heartbeat every 15s to keep ALB connection alive
-- [ ] Implement task management (in-memory Map or Redis) to track generation state
-- [ ] Add timeout handling (kill generation if > 60s)
-- [ ] Add rate limiting (max 1 concurrent generation per user)
-
-**Flow:**
-```
-POST /plans/ai-generate  →  returns { taskId: "abc123" }
-                               (kicks off async generation)
-
-GET  /plans/ai-stream?taskId=abc123  →  SSE stream
-     event: day
-     data: { "date": "2025-03-26", "meals": [...] }
-
-     event: day
-     data: { "date": "2025-03-27", "meals": [...] }
-
-     ...
-
-     event: done
-     data: { "totalDays": 7 }
-```
-
-### Step 3: Frontend Streaming UI
-**Estimated scope: 1 new component + modifications to WeekPlans page**
-
-**Tasks:**
-- [ ] Add "AI Generate" button/tab alongside existing "Shuffle" on WeekPlans page
-- [ ] Add text input for user preference (collapsible, optional)
-- [ ] Implement SSE client hook `useAiMealPlan(taskId)`
-- [ ] Progressive rendering: show each day's card as it streams in
-  - Skeleton loading for days not yet received
-  - Typing animation for the AI "reason" text
-  - Smooth transition from skeleton → real card
-- [ ] Handle AI-suggested new meals (no image/video):
-  - Show a distinct "AI Suggestion" badge (different from "My Meal" badge)
-  - "Save to My Meals" button to persist the suggestion
-- [ ] Once all 7 days are streamed, enable existing Save/Shuffle per-meal controls
-- [ ] Error handling: timeout, API failure, network disconnect
-
-**UI mockup:**
-```
-┌──────────────────────────────────────────────┐
-│  Weekly Meal Plan                             │
-│                                               │
-│  ┌─────────────────────────────────────────┐ │
-│  │ 🤖 What are you in the mood for?        │ │
-│  │ ┌─────────────────────────────────────┐ │ │
-│  │ │ 这周想吃清淡的，周三朋友来做硬菜    │ │ │
-│  │ └─────────────────────────────────────┘ │ │
-│  │           [✨ AI Generate]  [🎲 Shuffle] │ │
-│  └─────────────────────────────────────────┘ │
-│                                               │
-│  ── Wednesday, Mar 26 ──────────────────────  │
-│  🍳 Oatmeal       🥗 Caesar Salad   🍝 ░░░░ │
-│  (from library)   (from library)   streaming..│
-│                                               │
-│  ── Thursday, Mar 27 ──────────────────────── │
-│  ░░░░░░░░░░░░  (waiting for AI...)            │
-└──────────────────────────────────────────────┘
-```
-
-### Step 4: Smart Caching & Cost Optimization
-**Estimated scope: enhancements to AI service**
-
-**Tasks:**
-- [ ] **Prompt caching**: Cache the meal pool portion of the prompt in Redis
-  - Meal pool changes infrequently, no need to re-fetch every request
-  - Only the user preference changes per request
-- [ ] **Response caching**: Cache AI responses by (userId + normalized preference hash)
-  - Short TTL (10-30 min) — same mood in same session gets cached result
-  - Saves tokens on "regenerate" clicks
-- [ ] **Token budget management**:
-  - Track daily/monthly token usage per user in Redis
-  - Set limits (e.g., 10 AI generations per day per user)
-  - Return 429 when limit exceeded
-- [ ] **Model tier strategy**:
-  - Use `claude-haiku-4-5-20251001` for simple preferences (fast, cheap)
-  - Use `claude-sonnet-4-20250514` for complex multi-constraint requests
-  - Let the backend decide based on input complexity (word count, constraint count)
-- [ ] **Meal pool optimization**:
-  - Only send meal name + ID + ingredient names to AI (skip URLs)
-  - If pool > 100 meals, pre-filter by type before building prompt
-  - Estimated prompt size: ~50 meals = ~2K tokens input
-
-### Step 5: Save AI Suggestions to Library
-**Estimated scope: enhancements to meal service + frontend**
-
-**Tasks:**
-- [ ] When AI suggests a new meal not in the pool:
-  - Frontend shows "Save to My Meals" button
-  - `POST /meals/my` with AI-generated name + ingredients
-  - Auto-create missing ingredients (existing logic handles this)
-  - After save, the suggestion card upgrades to a full meal card (with edit capability)
-- [ ] Track AI-originated meals with a flag or tag for analytics
-
-### Step 6: Observability & Guardrails
-**Estimated scope: middleware + logging**
-
-**Tasks:**
-- [ ] Log AI requests: userId, preference text, model used, token count, latency
-- [ ] Slack notification for AI usage anomalies (high cost, errors)
-- [ ] Input sanitization: strip PII, limit input length (500 chars)
-- [ ] Output validation: verify AI response matches expected JSON schema before sending to frontend
-- [ ] Fallback: if AI fails, offer "Fall back to random shuffle?"
+**Execution order:** Step 4 → Step 6 (both touch `ai.service.ts`; caching builds on the refactored streaming code).
 
 ---
 
-## Technical Deep Dives
+## Technical Reference
 
 ### SSE + ALB + Fargate Configuration
 
 ```
-Browser  ──SSE──▶  ALB (idle timeout: 300s)  ──▶  Fargate (NestJS @Sse)
-                   ▲                                      │
-                   │              heartbeat every 15s      │
-                   └──────────────────────────────────────┘
+Browser ──SSE──▶ ALB (idle timeout: 300s) ──▶ Fargate (NestJS @Sse)
+                  ▲                                    │
+                  │         heartbeat every 15s        │
+                  └────────────────────────────────────┘
 ```
 
-**ALB idle timeout adjustment:**
+ALB idle timeout must be increased to 300s (default 60s will kill long generations):
 ```bash
 aws elbv2 modify-load-balancer-attributes \
   --load-balancer-arn <your-alb-arn> \
   --attributes Key=idle_timeout.timeout_seconds,Value=300
 ```
 
-**NestJS heartbeat in SSE stream:**
+NestJS heartbeat pattern (already implemented in `ai.controller.ts`):
 ```typescript
-// In your Observable, merge a heartbeat interval
 const heartbeat$ = interval(15000).pipe(
-  map(() => ({ type: 'ping', data: '' } as MessageEvent)),
-);
-const generation$ = this.aiService.streamMealPlan(taskId);
-return merge(generation$, heartbeat$).pipe(
-  finalize(() => this.cleanup(taskId)),
+  takeUntil(done$),
+  map(() => ({ data: JSON.stringify({ type: 'heartbeat' }) })),
 );
 ```
 
-### Request-Response vs SSE Decision
+### Token Cost Estimation (at current scale)
 
-| Approach | Pros | Cons |
-|----------|------|------|
-| **SSE (recommended)** | Real-time UX, progressive rendering, feels fast | ALB timeout config, more frontend complexity |
-| **POST + Poll** | Simple, no long connection issues | Laggy UX, extra requests, need task queue |
-| **WebSocket** | Bidirectional (overkill here) | More infra complexity, not needed |
+| Component | Tokens | Note |
+|-----------|--------|------|
+| System prompt + meal pool | ~2,300 | Cached after first call in a session |
+| User preference | ~50–150 | Variable |
+| Claude output (7 days) | ~1,500 | Variable |
+| **Total (cache miss)** | **~4,000** | |
+| **Total (cache hit)** | **~1,700** | Meal pool tokens cost 10% |
 
-**Recommendation:** SSE. It's the natural fit — unidirectional server→client stream, built-in browser reconnect, NestJS has first-class support.
+**Cost per generation:**
+- Haiku, cache miss: ~$0.003
+- Haiku, cache hit: ~$0.001
+- Sonnet, cache miss: ~$0.022
 
-### Prompt Design Strategy
+At 100 users × 3 generations/day = ~$0.30–6.60/day depending on model mix and cache hit rate.
 
-**Two-phase approach:**
-1. **Selection phase**: AI picks from existing meals (returns IDs)
-2. **Creation phase**: For slots where no existing meal fits, AI creates new suggestions
+### Rate Limiting (existing P0 backlog item)
 
-This is better than one giant prompt because:
-- Smaller output = faster streaming
-- Existing meals already have all metadata (images, videos, ingredients)
-- Backend just needs to hydrate meal IDs into full `DraftPlan` objects
-
----
-
-## Cost & Performance Considerations
-
-### Token Cost Estimation
-
-| Component | Tokens | Per Request |
-|-----------|--------|-------------|
-| System prompt | ~300 | Fixed |
-| Meal pool (50 meals) | ~2,000 | Cached between requests |
-| User preference | ~100 | Variable |
-| AI output (7 days) | ~1,500 | Variable |
-| **Total** | **~3,900** | |
-
-**Cost per request (Claude Haiku):** ~$0.003
-**Cost per request (Claude Sonnet):** ~$0.02
-
-At 100 users making 3 requests/day = ~$1-6/day depending on model mix.
-
-### Latency Budget
-
-| Step | Target |
-|------|--------|
-| Fetch meal pool (cache hit) | < 10ms |
-| Build prompt | < 5ms |
-| AI first token (TTFT) | 500ms - 1.5s |
-| AI full response | 3-8s |
-| **Total (first day appears)** | **~1-2s** |
-| **Total (all 7 days)** | **~4-9s** |
-
-### Rate Limiting
-
-| Tier | Limit | Rationale |
-|------|-------|-----------|
-| Free user | 5 AI generations / day | Cost control |
-| Authenticated user | 15 AI generations / day | Reasonable usage |
-| Cooldown | 30s between requests | Prevent spam |
+AWS WAF Rate-based Rules on ALB + CloudFront handle abuse prevention. The AI endpoint is particularly important to protect since each request hits the Anthropic API (billable).
 
 ---
 
-## Testing Strategy
-
-### Unit Tests (AI Service)
-- Prompt construction with various meal pool sizes
-- JSON parsing of streaming chunks (including malformed input)
-- Fallback behavior when API fails
-- Rate limit enforcement
-- Token counting accuracy
-
-### Integration Tests
-- `POST /plans/ai-generate` → returns taskId
-- `GET /plans/ai-stream` → receives valid SSE events
-- Auth guard: unauthenticated users get 401
-- Rate limit: 429 after exceeding limit
-
-### Mock Strategy for CI
-- Mock the Anthropic SDK client in tests (don't hit real API in CI)
-- Use fixture responses that match real Claude output format
-- Test the full pipeline: prompt build → mock stream → parse → DraftPlan output
-
-### Manual Testing Checklist
-- [ ] AI generation with simple preference
-- [ ] AI generation with complex multi-constraint preference
-- [ ] Network disconnect mid-stream → graceful recovery
-- [ ] ALB timeout handling → heartbeat keeps connection alive
-- [ ] Save AI-suggested meal to library
-- [ ] Shuffle an AI-generated meal → works with existing shuffle logic
-- [ ] Rate limit exceeded → user sees friendly message
-- [ ] AI returns malformed JSON → fallback to shuffle
-
----
-
-## Migration Checklist (Before Going Live)
-
-- [ ] `ANTHROPIC_API_KEY` added to ECS task definition env vars (via Secrets Manager)
-- [ ] ALB idle timeout increased to 300s
-- [ ] Rate limiting configured in Redis
-- [ ] Slack alerts for AI cost anomalies
-- [ ] Frontend feature flag to gradually roll out
-- [ ] Monitoring dashboard for AI latency + token usage
-- [ ] Fallback to shuffle if AI service is down
+_Last updated: 2026-04-15_
