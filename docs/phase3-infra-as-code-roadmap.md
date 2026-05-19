@@ -40,7 +40,7 @@ infra/
 └── backend.tf              # Points at the S3 remote state bucket
 ```
 
-**Remote state**: All Terraform state is stored in S3 (`mealdice-tfstate`) with a DynamoDB table for locking. This prevents concurrent applies from corrupting state.
+**Remote state**: All Terraform state is stored in S3 (`mealdice-tfstate`) with S3 native locking (`use_lockfile = true`, requires Terraform ≥ 1.10). This prevents concurrent applies from corrupting state. DynamoDB is not used — S3 native lock is simpler and sufficient.
 
 **Workspaces**: `prod` workspace = existing live infrastructure (imported). `dev` workspace = a separate fresh stack for testing changes safely.
 
@@ -50,7 +50,7 @@ infra/
 
 | Module | Key AWS Resources | Net-New? |
 |--------|------------------|----------|
-| `vpc` | VPC, 4 subnets (2 public + 2 private), IGW, route tables, 4 security groups | Import |
+| `vpc` | Default VPC (172.31.0.0/16), 3 public subnets (us-east-2a/b/c), 1 shared SG | ✅ Imported |
 | `rds` | RDS MySQL 8.0 instance, DB subnet group | Import |
 | `elasticache` | Redis replication group, ElastiCache subnet group | Import |
 | `alb` | Application Load Balancer, HTTPS/HTTP listeners, target group | Import |
@@ -67,18 +67,20 @@ Security groups follow least-privilege: ALB accepts public traffic → ECS only 
 
 > **The golden rule**: never run `terraform apply` on prod without first running `terraform plan` and confirming only the expected changes appear. For import steps, the plan must show **0 changes**.
 
-### Phase A — Bootstrap (do once, never destroy)
-1. Write `infra/bootstrap/main.tf` — creates `mealdice-tfstate` S3 bucket and `mealdice-tfstate-lock` DynamoDB table
-2. Run with local state: `cd infra/bootstrap && terraform init && terraform apply`
-3. This bucket is not managed by the main Terraform — doing so would create a circular dependency
+### Phase A — Bootstrap ✅ Done
+1. ~~Write `infra/bootstrap/main.tf`~~ — creates `mealdice-tfstate` S3 bucket with versioning, encryption, and public access block
+2. ~~Run with local state: `cd infra/bootstrap && terraform init && terraform apply`~~
+3. Note: Uses S3 native lock (`use_lockfile = true`) instead of DynamoDB — simpler, no extra resource to manage
 
-### Phase B — Root Module Scaffolding
-4. Write `provider.tf`, `backend.tf` (pointing at the bootstrap bucket), `variables.tf`
-5. Add `*.tfvars` and `.terraform/` to `.gitignore`
-6. `terraform init` — Terraform migrates to remote state
+### Phase B — Root Module Scaffolding ✅ Done
+4. ~~Write `provider.tf`, `backend.tf` (pointing at the bootstrap bucket), `variables.tf`~~
+5. ~~Add `*.tfvars` and `.terraform/` to `.gitignore`~~
+6. ~~`terraform init` — Terraform migrates to remote state~~
 
 ### Phase C — Modules (write, validate, import in dependency order)
-7. `vpc` module → import VPC and all subnets/SGs
+7. `vpc` module ✅ Done — imported Default VPC (172.31.0.0/16), 3 public subnets (us-east-2a/b/c), single shared SG
+   - **Deviation from plan**: Using Default VPC instead of custom VPC; 3 public subnets instead of 2 public + 2 private; single SG instead of 4 per-layer SGs. Private subnet isolation deferred as future security hardening.
+   - `infra/README.md` created with architecture diagrams and SG rule table
 8. `rds` module → import RDS instance
 9. `elasticache` module → import Redis cluster
 10. `alb` module → import load balancer and listeners
@@ -138,4 +140,4 @@ See [backlog.md](backlog.md) for full priority order and [docs/superpowers/plans
 
 ---
 
-_Last updated: 2026-05-15_
+_Last updated: 2026-05-19_

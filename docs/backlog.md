@@ -10,9 +10,13 @@
 > **Plan:** [docs/superpowers/plans/2026-05-15-phase3-terraform-iac.md](superpowers/plans/2026-05-15-phase3-terraform-iac.md)
 > **简历叙事**：全量基础设施代码化，8 个独立模块，remote state，dev/prod workspace，GitHub Actions 无静态凭证。
 
-- [ ] **Task 1**：Bootstrap 远程状态（S3 bucket `mealdice-tfstate` + DynamoDB lock，本地 state，一次性执行）
-- [ ] **Task 2**：根模块脚手架（`provider.tf`、`backend.tf`、`variables.tf`、`.gitignore` 补 `*.tfvars`）
-- [ ] **Task 3**：VPC 模块（2 公共 + 2 私有子网、IGW、路由表、4 个 Security Group：ALB / ECS / RDS / ElastiCache）
+- [x] **Task 1**：Bootstrap 远程状态（S3 bucket `mealdice-tfstate`，本地 state，一次性执行）
+  - 注：使用 S3 原生锁（`use_lockfile = true`，Terraform 1.10+），未使用 DynamoDB
+- [x] **Task 2**：根模块脚手架（`provider.tf`、`backend.tf`、`variables.tf`、`.gitignore` 补 `*.tfvars`）
+- [x] **Task 3**：VPC 模块 import 成功（`terraform plan` 显示 0 changes）
+  - 注：使用 Default VPC（172.31.0.0/16）+ 3 个 public subnet（us-east-2a/b/c），单一共享 SG
+  - 偏差原点：原计划自定义 VPC + 2 public + 2 private + 4 独立 SG；当前先 import 现状，private subnet 拆分作为后续技术债
+  - 附：`infra/README.md` 已创建，含架构 Mermaid 图、SG 规则表、常用命令
 - [ ] **Task 4**：RDS 模块（MySQL 8.0、DB subnet group、deletion_protection、backup retention 7 天）
 - [ ] **Task 5**：ElastiCache 模块（Redis 7、transit + at-rest encryption、AUTH token）
 - [ ] **Task 6**：ALB 模块（HTTP→HTTPS redirect、HTTPS listener、ACM cert data source）
@@ -214,4 +218,4 @@
 
 ---
 
-_Last updated: 2026-05-15_
+_Last updated: 2026-05-19_
