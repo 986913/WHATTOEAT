@@ -18,3 +18,18 @@ module "vpc" {
   app_name    = var.app_name
   environment = var.environment
 }
+
+module "rds" {
+  source      = "./modules/rds"
+  app_name    = var.app_name
+  environment = var.environment
+
+  # 从 VPC 模块拿subnets和security group IDs
+  # module.vpc.subnet_ids = VPC模块outputs.tf里定义的输出
+  subnet_ids = module.vpc.subnet_ids
+  rds_sg_id  = var.rds_sg_id
+
+  # 敏感变量从 prod.tfvars 传入，不硬编码
+  db_password = var.db_password
+  db_username = var.db_username
+}

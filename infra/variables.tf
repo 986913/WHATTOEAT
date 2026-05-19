@@ -44,8 +44,7 @@ variable "db_password" {
 }
 
 # db_name 是 ECS 容器的环境变量（告诉 app 连哪个 schema），
-# 不是 RDS 实例的初始数据库名（RDS 创建时没有指定 db_name，
-# 实际的数据库是 TypeORM migration 自动创建的）。
+# 不是 RDS 实例的初始数据库名（RDS 创建时没有指定 db_name）。
 variable "db_name" {
   description = "Database schema name used by the application"
   type        = string
@@ -69,4 +68,10 @@ variable "github_repo" {
   description = "GitHub repo in owner/repo format for OIDC trust policy"
   type        = string
   default     = "986913/WHATTOEAT"
+}
+
+variable "rds_sg_id" {
+  description = "Security group ID attached to the RDS instance — defaults to the VPC default SG which is what was used at creation time"
+  type        = string
+  default     = "sg-09ffc1c2310dbf1d8"
 }
