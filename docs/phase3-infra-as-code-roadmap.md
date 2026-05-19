@@ -51,7 +51,7 @@ infra/
 | Module | Key AWS Resources | Net-New? |
 |--------|------------------|----------|
 | `vpc` | Default VPC (172.31.0.0/16), 3 public subnets (us-east-2a/b/c), 1 shared SG | ✅ Imported |
-| `rds` | RDS MySQL 8.0 instance, DB subnet group | Import |
+| `rds` | RDS MySQL 8.4.8 instance (`db.t4g.micro`, port 3310, multi_az=true), DB subnet group | ✅ Imported |
 | `elasticache` | Redis replication group, ElastiCache subnet group | Import |
 | `alb` | Application Load Balancer, HTTPS/HTTP listeners, target group | Import |
 | `ecs` | Fargate cluster, ECR repo, task execution IAM role, task definition, Fargate service | Import |
@@ -81,7 +81,8 @@ Security groups follow least-privilege: ALB accepts public traffic → ECS only 
 7. `vpc` module ✅ Done — imported Default VPC (172.31.0.0/16), 3 public subnets (us-east-2a/b/c), single shared SG
    - **Deviation from plan**: Using Default VPC instead of custom VPC; 3 public subnets instead of 2 public + 2 private; single SG instead of 4 per-layer SGs. Private subnet isolation deferred as future security hardening.
    - `infra/README.md` created with architecture diagrams and SG rule table
-8. `rds` module → import RDS instance
+8. ~~`rds` module → import RDS instance~~ ✅ Done — MySQL 8.4.8 / db.t4g.micro / port 3310 / multi_az=true / default SG
+   - **Deviations**: `deletion_protection=false` (legacy), `backup_retention=1d` (legacy), `db_name` omitted (eatdbprod created manually via CLI), using VPC default SG instead of dedicated RDS SG
 9. `elasticache` module → import Redis cluster
 10. `alb` module → import load balancer and listeners
 11. `ecs` module → import cluster, ECR repo, and service
@@ -115,7 +116,7 @@ After each module: `terraform validate` → `terraform import ...` → `terrafor
 
 ## Interview Narrative
 
-> "I own the full infrastructure for MealDice — it's all Terraform. Eight modules: VPC, ECS Fargate, ALB, RDS MySQL, ElastiCache Redis, S3 + CloudFront, WAF, and IAM. Remote state in S3 with DynamoDB locking, dev/prod workspaces, and GitHub Actions uses OIDC so there are zero static IAM keys in our secrets.
+> "I own the full infrastructure for MealDice — it's all Terraform. Eight modules: VPC, ECS Fargate, ALB, RDS MySQL, ElastiCache Redis, S3 + CloudFront, WAF, and IAM. Remote state in S3 with native S3 locking (`use_lockfile = true`, Terraform ≥ 1.10 — no DynamoDB needed), dev/prod workspaces, and GitHub Actions uses OIDC so there are zero static IAM keys in our secrets.
 >
 > The trickiest part was the import phase — all the infra was manually created, so I had to write the HCL to match the existing config exactly. If `terraform plan` shows any changes after an import, it means my code doesn't match reality. I reconcile the code to match AWS, not the other way around — you never want an accidental apply to modify production infra just because your variable was off by one.
 >
@@ -140,4 +141,4 @@ See [backlog.md](backlog.md) for full priority order and [docs/superpowers/plans
 
 ---
 
-_Last updated: 2026-05-19_
+_Last updated: 2026-05-19 — RDS module imported_
