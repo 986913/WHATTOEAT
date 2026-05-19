@@ -9,3 +9,11 @@ build
 # Local-only: not for teammates
 interview-prep/
 docs/superpowers/
+
+# Terraform
+*.tfvars
+*.tfvars.json
+.terraform/
+.terraform.lock.hcl
+terraform.tfstate
+terraform.tfstate.backup
