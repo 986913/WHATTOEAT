@@ -33,3 +33,15 @@ module "rds" {
   db_password = var.db_password
   db_username = var.db_username
 }
+
+module "elasticache" {
+  source      = "./modules/elasticache"
+  app_name    = var.app_name
+  environment = var.environment
+
+  # 子网和 SG 直接来自 VPC 模块的输出，不需要根模块变量。
+  # 和 RDS 不同：RDS 的 SG 是历史遗留的默认 SG，不在 Terraform 管理内；
+  # ElastiCache 用的 my-web-app-sg 已由 vpc 模块管理，可以直接引用。
+  subnet_ids  = module.vpc.subnet_ids
+  redis_sg_id = module.vpc.sg_id
+}

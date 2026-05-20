@@ -18,7 +18,8 @@ infra/
 │   └── prod.tfvars   # Production variable values (gitignored)
 ├── bootstrap/        # One-time setup: creates the S3 state bucket
 └── modules/
-    └── vpc/          # Network layer (imported)
+    ├── vpc/          # Network layer (imported)
+    └── rds/          # RDS MySQL 8.4.8 instance + DB subnet group (imported)
 ```
 
 ---
@@ -28,17 +29,18 @@ infra/
 ```mermaid
 graph TD
     subgraph Root["Root Module infra/"]
-        VPC["module.vpc"]
+        VPC["module.vpc ✅"]
+        RDS["module.rds ✅"]
         ALB["module.alb 🔜"]
         ECS["module.ecs 🔜"]
-        RDS["module.rds 🔜"]
         CACHE["module.elasticache 🔜"]
     end
 
+    VPC -- "subnet_ids" --> RDS
     VPC -- "vpc_id\nsubnet_ids\nsg_id" --> ALB
     VPC -- "vpc_id\nsubnet_ids\nsg_id" --> ECS
-    VPC -- "vpc_id\nsubnet_ids\nsg_id" --> RDS
     VPC -- "vpc_id\nsubnet_ids\nsg_id" --> CACHE
+    RDS -- "db_endpoint\ndb_address" --> ECS
 ```
 
 Modules pass values to each other via `output → variable` references — no hardcoded AWS resource IDs.
@@ -61,6 +63,8 @@ graph TB
                 SC["Public Subnet C"]
             end
             SG["Security Group: my-web-app-sg"]
+            DefaultSG["Security Group: default (RDS)"]
+            RDS[("RDS: database-2\nMySQL 8.4.8 / db.t4g.micro\nport 3310 / multi-AZ")]
         end
         S3["S3: mealdice-tfstate\n(remote state)"]
     end
@@ -68,6 +72,7 @@ graph TB
     Internet(("Internet")) -- ":80 :443" --> SG
     Internet -- ":22 ⚠️" --> SG
     SG --> SA & SB & SC
+    DefaultSG --> RDS
 ```
 
 **Current network characteristics:**
@@ -99,9 +104,40 @@ graph TB
 | `environment` | — | `prod` or `dev` |
 | `db_password` | — | RDS master password (sensitive) |
 | `db_username` | `admin` | RDS master username |
-| `db_name` | `mealdice` | Application database schema name |
+| `db_name` | `mealdice` | App env var — schema name (`eatdbprod` in prod, created manually via CLI) |
 | `domain_name` | — | Primary domain, e.g. `mealdice.com` |
 | `github_repo` | `986913/WHATTOEAT` | OIDC trust policy scope |
+| `rds_sg_id` | `sg-09ffc1c2310dbf1d8` | SG attached to RDS — VPC default SG (legacy, not app SG) |
+
+---
+
+## RDS Module
+
+| Field | Value |
+|-------|-------|
+| Identifier | `database-2` |
+| Engine | MySQL `8.4.8` |
+| Instance class | `db.t4g.micro` |
+| Port | `3310` |
+| Multi-AZ | `true` |
+| Storage | 20 GB gp2, autoscale up to 1000 GB |
+| Encryption | ✓ at-rest |
+| Backup retention | 1 day |
+| Monitoring interval | 60s (Enhanced Monitoring) |
+| Subnet group | `default-vpc-0de0822aefb86efbd` |
+| Security group | `sg-09ffc1c2310dbf1d8` (VPC default SG, **not** the app SG) |
+| `db_name` | Not set — `eatdbprod` schema was created manually via CLI after instance creation |
+| `deletion_protection` | `false` (legacy — should be enabled) |
+| `publicly_accessible` | `true` (legacy — should be disabled) |
+
+**Import commands used:**
+```bash
+terraform import -var-file=envs/prod.tfvars \
+  module.rds.aws_db_subnet_group.main default-vpc-0de0822aefb86efbd
+
+terraform import -var-file=envs/prod.tfvars \
+  module.rds.aws_db_instance.main database-2
+```
 
 ---
 
@@ -143,6 +179,10 @@ terraform state show <resource_address>
 | Issue | Risk | Priority |
 |-------|------|----------|
 | Port 22 open to the world | SSH brute-force exposure | High |
+| `deletion_protection = false` on RDS | Accidental `terraform destroy` would delete prod database | High |
+| `publicly_accessible = true` on RDS | Database port 3310 reachable from public internet | High |
+| RDS uses VPC default SG instead of dedicated SG | No layer isolation; default SG rules are shared across all resources | Medium |
 | All subnets are public | Database directly reachable from internet | Medium |
-| Single shared Security Group | Cannot enforce least-privilege between layers | Medium |
+| Single shared Security Group (`my-web-app-sg`) | Cannot enforce least-privilege between layers | Medium |
+| `backup_retention_period = 1` on RDS | Only 1 day of automated backups — data loss window is large | Medium |
 | Using Default VPC | Does not meet production security baseline | Low (high migration cost) |

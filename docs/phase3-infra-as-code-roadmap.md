@@ -83,7 +83,8 @@ Security groups follow least-privilege: ALB accepts public traffic → ECS only 
    - `infra/README.md` created with architecture diagrams and SG rule table
 8. ~~`rds` module → import RDS instance~~ ✅ Done — MySQL 8.4.8 / db.t4g.micro / port 3310 / multi_az=true / default SG
    - **Deviations**: `deletion_protection=false` (legacy), `backup_retention=1d` (legacy), `db_name` omitted (eatdbprod created manually via CLI), using VPC default SG instead of dedicated RDS SG
-9. `elasticache` module → import Redis cluster
+9. `elasticache` module → import Redis cluster ✅ Done — Redis 7.1 / cache.t3.micro / single-node / port 6379 / default SG
+   - **Deviations**: `engine_version` must be `"7.1"` not `"7.1.0"` (Redis v6+ format rule); AUTH is Disabled — `lifecycle { ignore_changes = [auth_token, auth_token_update_strategy] }` prevents import state residue from triggering API error; `redis_sg_id` references `module.vpc.sg_id` directly (no root variable needed)
 10. `alb` module → import load balancer and listeners
 11. `ecs` module → import cluster, ECR repo, and service
 12. `s3_cloudfront` module → import S3 bucket and CloudFront distribution
@@ -141,4 +142,4 @@ See [backlog.md](backlog.md) for full priority order and [docs/superpowers/plans
 
 ---
 
-_Last updated: 2026-05-19 — RDS module imported_
+_Last updated: 2026-05-20 — ElastiCache module imported_
