@@ -1,11 +1,11 @@
 # =======================================================================
 # ALB 模块
 #
-# 四个资源：
-#   1. data "aws_acm_certificate"  — 查找 ACM 证书 ARN（不 import，只读）
-#   2. aws_lb                      — ALB 本体
-#   3. aws_lb_target_group         — 目标组（ECS Fargate 任务注册到这里）
-#   4. aws_lb_listener             — HTTPS 443 监听器
+# 三个资源 + 一个 data source：
+#   data "aws_acm_certificate"     — 查找 ACM 证书 ARN（不 import，只读）
+#   aws_lb                         — ALB 本体
+#   aws_lb_target_group            — 目标组（ECS Fargate 任务注册到这里）
+#   aws_lb_listener                — HTTPS 443 监听器
 # =======================================================================
 
 # -----------------------------------------------------------------------
@@ -77,8 +77,9 @@ resource "aws_lb_target_group" "main" {
   lifecycle {
     # 与 aws_lb.main 同理：Terraform 接管之前无 default_tags，忽略 tags_all diff。
     # lambda_multi_value_headers_enabled / proxy_protocol_v2：
-    # provider v5.100 开始在 state 里跟踪这两个字段，但 import 时 state 里没有它们。
-    # 忽略这两个字段，防止 plan 显示"要添加 false"的虚假 diff。
+    # provider v5.100 在 schema 里新增了这两个字段；import 后 state 里有它们，
+    # 但 HCL 没有显式设置，plan 就会显示 "null → false" 的虚假变更。
+    # 忽略这两个字段消除该 diff，不影响实际功能。
     ignore_changes = [tags_all, lambda_multi_value_headers_enabled, proxy_protocol_v2]
   }
 }

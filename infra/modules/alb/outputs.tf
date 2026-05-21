@@ -14,3 +14,8 @@ output "alb_dns_name" {
   description = "ALB DNS hostname — used by Route 53 Alias record"
   value       = aws_lb.main.dns_name
 }
+
+output "alb_zone_id" {
+  description = "ALB canonical hosted zone ID — required for Route 53 Alias record alongside alb_dns_name"
+  value       = aws_lb.main.zone_id
+}
