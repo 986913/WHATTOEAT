@@ -45,3 +45,16 @@ module "elasticache" {
   subnet_ids  = module.vpc.subnet_ids
   redis_sg_id = module.vpc.sg_id
 }
+
+module "alb" {
+  source      = "./modules/alb"
+  app_name    = var.app_name
+  environment = var.environment
+
+  # 子网和 SG 直接来自 VPC 模块的输出
+  subnet_ids = module.vpc.subnet_ids
+  alb_sg_id  = module.vpc.sg_id
+
+  # domain_name 用于查找 ACM 证书
+  domain_name = var.domain_name
+}
