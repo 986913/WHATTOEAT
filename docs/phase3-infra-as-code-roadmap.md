@@ -48,16 +48,16 @@ infra/
 
 ## The 8 Modules
 
-| Module | Key AWS Resources | Net-New? |
-|--------|------------------|----------|
-| `vpc` | Default VPC (172.31.0.0/16), 3 public subnets (us-east-2a/b/c), 1 shared SG | ✅ Imported |
-| `rds` | RDS MySQL 8.4.8 instance (`db.t4g.micro`, port 3310, multi_az=true), DB subnet group | ✅ Imported |
-| `elasticache` | Redis replication group, ElastiCache subnet group | Import |
-| `alb` | Application Load Balancer, HTTPS/HTTP listeners, target group | Import |
-| `ecs` | Fargate cluster, ECR repo, task execution IAM role, task definition, Fargate service | Import |
-| `s3_cloudfront` | S3 bucket (`mealdice-frontend`), CloudFront distribution | Import |
-| `waf` | WAF WebACL (rate-based rule: 2000 req/5min per IP), ALB association | **New** |
-| `iam` | GitHub OIDC provider, IAM role (replaces static access keys in CI/CD) | **New** |
+| Module          | Key AWS Resources                                                                    | Net-New?    |
+| --------------- | ------------------------------------------------------------------------------------ | ----------- |
+| `vpc`           | Default VPC (172.31.0.0/16), 3 public subnets (us-east-2a/b/c), 1 shared SG          | ✅ Imported |
+| `rds`           | RDS MySQL 8.4.8 instance (`db.t4g.micro`, port 3310, multi_az=true), DB subnet group | ✅ Imported |
+| `elasticache`   | Redis replication group, ElastiCache subnet group                                    | ✅ Imported |
+| `alb`           | Application Load Balancer, HTTPS/HTTP listeners, target group                        | ✅ Imported |
+| `ecs`           | Fargate cluster, ECR repo, task execution IAM role, task definition, Fargate service | Import      |
+| `s3_cloudfront` | S3 bucket (`mealdice-frontend`), CloudFront distribution                             | Import      |
+| `waf`           | WAF WebACL (rate-based rule: 2000 req/5min per IP), ALB association                  | **New**     |
+| `iam`           | GitHub OIDC provider, IAM role (replaces static access keys in CI/CD)                | **New**     |
 
 Security groups follow least-privilege: ALB accepts public traffic → ECS only accepts from ALB → RDS/ElastiCache only accept from ECS.
 
@@ -68,16 +68,19 @@ Security groups follow least-privilege: ALB accepts public traffic → ECS only 
 > **The golden rule**: never run `terraform apply` on prod without first running `terraform plan` and confirming only the expected changes appear. For import steps, the plan must show **0 changes**.
 
 ### Phase A — Bootstrap ✅ Done
+
 1. ~~Write `infra/bootstrap/main.tf`~~ — creates `mealdice-tfstate` S3 bucket with versioning, encryption, and public access block
 2. ~~Run with local state: `cd infra/bootstrap && terraform init && terraform apply`~~
 3. Note: Uses S3 native lock (`use_lockfile = true`) instead of DynamoDB — simpler, no extra resource to manage
 
 ### Phase B — Root Module Scaffolding ✅ Done
+
 4. ~~Write `provider.tf`, `backend.tf` (pointing at the bootstrap bucket), `variables.tf`~~
 5. ~~Add `*.tfvars` and `.terraform/` to `.gitignore`~~
 6. ~~`terraform init` — Terraform migrates to remote state~~
 
 ### Phase C — Modules (write, validate, import in dependency order)
+
 7. `vpc` module ✅ Done — imported Default VPC (172.31.0.0/16), 3 public subnets (us-east-2a/b/c), single shared SG
    - **Deviation from plan**: Using Default VPC instead of custom VPC; 3 public subnets instead of 2 public + 2 private; single SG instead of 4 per-layer SGs. Private subnet isolation deferred as future security hardening.
    - `infra/README.md` created with architecture diagrams and SG rule table
@@ -85,18 +88,19 @@ Security groups follow least-privilege: ALB accepts public traffic → ECS only 
    - **Deviations**: `deletion_protection=false` (legacy), `backup_retention=1d` (legacy), `db_name` omitted (eatdbprod created manually via CLI), using VPC default SG instead of dedicated RDS SG
 9. `elasticache` module → import Redis cluster ✅ Done — Redis 7.1 / cache.t3.micro / single-node / port 6379 / default SG
    - **Deviations**: `engine_version` must be `"7.1"` not `"7.1.0"` (Redis v6+ format rule); AUTH is Disabled — `lifecycle { ignore_changes = [auth_token, auth_token_update_strategy] }` prevents import state residue from triggering API error; `redis_sg_id` references `module.vpc.sg_id` directly (no root variable needed)
-10. `alb` module → import load balancer and listeners ✅ Done — mealdice-alb / internet-facing / HTTPS 443 only / target group mealdice-fargate-tg (ip type, port 3001)
-   - **Deviations**: No HTTP 80 listener (none existed in AWS); ACM cert domain is `api.mealdice.com` not root domain; `idle_timeout=300` must be explicit (AWS non-default); explicit `forward {}` block required in listener (import stores canonical form); `lifecycle { ignore_changes = [tags_all] }` on all 3 resources (pre-Terraform resources); `lambda_multi_value_headers_enabled` + `proxy_protocol_v2` added to ignore_changes (provider v5.100 schema additions cause phantom diff)
+10. `alb` module → import load balancer and listeners
 11. `ecs` module → import cluster, ECR repo, and service
 12. `s3_cloudfront` module → import S3 bucket and CloudFront distribution
 
 After each module: `terraform validate` → `terraform import ...` → `terraform plan` (must show 0 changes)
 
 ### Phase D — Net-New Resources
+
 13. `waf` module → `terraform apply` creates WAF WebACL and associates with ALB
 14. `iam` module → `terraform apply` creates OIDC provider and GitHub Actions role
 
 ### Phase E — Workspaces + CI/CD
+
 15. `terraform workspace new dev` — spin up an isolated dev stack
 16. Update `.github/workflows/deploy.yml` to use OIDC (`role-to-assume`) — delete static AWS keys from GitHub Secrets
 
@@ -130,17 +134,17 @@ After each module: `terraform validate` → `terraform import ...` → `terrafor
 
 Once IaC is complete, the AI skill track resumes:
 
-| Step | What | AI Gap Closed |
-|------|------|--------------|
-| Step 4 | Native Tool Use (`tool_use` blocks) | Function calling — #1 market demand |
-| Step 5 | Chatbot with Memory | Stateful AI, context management |
-| Step 6 | Prompt Caching + Model Routing | Cost optimization |
-| NEW | Agent Workflow | Multi-step agents — #3 market demand |
-| NEW | RAG — Semantic Meal Search | Vector search — #2 market demand |
-| NEW | Eval / Guardrails | LLM-as-judge, production quality gates |
+| Step   | What                                | AI Gap Closed                          |
+| ------ | ----------------------------------- | -------------------------------------- |
+| Step 4 | Native Tool Use (`tool_use` blocks) | Function calling — #1 market demand    |
+| Step 5 | Chatbot with Memory                 | Stateful AI, context management        |
+| Step 6 | Prompt Caching + Model Routing      | Cost optimization                      |
+| NEW    | Agent Workflow                      | Multi-step agents — #3 market demand   |
+| NEW    | RAG — Semantic Meal Search          | Vector search — #2 market demand       |
+| NEW    | Eval / Guardrails                   | LLM-as-judge, production quality gates |
 
 See [backlog.md](backlog.md) for full priority order and [docs/superpowers/plans/2026-05-15-phase3-terraform-iac.md](superpowers/plans/2026-05-15-phase3-terraform-iac.md) for the step-by-step implementation plan.
 
 ---
 
-_Last updated: 2026-05-21 — ALB module imported_
+_Last updated: 2026-05-20 — ElastiCache module imported_
