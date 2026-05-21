@@ -18,8 +18,10 @@ infra/
 │   └── prod.tfvars   # Production variable values (gitignored)
 ├── bootstrap/        # One-time setup: creates the S3 state bucket
 └── modules/
-    ├── vpc/          # Network layer (imported)
-    └── rds/          # RDS MySQL 8.4.8 instance + DB subnet group (imported)
+    ├── vpc/          # Network layer — Default VPC, 3 public subnets, shared SG (imported ✅)
+    ├── rds/          # RDS MySQL 8.4.8 instance + DB subnet group (imported ✅)
+    ├── elasticache/  # Redis 7.1 replication group + subnet group (imported ✅)
+    └── alb/          # ALB + HTTPS listener + target group, ACM cert data source (imported ✅)
 ```
 
 ---
@@ -31,16 +33,22 @@ graph TD
     subgraph Root["Root Module infra/"]
         VPC["module.vpc ✅"]
         RDS["module.rds ✅"]
-        ALB["module.alb 🔜"]
+        CACHE["module.elasticache ✅"]
+        ALB["module.alb ✅"]
         ECS["module.ecs 🔜"]
-        CACHE["module.elasticache 🔜"]
+        S3CF["module.s3_cloudfront 🔜"]
+        WAF["module.waf 🔜"]
+        IAM["module.iam 🔜"]
     end
 
     VPC -- "subnet_ids" --> RDS
-    VPC -- "vpc_id\nsubnet_ids\nsg_id" --> ALB
-    VPC -- "vpc_id\nsubnet_ids\nsg_id" --> ECS
-    VPC -- "vpc_id\nsubnet_ids\nsg_id" --> CACHE
-    RDS -- "db_endpoint\ndb_address" --> ECS
+    VPC -- "subnet_ids\nsg_id" --> CACHE
+    VPC -- "subnet_ids\nsg_id" --> ALB
+    VPC -- "subnet_ids\nsg_id" --> ECS
+    RDS -- "db_endpoint" --> ECS
+    CACHE -- "redis_primary_endpoint" --> ECS
+    ALB -- "target_group_arn" --> ECS
+    ALB -- "alb_dns_name\nalb_zone_id" --> WAF
 ```
 
 Modules pass values to each other via `output → variable` references — no hardcoded AWS resource IDs.
@@ -64,21 +72,30 @@ graph TB
             end
             SG["Security Group: my-web-app-sg"]
             DefaultSG["Security Group: default (RDS)"]
+            ALB["ALB: mealdice-alb\nHTTPS :443 only\nidle_timeout=300s"]
+            ECS["ECS Fargate\n(port 3001)"]
             RDS[("RDS: database-2\nMySQL 8.4.8 / db.t4g.micro\nport 3310 / multi-AZ")]
+            REDIS[("ElastiCache Redis\nmealdice-redis\nport 6379")]
         end
         S3["S3: mealdice-tfstate\n(remote state)"]
+        ACM["ACM: api.mealdice.com\n(data source only)"]
     end
 
-    Internet(("Internet")) -- ":80 :443" --> SG
+    Internet(("Internet")) -- "HTTPS :443" --> ALB
     Internet -- ":22 ⚠️" --> SG
-    SG --> SA & SB & SC
-    DefaultSG --> RDS
+    ALB -- "HTTP :3001" --> ECS
+    ECS -- ":3310" --> RDS
+    ECS -- ":6379" --> REDIS
+    ACM -. "cert lookup" .-> ALB
+    ALB & ECS & REDIS -.-> SG
+    RDS -.-> DefaultSG
 ```
 
 **Current network characteristics:**
 - Uses AWS Default VPC — `terraform destroy` will not actually delete it
 - All 3 AZ subnets are public (inherent to Default VPC)
-- All resources share a single Security Group (legacy)
+- All resources share a single Security Group `my-web-app-sg` (legacy), except RDS which uses the VPC default SG
+- ALB handles TLS termination — traffic from ALB to ECS is plain HTTP
 
 ---
 
@@ -137,6 +154,65 @@ terraform import -var-file=envs/prod.tfvars \
 
 terraform import -var-file=envs/prod.tfvars \
   module.rds.aws_db_instance.main database-2
+```
+
+---
+
+## ElastiCache Module
+
+| Field | Value |
+|-------|-------|
+| Replication Group ID | `mealdice-redis` |
+| Engine | Redis `7.1` |
+| Node type | `cache.t3.micro` |
+| Nodes | 1 (single-node, no replicas) |
+| Port | `6379` |
+| Parameter group | `default.redis7` |
+| Subnet group | `mealdice-redis-subnet` |
+| Security group | `my-web-app-sg` (shared app SG) |
+| Encryption at rest | ✓ |
+| Encryption in transit | ✓ (required mode) |
+| AUTH | Disabled — access controlled by SG only |
+| Multi-AZ / Failover | Disabled |
+
+**Import commands used:**
+```bash
+terraform import -var-file=envs/prod.tfvars \
+  module.elasticache.aws_elasticache_subnet_group.main mealdice-redis-subnet
+
+terraform import -var-file=envs/prod.tfvars \
+  module.elasticache.aws_elasticache_replication_group.main mealdice-redis
+```
+
+---
+
+## ALB Module
+
+| Field | Value |
+|-------|-------|
+| Name | `mealdice-alb` |
+| Scheme | `internet-facing` |
+| Listeners | HTTPS :443 only (no HTTP :80) |
+| SSL Policy | `ELBSecurityPolicy-TLS13-1-2-Res-PQ-2025-09` |
+| ACM Certificate | `api.mealdice.com` (data source lookup, not imported) |
+| Target Group | `mealdice-fargate-tg` — type `ip`, port `3001` |
+| Health Check | `GET /api/v1/health` → HTTP 200 |
+| Security group | `my-web-app-sg` (shared app SG) |
+| Idle timeout | `300s` (non-default — Terraform default is 60s) |
+
+**Import commands used:**
+```bash
+terraform import -var-file=envs/prod.tfvars \
+  module.alb.aws_lb.main \
+  arn:aws:elasticloadbalancing:us-east-2:083308938013:loadbalancer/app/mealdice-alb/43b0e722175ece04
+
+terraform import -var-file=envs/prod.tfvars \
+  module.alb.aws_lb_target_group.main \
+  arn:aws:elasticloadbalancing:us-east-2:083308938013:targetgroup/mealdice-fargate-tg/4bfe73d05b2e2e97
+
+terraform import -var-file=envs/prod.tfvars \
+  module.alb.aws_lb_listener.https \
+  arn:aws:elasticloadbalancing:us-east-2:083308938013:listener/app/mealdice-alb/43b0e722175ece04/6269e8a6ff402d19
 ```
 
 ---
