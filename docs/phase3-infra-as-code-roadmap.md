@@ -89,7 +89,8 @@ Security groups follow least-privilege: ALB accepts public traffic → ECS only 
 9. `elasticache` module → import Redis cluster ✅ Done — Redis 7.1 / cache.t3.micro / single-node / port 6379 / default SG
    - **Deviations**: `engine_version` must be `"7.1"` not `"7.1.0"` (Redis v6+ format rule); AUTH is Disabled — `lifecycle { ignore_changes = [auth_token, auth_token_update_strategy] }` prevents import state residue from triggering API error; `redis_sg_id` references `module.vpc.sg_id` directly (no root variable needed)
 10. `alb` module → import load balancer and listeners
-11. `ecs` module → import cluster, ECR repo, and service
+11. `ecs` module → import cluster, ECR repo, and service ✅ Done — mealdice-backend-cluster / mealdice-backend ECR / mealdice-backend-task:5 / mealdice-backend-service / CloudWatch log group /ecs/mealdice-backend-task (retention set to 30 days)
+   - **Deviations**: `ecsTaskExecutionRole` used as data source (not imported — AWS default role, not MealDice-specific); `configuration { execute_command_configuration { logging = "DEFAULT" } }` required on cluster; `runtime_platform { cpu_architecture = "X86_64" operating_system_family = "LINUX" }` required on task definition; `availability_zone_rebalancing = "ENABLED"` and `enable_ecs_managed_tags = true` required on service (provider v5.100 new fields); environment vars sorted alphabetically (AWS normalises order); `ignore_changes = [task_definition, wait_for_steady_state]` on service
 12. `s3_cloudfront` module → import S3 bucket and CloudFront distribution
 
 After each module: `terraform validate` → `terraform import ...` → `terraform plan` (must show 0 changes)
@@ -147,4 +148,4 @@ See [backlog.md](backlog.md) for full priority order and [docs/superpowers/plans
 
 ---
 
-_Last updated: 2026-05-20 — ElastiCache module imported_
+_Last updated: 2026-05-22 — ECS module imported_

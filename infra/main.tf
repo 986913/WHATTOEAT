@@ -58,3 +58,28 @@ module "alb" {
   # domain_name 用于查找 ACM 证书
   domain_name = var.domain_name
 }
+
+module "ecs" {
+  source      = "./modules/ecs"
+  app_name    = var.app_name
+  environment = var.environment
+
+  # 来自 vpc 模块
+  subnet_ids = module.vpc.subnet_ids
+  ecs_sg_id  = module.vpc.sg_id
+
+  # 来自 alb 模块
+  target_group_arn = module.alb.target_group_arn
+
+  # 敏感 env var — 从 prod.tfvars 传入
+  # 注意：db_username 在根模块已有（RDS 也用），其余敏感值是 ECS 专属新增
+  # node_env / google_client_id / mail_user 不传，使用 ECS 模块变量的默认值
+  db_password          = var.db_password
+  db_username          = var.db_username
+  jwt_secret           = var.jwt_secret
+  anthropic_api_key    = var.anthropic_api_key
+  google_client_secret = var.google_client_secret
+  mail_pass            = var.mail_pass
+  slack_webhook_url    = var.slack_webhook_url
+  unsplash_access_key  = var.unsplash_access_key
+}

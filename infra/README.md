@@ -22,6 +22,7 @@ infra/
     ├── rds/          # RDS MySQL 8.4.8 instance + DB subnet group (imported ✅)
     ├── elasticache/  # Redis 7.1 replication group + subnet group (imported ✅)
     └── alb/          # ALB + HTTPS listener + target group, ACM cert data source (imported ✅)
+    └── ecs/          # ECS Fargate cluster + ECR + task definition + service, CloudWatch logs (imported ✅)
 ```
 
 ---
@@ -35,7 +36,7 @@ graph TD
         RDS["module.rds ✅"]
         CACHE["module.elasticache ✅"]
         ALB["module.alb ✅"]
-        ECS["module.ecs 🔜"]
+        ECS["module.ecs ✅"]
         S3CF["module.s3_cloudfront 🔜"]
         WAF["module.waf 🔜"]
         IAM["module.iam 🔜"]
@@ -213,6 +214,48 @@ terraform import -var-file=envs/prod.tfvars \
 terraform import -var-file=envs/prod.tfvars \
   module.alb.aws_lb_listener.https \
   arn:aws:elasticloadbalancing:us-east-2:083308938013:listener/app/mealdice-alb/43b0e722175ece04/6269e8a6ff402d19
+```
+
+---
+
+## ECS Module
+
+| Field | Value |
+|-------|-------|
+| Cluster | `mealdice-backend-cluster` |
+| ECR Repo | `mealdice-backend` |
+| Task Definition | `mealdice-backend-task:5` (cpu=256, memory=512, awsvpc, FARGATE, X86_64/LINUX) |
+| Container | `backend`, port 3001, image `:latest`, 11 env vars |
+| Service | `mealdice-backend-service`, desired=2, capacity_provider=FARGATE weight=1 |
+| Security group | `my-web-app-sg` (shared app SG, from `module.vpc.sg_id`) |
+| Log group | `/ecs/mealdice-backend-task`, retention=30 days (was null) |
+| IAM role | `ecsTaskExecutionRole` (data source — not imported, AWS default role) |
+
+**Deviations from plan:**
+- `ecsTaskExecutionRole` used as data source, not imported (not MealDice-specific)
+- `configuration { execute_command_configuration { logging = "DEFAULT" } }` required on cluster
+- `runtime_platform { X86_64 / LINUX }` required on task definition
+- `availability_zone_rebalancing = "ENABLED"` and `enable_ecs_managed_tags = true` required on service (provider v5.100 new fields)
+- Environment vars sorted alphabetically (AWS normalises order on import)
+
+**Import commands used:**
+```bash
+terraform import -var-file=envs/prod.tfvars \
+  module.ecs.aws_ecs_cluster.main mealdice-backend-cluster
+
+terraform import -var-file=envs/prod.tfvars \
+  module.ecs.aws_ecr_repository.main mealdice-backend
+
+terraform import -var-file=envs/prod.tfvars \
+  module.ecs.aws_cloudwatch_log_group.ecs /ecs/mealdice-backend-task
+
+terraform import -var-file=envs/prod.tfvars \
+  module.ecs.aws_ecs_task_definition.main \
+  arn:aws:ecs:us-east-2:083308938013:task-definition/mealdice-backend-task:5
+
+terraform import -var-file=envs/prod.tfvars \
+  module.ecs.aws_ecs_service.main \
+  mealdice-backend-cluster/mealdice-backend-service
 ```
 
 ---

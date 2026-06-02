@@ -75,3 +75,43 @@ variable "rds_sg_id" {
   type        = string
   default     = "sg-09ffc1c2310dbf1d8"
 }
+
+# -----------------------------------------------------------------------
+# ECS 模块变量（task definition 容器 env var）
+# -----------------------------------------------------------------------
+
+variable "jwt_secret" {
+  description = "JWT signing secret — never commit this value"
+  type        = string
+  sensitive   = true
+}
+
+variable "anthropic_api_key" {
+  description = "Anthropic Claude API key — never commit this value"
+  type        = string
+  sensitive   = true
+}
+
+variable "google_client_secret" {
+  description = "Google OAuth client secret — never commit this value"
+  type        = string
+  sensitive   = true
+}
+
+variable "mail_pass" {
+  description = "Gmail app password — never commit this value"
+  type        = string
+  sensitive   = true
+}
+
+variable "slack_webhook_url" {
+  description = "Slack incoming webhook URL — never commit this value"
+  type        = string
+  sensitive   = true
+}
+
+variable "unsplash_access_key" {
+  description = "Unsplash API access key — never commit this value"
+  type        = string
+  sensitive   = true
+}
