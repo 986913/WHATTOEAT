@@ -83,9 +83,13 @@ jobs:
           aws-region: us-east-2
 
       - name: Upload to S3
+        # 将 React build 产物同步到 S3（纯文件存储，作为 CloudFront 的 origin）
+        # --delete：删除 S3 中本地已移除的文件，保持两侧完全一致
         run: aws s3 sync packages/frontend/build/ s3://mealdice-frontend/ --delete
 
       - name: Invalidate CloudFront cache
+        # 标记全球所有 edge 节点的缓存失效；不是主动推送，而是懒失效：
+        # 下次有用户请求时，edge 才会回源 S3 拉新文件并重新缓存
         run: aws cloudfront create-invalidation --distribution-id E22MA8FD1ZLL3G --paths "/*"
 
   # Step 2b: 后端部署到 ECS Fargate
