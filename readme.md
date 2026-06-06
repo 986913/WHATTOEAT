@@ -4,16 +4,14 @@
 
 A full-stack meal planning app that eliminates the daily "what should I eat?" dilemma. Roll the dice, get personalized meals, and plan your week with AI — all in one place.
 
-| Phase                          | Focus                                                                   | Status       |
-| ------------------------------ | ----------------------------------------------------------------------- | ------------ |
-| **1 — High Availability**      | ALB · ECS Fargate · ElastiCache · S3 + CloudFront                       | ✅ Done      |
-| **2 — AI Meal Planning**       | Claude streaming via SSE · Redis Pub/Sub bridge · cache-aside meal pool | ✅ Done      |
-| **3 — Infrastructure as Code** | Terraform 8-module IaC · Remote state · GitHub Actions OIDC            | 🔧 In Progress |
-| **4 — Microservices**          | NestJS TCP microservices · DDD decomposition · Cloud Map · path-based CI/CD | 📋 Planned |
+| Phase                          | Focus                                                                       | Status         |
+| ------------------------------ | --------------------------------------------------------------------------- | -------------- |
+| **1 — High Availability**      | ALB · ECS Fargate · ElastiCache · S3 + CloudFront                           | ✅ Done        |
+| **2 — AI Meal Planning**       | Claude streaming via SSE · Redis Pub/Sub bridge · cache-aside meal pool     | ✅ Done        |
+| **3 — Infrastructure as Code** | Terraform 8-module IaC · Remote state · GitHub Actions OIDC                 | 🔧 In Progress |
+| **4 — Microservices**          | NestJS TCP microservices · DDD decomposition · Cloud Map · path-based CI/CD | 📋 Planned     |
 
-> **Next:** After completing IaC (Phase 3), splitting the monolith into 7 independently deployable NestJS microservices (gateway · auth · user · meal · plan · ai · notification). Design: [`docs/superpowers/specs/2026-06-06-microservices-architecture-design.md`](docs/superpowers/specs/2026-06-06-microservices-architecture-design.md)
-
----
+> **Next:** After completing IaC (Phase 3), splitting the monolith into 7 independently deployable NestJS microservices (gateway · auth · user · meal · plan · ai · notification).
 
 ## Features
 
@@ -107,12 +105,12 @@ flowchart LR
 
 The frontend and backend are deployed completely independently — not because they share a pattern, but because each uses the tool that fits its nature.
 
-| | Frontend (React SPA) | Backend (NestJS) |
-|---|---|---|
-| **Output** | Static files (HTML / CSS / JS) | Long-running HTTP server process |
-| **Needs a runtime?** | No — just file storage | Yes — Node.js process inside a container |
-| **Deployed to** | S3 + CloudFront | Docker image → ECR → ECS Fargate |
-| **Scales via** | CloudFront CDN edge nodes (automatic, global) | ECS task count (horizontal scaling) |
+|                            | Frontend (React SPA)                                                                       | Backend (NestJS)                               |
+| -------------------------- | ------------------------------------------------------------------------------------------ | ---------------------------------------------- |
+| **Output**                 | Static files (HTML / CSS / JS)                                                             | Long-running HTTP server process               |
+| **Needs a runtime?**       | No — just file storage                                                                     | Yes — Node.js process inside a container       |
+| **Deployed to**            | S3 + CloudFront                                                                            | Docker image → ECR → ECS Fargate               |
+| **Scales via**             | CloudFront CDN edge nodes (automatic, global)                                              | ECS task count (horizontal scaling)            |
 | **Why not the other way?** | Running Nginx in a Fargate container to serve static files wastes compute you pay for 24/7 | You can't run a Node.js server as an S3 object |
 
 **How routing works:** Route 53 has two ALIAS records. `mealdice.com` points to the CloudFront distribution domain, which resolves to the nearest CDN edge node. `api.mealdice.com` points to the ALB domain, which resolves to the load balancer. CloudFront and ALB each act as a full HTTP server — they terminate SSL, apply their own routing rules, and forward requests to their respective origins (S3 or ECS tasks).
@@ -687,4 +685,4 @@ whatToEat/
 
 ## License
 
-MIT · Built by **Mingyue Liu** | [mealdice.com](https://mealdice.com)
+MIT · Design and built by **Mingyue Liu** | [mealdice.com](https://mealdice.com)
