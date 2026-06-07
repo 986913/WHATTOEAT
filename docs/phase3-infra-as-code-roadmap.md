@@ -54,7 +54,7 @@ infra/
 | `rds`           | RDS MySQL 8.4.8 instance (`db.t4g.micro`, port 3310, multi_az=true), DB subnet group | ✅ Imported |
 | `elasticache`   | Redis replication group, ElastiCache subnet group                                    | ✅ Imported |
 | `alb`           | Application Load Balancer, HTTPS/HTTP listeners, target group                        | ✅ Imported |
-| `ecs`           | Fargate cluster, ECR repo, task execution IAM role, task definition, Fargate service | Import      |
+| `ecs`           | Fargate cluster, ECR repo, task execution IAM role, task definition, Fargate service | ✅ Imported |
 | `s3_cloudfront` | S3 bucket (`mealdice-frontend`), CloudFront distribution                             | Import      |
 | `waf`           | WAF WebACL (rate-based rule: 2000 req/5min per IP), ALB association                  | **New**     |
 | `iam`           | GitHub OIDC provider, IAM role (replaces static access keys in CI/CD)                | **New**     |
@@ -88,7 +88,7 @@ Security groups follow least-privilege: ALB accepts public traffic → ECS only 
    - **Deviations**: `deletion_protection=false` (legacy), `backup_retention=1d` (legacy), `db_name` omitted (eatdbprod created manually via CLI), using VPC default SG instead of dedicated RDS SG
 9. `elasticache` module → import Redis cluster ✅ Done — Redis 7.1 / cache.t3.micro / single-node / port 6379 / default SG
    - **Deviations**: `engine_version` must be `"7.1"` not `"7.1.0"` (Redis v6+ format rule); AUTH is Disabled — `lifecycle { ignore_changes = [auth_token, auth_token_update_strategy] }` prevents import state residue from triggering API error; `redis_sg_id` references `module.vpc.sg_id` directly (no root variable needed)
-10. `alb` module → import load balancer and listeners
+10. `alb` module → import load balancer and listeners ✅ Done — HTTPS listener / ACM cert data source / idle_timeout=300 / `lifecycle { ignore_changes = [tags_all] }` on all 3 resources
 11. `ecs` module → import cluster, ECR repo, and service ✅ Done — mealdice-backend-cluster / mealdice-backend ECR / mealdice-backend-task:5 / mealdice-backend-service / CloudWatch log group /ecs/mealdice-backend-task (retention set to 30 days)
    - **Deviations**: `ecsTaskExecutionRole` used as data source (not imported — AWS default role, not MealDice-specific); `configuration { execute_command_configuration { logging = "DEFAULT" } }` required on cluster; `runtime_platform { cpu_architecture = "X86_64" operating_system_family = "LINUX" }` required on task definition; `availability_zone_rebalancing = "ENABLED"` and `enable_ecs_managed_tags = true` required on service (provider v5.100 new fields); environment vars sorted alphabetically (AWS normalises order); `ignore_changes = [task_definition, wait_for_steady_state]` on service
 12. `s3_cloudfront` module → import S3 bucket and CloudFront distribution
@@ -133,7 +133,19 @@ After each module: `terraform validate` → `terraform import ...` → `terrafor
 
 ## What Comes After Phase 3
 
-Once IaC is complete, the AI skill track resumes:
+Once IaC is complete, the roadmap continues in this order:
+
+### 1. Security — Auth Hardening
+Replace the current single 3-day JWT (localStorage) with Access + Refresh Token.
+
+See [phase-security-auth-hardening.md](phase-security-auth-hardening.md) for the full roadmap.
+
+### 2. Phase 4 — Microservices
+Decompose the NestJS monolith into 7 independently deployable services (gateway · auth · user · meal · plan · ai · notification). Phase 4 Terraform (Phase B) depends on Phase 3 IaC being complete.
+
+See [phase4-microservices-roadmap.md](phase4-microservices-roadmap.md) for the full roadmap.
+
+### 3. AI Main Track (Steps 4–6 + NEW)
 
 | Step   | What                                | AI Gap Closed                          |
 | ------ | ----------------------------------- | -------------------------------------- |
@@ -148,4 +160,4 @@ See [backlog.md](backlog.md) for full priority order and [docs/superpowers/plans
 
 ---
 
-_Last updated: 2026-05-22 — ECS module imported_
+_Last updated: 2026-06-07 — ALB module imported; post-Phase 3 roadmap updated (Auth Hardening → Microservices → AI)_

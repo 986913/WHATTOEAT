@@ -1,6 +1,8 @@
 # Scalability Roadmap — whatToEat
 
-## Current Architecture
+> **Status: ✅ Completed.** All 5 steps shipped. MealDice now runs on ECS Fargate + ALB + ElastiCache + S3/CloudFront. This document is preserved as a record of the migration decisions and architecture reasoning.
+
+## Starting Architecture (pre-migration)
 
 ```
                    ┌──────────────────────────────┐
@@ -322,11 +324,19 @@ ECS will automatically do a rolling deployment: start new tasks with the new ima
 
 ---
 
-## Future Considerations (Post-IaC)
+## What Came After Phase 1
 
-After manually building and validating this architecture, codify everything with IaC (Terraform or AWS CDK):
+Phase 1 established the HA infrastructure foundation. Subsequent phases built on top of it:
 
-- **IaC**: Codify all AWS resources (ALB, ECS, RDS, ElastiCache, S3, CloudFront) as code
-- **Lambda**: Offload Slack notifications, email sending (see separate Lambda analysis)
-- **Monitoring**: CloudWatch alarms, X-Ray tracing, ECS container insights
-- **WAF**: Attach to ALB for API protection
+| Phase | Focus | Status |
+|---|---|---|
+| **Phase 2** | AI Meal Planning (Claude streaming, SSE, Redis Pub/Sub) | ✅ Done (Steps 0–3) |
+| **Phase 3** | Infrastructure as Code (Terraform 8 modules) | 🔧 In Progress |
+| **Security** | Auth Hardening (Access + Refresh Token, Redis rotation) | 📐 Designed |
+| **Phase 4** | Microservices (NestJS TCP, DDD, Cloud Map) | 📋 Planned |
+
+- [phase2-ai-engineering-roadmap.md](phase2-ai-engineering-roadmap.md)
+- [phase3-infra-as-code-roadmap.md](phase3-infra-as-code-roadmap.md)
+- [phase-security-auth-hardening.md](phase-security-auth-hardening.md)
+- [phase4-microservices-roadmap.md](phase4-microservices-roadmap.md)
+- [backlog.md](backlog.md) — full priority order

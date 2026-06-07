@@ -11,10 +11,13 @@
 | Step 0 | Redis infrastructure (ElastiCache + ioredis Pub/Sub) | ✅ Done |
 | Step 1 | Backend AI Service (AiModule + Claude streaming + SSE endpoint) | ✅ Done |
 | Step 2 | SSE Streaming Pipeline (taskId pattern + heartbeat + buffer replay) | ✅ Done |
-| Step 3 | Frontend Streaming UI (progressive day rendering + AI suggestion badge) | ✅ Done |
+| Step 3 | Frontend Streaming UI (progressive day rendering + AI suggestion badge + Save to Library) | ✅ Done |
 | Step 4 | Native Tool Use refactor (replace JSON mode + bracket-depth parsing) | ⬜ Not started |
 | Step 5 | Meal Planning Chatbot with Memory | ⬜ Not started |
 | Step 6 | Prompt Caching + Model Tier Routing + CloudWatch cost telemetry | ⬜ Not started |
+| NEW   | Agent Workflow (multi-step agentic meal planning with tool handoffs) | ⬜ Not started |
+| NEW   | RAG — Semantic Meal Search (Pinecone vector DB + MySQL hybrid retrieval) | ⬜ Not started |
+| NEW   | Eval / Guardrails (LLM-as-judge, score < 6 auto-retry, CloudWatch trend) | ⬜ Not started |
 | Step 7 | Save AI Suggestions to Library (needs TD1.2 DB migrations first) | ⬜ Blocked |
 | Step 8 | Observability & Guardrails (熔断 + Event Loop 监控) | ⬜ Not started |
 
@@ -94,7 +97,7 @@ Claude was asked for JSONL output. We accumulated characters and emitted a compl
 
 ---
 
-## What's Next (Steps 4–6)
+## What's Next (Steps 4–6 + NEW)
 
 ### Step 4: Native Tool Use
 **Plan:** [2026-04-15-step4-native-tool-use.md](superpowers/plans/2026-04-15-step4-native-tool-use.md)
@@ -121,6 +124,21 @@ Three changes to `AiService`:
 3. **CloudWatch telemetry:** After each call, `PutMetricData` to `MealDice/AI` namespace with `InputTokens`, `CacheReadTokens`, `OutputTokens`, `EstimatedCostUSD`. Alarm triggers at $10/day.
 
 **Execution order:** Step 4 → Step 6 (both touch `ai.service.ts`; caching builds on the refactored streaming code).
+
+### NEW: Agent Workflow
+Build a multi-step agentic meal planner on top of Step 4's `tool_use`. Loop: `research_meals(constraints)` → `validate_nutrition(plan)` → `refine(feedback)` → `finalize_plan(approved)`. Each tool is a NestJS service method; loop terminates on `finalize_plan` or max iterations.
+
+**Interview signal:** Multi-step agent with planning, tool handoffs, loop termination — #3 market demand for AI Engineer roles.
+
+### NEW: RAG — Semantic Meal Search
+Vector store: Pinecone (managed, free tier). On meal create/update → generate embedding (Claude API) → upsert to Pinecone. On search → embed query → `pinecone.query()` → fetch full records from MySQL by returned IDs. New `VectorModule` encapsulates Pinecone client.
+
+**Interview signal:** Vector DB integration, embedding pipeline, hybrid retrieval (vector + relational).
+
+### NEW: Eval / Guardrails
+After Claude generates a plan, a second Haiku call acts as LLM-judge: scores 1–10, returns `{ score, reason }`. Score < 6 → auto-retry once. Score + reason written to CloudWatch `MealDice/AI` namespace for quality trend dashboard.
+
+**Interview signal:** LLM-as-judge, measurable AI output quality, production guardrail pattern.
 
 ---
 
@@ -173,4 +191,4 @@ AWS WAF Rate-based Rules on ALB + CloudFront handle abuse prevention. The AI end
 
 ---
 
-_Last updated: 2026-04-15_
+_Last updated: 2026-06-07_

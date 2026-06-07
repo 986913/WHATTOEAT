@@ -4,14 +4,31 @@
 
 A full-stack meal planning app that eliminates the daily "what should I eat?" dilemma. Roll the dice, get personalized meals, and plan your week with AI — all in one place.
 
-| Phase                          | Focus                                                                       | Status         |
-| ------------------------------ | --------------------------------------------------------------------------- | -------------- |
-| **1 — High Availability**      | ALB · ECS Fargate · ElastiCache · S3 + CloudFront                           | ✅ Done        |
-| **2 — AI Meal Planning**       | Claude streaming via SSE · Redis Pub/Sub bridge · cache-aside meal pool     | ✅ Done        |
-| **3 — Infrastructure as Code** | Terraform 8-module IaC · Remote state · GitHub Actions OIDC                 | 🔧 In Progress |
-| **4 — Microservices**          | NestJS TCP microservices · DDD decomposition · Cloud Map · path-based CI/CD | 📋 Planned     |
+Three parallel tracks — each can progress independently, with a few hard dependencies noted below.
 
-> **Next:** After completing IaC (Phase 3), splitting the monolith into 7 independently deployable NestJS microservices (gateway · auth · user · meal · plan · ai · notification).
+**🏗️ Infra track** — sequential, each step gates the next:
+
+| Order | Phase | Focus | Status |
+| ----- | ----- | ----- | ------ |
+| 1st | **1 — High Availability** | ALB · ECS Fargate · ElastiCache · S3 + CloudFront | ✅ Done |
+| 2nd | **3 — Infrastructure as Code** | Terraform 8-module IaC · Remote state · GitHub Actions OIDC | 🔧 In Progress |
+| 3rd | **4 — Microservices** | NestJS TCP · DDD · Cloud Map · path-based CI/CD | 📋 Planned |
+
+**🔒 Security track** — gates Phase 4 (auth-service extracts this code directly):
+
+| Order | Phase | Focus | Status |
+| ----- | ----- | ----- | ------ |
+| Before Phase 4 | **Auth Hardening** | Access + Refresh Token · Redis rotation · reuse detection · HttpOnly cookie · XSS/CSRF defence | 📐 Designed |
+
+**🤖 AI track** — runs independently of Infra/Security:
+
+| Order | Phase | Focus | Status |
+| ----- | ----- | ----- | ------ |
+| Done | **2 — AI Meal Planning** (Steps 0–3) | Claude streaming · SSE · Redis Pub/Sub · cache-aside meal pool | ✅ Done |
+| Next | **2 — AI Meal Planning** (Steps 4–6) | Native tool use · Chatbot with memory · Prompt caching + model routing | ⬜ Planned |
+| Next | **2 — AI Meal Planning** (NEW) | Agent workflow · RAG semantic search · Eval / guardrails | ⬜ Planned |
+
+> **Hard dependencies:** Phase 3 IaC must complete before Phase 4 Terraform. Auth Hardening must ship before Phase 4 begins (auth-service reuses that code). AI Steps 4–6 are unblocked and can start any time.
 
 ## Features
 
@@ -21,6 +38,7 @@ A full-stack meal planning app that eliminates the daily "what should I eat?" di
 - **AI Meal Planning** — describe your preference in any language; Claude generates a personalized week streamed live with progressive card rendering
 - **Custom Meals** — create private meals that appear alongside public ones
 - **Plan History** — paginated history with date range and meal name filters
+- **Secure Authentication** — short-lived Access Token (15 min, memory) + long-lived Refresh Token (30 days, HttpOnly cookie); rotation + reuse detection via Redis; XSS and CSRF hardened
 - **Google OAuth + Email Auth** — sign in with Google or email; password reset supported
 - **Role-Based Access** — admin panel for meals, ingredients, users, roles
 - **Cooking Videos** — tap any meal to watch its tutorial
@@ -456,15 +474,17 @@ All endpoints are prefixed with `/api/v1`.
 <details>
 <summary><strong>Auth</strong> — <code>/auth</code></summary>
 
-| Method | Endpoint                | Auth   | Description                  |
-| ------ | ----------------------- | ------ | ---------------------------- |
-| `POST` | `/auth/signup`          | Public | Register with email          |
-| `POST` | `/auth/signin`          | Public | Login — returns JWT          |
-| `GET`  | `/auth/me`              | JWT    | Get current user             |
-| `POST` | `/auth/forgot-password` | Public | Request password reset email |
-| `POST` | `/auth/reset-password`  | Public | Reset password with token    |
-| `GET`  | `/auth/google`          | Public | Initiate Google OAuth        |
-| `GET`  | `/auth/google/callback` | Public | Google OAuth callback        |
+| Method     | Endpoint                | Auth   | Description                                                               |
+| ---------- | ----------------------- | ------ | ------------------------------------------------------------------------- |
+| `POST`     | `/auth/signup`          | Public | Register with email                                                       |
+| `POST`     | `/auth/signin`          | Public | Login — returns `access_token` (body) + `refresh_token` (HttpOnly cookie) |
+| `GET`      | `/auth/me`              | JWT    | Get current user                                                          |
+| `POST`     | `/auth/refresh`         | Cookie | Silent refresh — rotates refresh token, returns new `access_token`        |
+| `DELETE`   | `/auth/logout`          | Cookie | Logout current device (`?all=true` to revoke all devices)                 |
+| `POST`     | `/auth/forgot-password` | Public | Request password reset email                                              |
+| `POST`     | `/auth/reset-password`  | Public | Reset password with token                                                 |
+| `GET`      | `/auth/google`          | Public | Initiate Google OAuth                                                     |
+| `GET`      | `/auth/google/callback` | Public | Google OAuth callback                                                     |
 
 </details>
 
