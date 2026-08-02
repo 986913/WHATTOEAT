@@ -67,8 +67,10 @@ resource "aws_db_instance" "main" {
   option_group_name    = "default:mysql-8-4"
   parameter_group_name = "default.mysql8.4"
 
-  multi_az            = true
-  publicly_accessible = true   # TODO: 收紧为仅 ECS SG 访问；当前允许公网连接是历史遗留，需单独安全加固任务处理
+  multi_az            = false  # 2026-08-02 发现代码和实际 AWS 状态有 drift：代码原写 true，但实例实际是 false（单AZ）。
+                                # 改成 false 让代码匹配现状——现状更便宜，且这次改动的目的就是降成本，不是开 Multi-AZ。
+  publicly_accessible = false  # 2026-08-02 关闭：ECS 在同一 VPC 内访问，走 rds_sg_id 的 0.0.0.0/0 规则即可，
+                                # 不需要公网 IP。关闭后省掉 ~$3.65/mo 的 Public IPv4 费用，并去掉一个公网攻击面。
   apply_immediately   = false
   deletion_protection = false  # TODO: 生产数据库建议启用；当前是历史遗留值，启用前需确认 skip_final_snapshot = true 的影响
   skip_final_snapshot = true

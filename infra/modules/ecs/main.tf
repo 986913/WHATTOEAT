@@ -179,13 +179,16 @@ resource "aws_ecs_service" "main" {
   name            = "mealdice-backend-service"
   cluster         = aws_ecs_cluster.main.id
   task_definition = aws_ecs_task_definition.main.arn
-  desired_count   = 2
+  desired_count   = 1 # 2026-08-02 从 2 降到 1：省一半 Fargate 计算费 + 一个任务的 Public IPv4 费用。
+                      # 个人项目当前流量下，单任务够用；代价是重启时会有短暂不可用（无滚动冗余）。
 
   availability_zone_rebalancing = "ENABLED"
   enable_ecs_managed_tags       = true
 
   capacity_provider_strategy {
-    capacity_provider = "FARGATE"
+    capacity_provider = "FARGATE_SPOT" # 2026-08-02 从 FARGATE 切到 SPOT：比 On-Demand 便宜约 70%。
+                                        # 代价是 AWS 可能以 2 分钟通知回收容量；desired_count=1 时
+                                        # 意味着偶尔会有几分钟的重新调度，接受这个风险来换成本。
     weight            = 1
     base              = 0
   }
